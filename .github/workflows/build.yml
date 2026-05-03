@@ -1,0 +1,75 @@
+name: Build Installers
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: windows-latest
+          - os: macos-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Python + PyInstaller ─────────────────────────────────────────────
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps + PyInstaller
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Build backend binary
+        run: pyinstaller app.spec --distpath dist-backend
+
+      # ── Node + electron-builder ──────────────────────────────────────────
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Node deps
+        run: npm install
+
+      - name: Sync package.json version from VERSION file
+        run: npm version $(cat VERSION) --no-git-tag-version
+
+      - name: Build Electron installer
+        run: npx electron-builder --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      # ── Upload ───────────────────────────────────────────────────────────
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.os }}
+          path: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.AppImage
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: installers/
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: installers/**
+          generate_release_notes: true

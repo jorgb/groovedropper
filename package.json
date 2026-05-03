@@ -1,0 +1,47 @@
+{
+  "name": "groove-dropper",
+  "version": "0.9.0",
+  "description": "Needle Drop Sampling Assistant",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "sampling",
+    "vinyl",
+    "music",
+    "assistant"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^29.1.0",
+    "electron-builder": "^24.0.0"
+  },
+  "dependencies": {},
+  "build": {
+    "appId": "com.groovedropper.app",
+    "productName": "GrooveDropper",
+    "files": [
+      "main.js",
+      "package.json"
+    ],
+    "extraResources": [
+      { "from": "dist-backend/", "to": "backend/" }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png",
+      "category": "Audio"
+    }
+  }
+}
