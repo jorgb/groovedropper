@@ -100,7 +100,7 @@ const GrooveDropper = {
         this.pollStatus().then(() => {
             const urlParams = this.checkUrlParams();
             if (urlParams) {
-                this.loadSpecificDigest(urlParams.digest, urlParams.startOffset).catch(e => console.error(e));
+                this.loadSpecificDigest(urlParams.digest, urlParams.startOffset, urlParams.pitch, urlParams.cents).catch(e => console.error(e));
             } else if (this.state.currentSampleId === null && this.state.totalSamplesCount > 0) {
                 this.loadNextRandom(false).catch(e => console.error(e));
             }
@@ -133,7 +133,12 @@ const GrooveDropper = {
         const params = new URLSearchParams(window.location.search);
         const digest = params.get('sample');
         if (digest) {
-            return { digest, startOffset: parseInt(params.get('start') ?? '0', 10) };
+            return {
+                digest,
+                startOffset: parseInt(params.get('start') ?? '0', 10),
+                pitch: parseInt(params.get('pitch') ?? '0', 10),
+                cents: parseInt(params.get('cents') ?? '0', 10),
+            };
         }
         return null;
     },
@@ -159,8 +164,12 @@ const GrooveDropper = {
     copyCurrentUrlToClipboard() {
         if (!this.state.currentDigest) return;
         const base = window.location.origin + window.location.pathname;
-        const url = `${base}?sample=${this.state.currentDigest}&start=${this.state.originalStartOffset}`;
-        navigator.clipboard.writeText(url)
+        const params = new URLSearchParams({ sample: this.state.currentDigest, start: this.state.originalStartOffset });
+        const s = this.state.pitchSemitones;
+        const c = this.state.pitchCents;
+        if (s !== 0) params.set('pitch', s);
+        if (c !== 0) params.set('cents', c);
+        navigator.clipboard.writeText(`${base}?${params}`)
             .then(() => this.showToast("URL Copied to Clipboard!"))
             .catch(err => console.error("Failed to copy URL:", err));
     },
@@ -345,7 +354,7 @@ const GrooveDropper = {
         }
     },
 
-    async loadSpecificDigest(digest, startOffset) {
+    async loadSpecificDigest(digest, startOffset, pitch = 0, cents = 0) {
         try {
             const res = await fetch(`/api/sample/digest/${digest}?start=${startOffset}`);
             if (!res.ok) {
@@ -355,6 +364,12 @@ const GrooveDropper = {
             const data = await res.json();
             this._pushHistory(data.history_id);
             this.updateUI(data, false);
+            if (pitch !== 0 || cents !== 0) {
+                this.state.pitchSemitones = pitch;
+                this.state.pitchCents = cents;
+                this._applyPitch();
+                this._renderPitchOverlay();
+            }
         } catch (e) {
             console.error("Error loading digest", e);
             this.showErrorToast('Failed to load sample from URL');

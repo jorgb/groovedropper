@@ -125,19 +125,28 @@ sample.
 ### Sharing a link
 
 Press **`Ctrl + Space`** to copy a direct URL to your clipboard. The link 
-encodes MD5 digest of the file and the play offset position, so you can:
+encodes MD5 digest of the file, the play offset position (and if pitch is 
+changed, as well), so you can:
 
 - Paste it into a note-taking tool (Notion, Obsidian, Bear, …) to build a 
   running list of samples that inspires you for a song and recall them by 
   clicking on the link when GrooveDropper runs
 - Send it to a friend. If they have the same sample library indexed locally, 
-  the link opens at the exact same spot.
+  the link opens at the exact same spot with the same pitch applied.
 
 Because of the MD5 digest, it does not matter how often you reindex your 
 database, or where the sample ends up, as long as the data of the sample is 
 unaltered, it will always be found. 
 
-The link will look like: `http://127.0.0.1:5000/?sample=801730016a4a44d2f18c8538daad086e&start=4216491`
+Without pitch information, the link will look like:
+- `http://127.0.0.1:5000/?sample=801730016a4a44d2f18c8538daad086e&start=4216491`  
+
+When pitch is applied, the link will look like:  
+- `http://127.0.0.1:5000/?sample=801730016a4a44d2f18c8538daad086e&start=4216491&pitch=2&cents=20`
+
+Opening a link with `pitch=` and/or `cents=` parameters will automatically 
+restore 
+the pitch to those values when the sample loads.
 
 ### Saving a slice
 
