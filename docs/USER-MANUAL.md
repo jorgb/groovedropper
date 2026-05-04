@@ -234,13 +234,16 @@ but I will try my best to not mess with your data 🙂
 
 ## Troubleshooting
 
-**The scan finishes but no samples appear.**
-Check that the folder contains `.wav` files — GrooveDropper only indexes WAV format.
-
-**A file I moved is showing as missing.**
-Re-add the folder at its new location and trigger a refresh. Because labels
-are stored by an MD5 file hash, any tags you applied will be picked up 
-automatically once the file is reindexed.
-
-**Playback cuts out or sounds glitchy.**
-This is usually a browser audio issue. Reload the page; if the problem persists try a different browser.
+- **The first time my Python installation failed**
+  - Fix the problem that is reported, but make sure you remove `.venv` in 
+    your folder to restart the installation
+- **The scan finishes but no samples appear.**
+  - Check that the folder contains `.wav` files — GrooveDropper only indexes 
+    WAV format.
+- **A file I moved is showing as missing.**
+  - Re-add the folder at its new location and trigger a refresh. Because labels
+  are stored by an MD5 file hash, any tags you applied will be picked up 
+  automatically once the file is reindexed.
+- **Playback cuts out or sounds glitchy.**
+  - This is usually a browser audio issue. Reload the page; if the problem 
+    persists try a different browser.
