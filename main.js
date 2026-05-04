@@ -43,6 +43,8 @@ function createWindow() {
         },
     });
 
+    mainWindow.maximize();
+
     mainWindow.on('closed', () => {
         mainWindow = null;
         if (flaskProcess) flaskProcess.kill();
