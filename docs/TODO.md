@@ -6,6 +6,10 @@
 
 ## LATER
 
+- feat: Adjust sample random offset manually
+  - Manual editing of offset box
+  - Arrow up / down micro adjust sample offset, left / right macro adjust offset (200ms / 0.5s?)
+  - playhead moves to offset, replays when playing, or moves when stopped
 - feat: select "untagged" find all samples that are not tagged
   - Simple label that deselects all, but is different in color, find all untagged labels for quick classification
 - feat: Add pitch information in filename to saved chop
@@ -38,23 +42,19 @@
 
 ## MAYBE
 
+- feat: Save sample slots (inspired by tape stopping)
+  - 1,2 to 0 are used for storing the randomized spots
+  - green / red key squares indicate something is stored there
+  - upon pressing a key, sample loads at stored offset
+  - Shift+S saves all slots to a file as a zip?
+  - future: save this set as a Vibe, reset vibe, reset set
 - feat: Add a star to the sample before the labels row, and a star in the preset field, the star needs to filter only "starred" items 
 - Download whole sample, as-is?
   - IF wanting to slice, or run remotely
-- Session based information
-  - Markers 1 through 9 to remember during the session (mass download?)
+  - slice sample metadata in WAV?
 - Starred items, because some are just cool but not used right now
   - Add one to five stars or just one star for "favorite for later?"
 - fix: Random seems to only pick from the beginning
-- Vibe list!
-  - When a sample matches a vibe, add it to the current list with V, or make a new one if it does not exist 
-  - It will display the clickable samples to the right in a vibe list with playhead preservation
-  - If the current sample is in the list of vibes and the playhead randomizes in the sample or is clicked, update the vibe position as well
-  - There should be a button next to the item that dismisses it from the current vibe
-  - There should be a button under it exporting the chops from the vibe as a zip
-  - There should be a button under it to export all samples from the vibe
-  - Above the vibe list there should be an (editable) name, auto generated with a name (and randomize for the name) - wordlist?
-  - There should be a button to save this vibe and a vibes dropdown with all previous vibes on the top next to the theme
 - Mobile UI front-end and running on another URL but 127.0.0.1?
 - Shift+Click mark end of slice, visualize and playback that part only save will save
 	- Tag the part of the slice as a certain type (or the whole sample) 
@@ -65,5 +65,15 @@
   - I'm feeling lucky function - Get 3 - 5 or 10 random slices which you need to use, as a ZIP file downloaded
   - Challenge mode, you only get 5 tries to find samples, after that randomize does not work anymore, only back
 - Slice mark in current sample, persistent?
+- Vibe list!
+  - When a sample matches a vibe, add it to the current list with V, or make a new one if it does not exist 
+  - It will display the clickable samples to the right in a vibe list with playhead preservation
+  - If the current sample is in the list of vibes and the playhead randomizes in the sample or is clicked, update the vibe position as well
+  - There should be a button next to the item that dismisses it from the current vibe
+  - There should be a button under it exporting the chops from the vibe as a zip
+  - There should be a button under it to export all samples from the vibe
+  - Above the vibe list there should be an (editable) name, auto generated with a name (and randomize for the name) - wordlist?
+  - There should be a button to save this vibe and a vibes dropdown with all previous vibes on the top next to the theme
+
 - A recent marker list, that is clickable as session info, selects when playing, max 20?
 - Click on a folder to pin that folder in the randomized selection, or maybe use a label functionality to decide what to pick from?
