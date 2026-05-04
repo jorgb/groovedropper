@@ -542,7 +542,12 @@ const GrooveDropper = {
 
     downloadSlice() {
         if (!this.state.currentSampleId) return;
-        window.location.href = `/api/slice/${this.state.currentSampleId}?start=${this.state.originalStartOffset}`;
+        const params = new URLSearchParams({ start: this.state.originalStartOffset });
+        const s = this.state.pitchSemitones;
+        const c = this.state.pitchCents;
+        if (s !== 0) params.set('pitch', s);
+        if (c !== 0) params.set('cents', c);
+        window.location.href = `/api/slice/${this.state.currentSampleId}?${params}`;
     },
 
     async loadInfo() {

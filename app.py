@@ -320,6 +320,8 @@ def audio(sample_id):
 @app.route('/api/slice/<int:sample_id>')
 def slice_audio(sample_id):
     start_offset = request.args.get('start', type=int, default=0)
+    pitch_semi = request.args.get('pitch', type=int, default=0)
+    pitch_cents = request.args.get('cents', type=int, default=0)
 
     with db.get_db() as conn:
         row = db.fetch_sample_path_and_name(conn, sample_id)
@@ -331,10 +333,19 @@ def slice_audio(sample_id):
     start_time = start_offset / samplerate
     stem = os.path.splitext(row['name'])[0]
 
+    pitch_suffix = ''
+    if pitch_semi != 0 or pitch_cents != 0:
+        parts = ''
+        if pitch_semi != 0:
+            parts += f"{pitch_semi}p"
+        if pitch_cents != 0:
+            parts += f"{pitch_cents}c"
+        pitch_suffix = f"_{parts}"
+
     try:
         buf = wav.make_audio_slice(row['path'], start_time)
         return send_file(buf, as_attachment=True,
-                         download_name=f"{stem}_{start_offset:08d}.wav",
+                         download_name=f"{stem}_{start_offset:08d}{pitch_suffix}.wav",
                          mimetype='audio/wav')
     except Exception as e:
         logger.error(f"Error creating slice: {e}")

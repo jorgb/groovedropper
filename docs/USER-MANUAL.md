@@ -146,6 +146,11 @@ start offset (this is not the current offset where the playhead stopped). The
 file downloads straight to your browser's download folder, ready to drag 
 into your sample or a DAW.
 
+If the sample was pitched up or down, this information is also saved to the 
+sample name. For example if the sample is pitched down 3 semitones and 10 
+cents, it will be exported as: `SAMPLE_0045342_-3p10c.wav`. This will allow 
+you to reconstruct the pitch in your DAW or sampler by inspecting the filename.
+
 ---
 
 ## Pitch Control
@@ -160,6 +165,9 @@ against the key you're working in, without leaving the app.
 
 Use your mouse to drag over the semitones or cents to control the pitch by 
 mouse.
+
+**NOTE:** A cent is 100 steps in a semitone, so after pitching up or down 90 
+cents, it will reset to 00 and increase or decrease the semitone value. 
 
 **Important:** pitch adjustment is handled by the browser's audio engine 
 and is not baked into the [exported slice](#saving-a-slice). Exporting at a 
