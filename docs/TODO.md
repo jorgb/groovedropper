@@ -1,14 +1,17 @@
 ## DOING
 
 - test: test code on fresh install:
-  - Windows
   - Linux
 - Publish on Reddit
 
 ## LATER
 
-- feature: draw sample start offset marker in waveform (upon click, or randomize Shift+R) to indicate where sthe slice save or restart is of the sampe
-- feature: Slice mode in waveform editor
+- feat: select "untagged" find all samples that are not tagged
+  - Simple label that deselects all, but is different in color, find all untagged labels for quick classification
+- feat: Add pitch information in filename to saved chop
+- feat: Share link including (optional) pitch settings
+- feat: draw sample start offset marker in waveform (upon click, or randomize Shift+R) to indicate where sthe slice save or restart is of the sampe
+- feat: Slice mode in waveform editor
   - Shift+Click or C will set the END point and draw a small masked overlay
   - Shift+Space will play and loop only between the start and end (or end sample if no slice stop)
   - Shift+R will reset the end slice to none, or clicking anywhere in the sample
@@ -16,12 +19,6 @@
   - Shift+S saves the whole sample (from location as-is without conversion)
   - Slice management + offset rework (do not use seconds to randomize but slice offset?)
   - Save slice time customizable, 5s by default? -- NEEDED?
-- test: Check ignore functionality, should it be a database entry?
-  - fix: .grvignore bug when appending lines (read and write the file again)
-  - Will it delete entries that are scanned?
-  - Does it even need to exist?
-- feat: select "untagged" find all samples that are not tagged
-  - Simple label that deselects all, but is different in color, find all untagged labels for quick classification
 - feat: label auto keyword addition
   - for a label, when created or edited, enter comma separated keywords that can be in a path to auto-match
   - what to do with re-scanning?
