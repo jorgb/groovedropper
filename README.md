@@ -77,7 +77,8 @@ The batch file creates a virtual environment and installs all required packages 
 **Linux / macOS** — install Python 3 via your package manager if needed (e.g. `sudo apt install python3` on Ubuntu/Debian), then:
 
 ```bash
-./run.sh ~/groovedropper.db
+> chmod +x run.sh
+> ./run.sh ~/groovedropper.db
 ```
 
 The shell script handles the virtual environment the same way the batch file does.
