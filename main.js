@@ -1,6 +1,7 @@
 const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
 const { spawn } = require('child_process');
 
 let mainWindow;
@@ -92,6 +93,24 @@ function startFlask(dbFile) {
     flaskProcess.on('close', (code) => console.log(`Flask process exited with code ${code}`));
 }
 
+function waitForFlask(url, maxRetries = 40, delayMs = 500) {
+    return new Promise((resolve, reject) => {
+        const attempt = (retriesLeft) => {
+            http.get(url, (res) => {
+                res.resume();
+                resolve();
+            }).on('error', () => {
+                if (retriesLeft <= 0) {
+                    reject(new Error('Flask server did not start in time'));
+                    return;
+                }
+                setTimeout(() => attempt(retriesLeft - 1), delayMs);
+            });
+        };
+        attempt(maxRetries);
+    });
+}
+
 app.on('ready', async () => {
     createWindow();
 
@@ -100,10 +119,14 @@ app.on('ready', async () => {
 
     startFlask(dbFile);
 
-    // Allow Flask time to initialize before loading the UI.
-    setTimeout(() => {
+    try {
+        await waitForFlask(`http://127.0.0.1:${port}`);
         if (mainWindow) mainWindow.loadURL(`http://127.0.0.1:${port}`);
-    }, 1500);
+    } catch (err) {
+        console.error('Flask failed to start:', err);
+        dialog.showErrorBox('Backend Error', 'The Flask server failed to start. Check the terminal for details.');
+        app.quit();
+    }
 });
 
 app.on('window-all-closed', () => {
