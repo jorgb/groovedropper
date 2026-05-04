@@ -1,8 +1,6 @@
 ## DOING
 
-- test: test code on fresh install:
-  - Linux
-- Publish on Reddit
+- feat: Copy sample path of current sample to clipboard
 
 ## LATER
 
@@ -12,8 +10,8 @@
   - playhead moves to offset, replays when playing, or moves when stopped
 - feat: select "untagged" find all samples that are not tagged
   - Simple label that deselects all, but is different in color, find all untagged labels for quick classification
-- feat: Add pitch information in filename to saved chop
-- feat: Share link including (optional) pitch settings
+- 1.0 release!
+  - Publish on Reddit
 - feat: draw sample start offset marker in waveform (upon click, or randomize Shift+R) to indicate where sthe slice save or restart is of the sampe
 - feat: Slice mode in waveform editor
   - Shift+Click or C will set the END point and draw a small masked overlay
