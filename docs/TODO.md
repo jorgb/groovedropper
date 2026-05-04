@@ -1,13 +1,13 @@
 ## DOING
 
-- feat: Copy sample path of current sample to clipboard
-
-## LATER
-
 - feat: Adjust sample random offset manually
   - Manual editing of offset box
   - Arrow up / down micro adjust sample offset, left / right macro adjust offset (200ms / 0.5s?)
   - playhead moves to offset, replays when playing, or moves when stopped
+
+
+## LATER
+
 - feat: select "untagged" find all samples that are not tagged
   - Simple label that deselects all, but is different in color, find all untagged labels for quick classification
 - 1.0 release!

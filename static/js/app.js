@@ -29,6 +29,8 @@ const GrooveDropper = {
         pitchCents: 0,
         isScanning: null,
         appVersion: '',
+        sampleName: null,
+        sampleDir: null,
     },
 
     elements: {
@@ -112,6 +114,7 @@ const GrooveDropper = {
         }
 
         this.addEventListeners();
+        this._initInfoCopyIcons();
 
         this._attachPitchDrag(this.elements.pitchSemitoneDrag, (steps) => this.adjustPitch(steps, 0));
         this._attachPitchDrag(this.elements.pitchCentsDrag, (steps) => this.adjustPitch(0, steps * 10));
@@ -127,6 +130,27 @@ const GrooveDropper = {
                 this.renderSampleLabelBar();
             })
             .catch(e => console.error('Label init error', e));
+    },
+
+    _initInfoCopyIcons() {
+        const copyMap = [
+            { id: 'copy-icon-name',     getValue: () => this.state.sampleName,                    toast: 'Filename copied!' },
+            { id: 'copy-icon-dir',      getValue: () => this.state.sampleDir,                     toast: 'Directory copied!' },
+            { id: 'copy-icon-size',     getValue: () => this.elements.sampleSize.textContent,     toast: 'Size copied!' },
+            { id: 'copy-icon-duration', getValue: () => this.elements.sampleDuration.textContent, toast: 'Duration copied!' },
+            { id: 'copy-icon-offset',   getValue: () => this.elements.sampleOffset.value,         toast: 'Offset copied!' },
+        ];
+        for (const { id, getValue, toast } of copyMap) {
+            const el = document.getElementById(id);
+            if (!el) continue;
+            el.addEventListener('click', () => {
+                const val = getValue();
+                if (!val || val === '-') return;
+                navigator.clipboard.writeText(val)
+                    .then(() => this.showToast(toast))
+                    .catch(err => console.error('Copy failed:', err));
+            });
+        }
     },
 
     checkUrlParams() {
@@ -400,6 +424,8 @@ const GrooveDropper = {
         this.state.durationSamples = data.duration_samples;
         this.state.originalStartOffset = data.start_offset;
         this.state.currentOffset = data.start_offset;
+        this.state.sampleName = data.name;
+        this.state.sampleDir = data.directory;
 
         this.elements.indexInput.value = data.index_num;
         this.elements.sampleName.textContent = data.name;

@@ -148,6 +148,26 @@ Opening a link with `pitch=` and/or `cents=` parameters will automatically
 restore 
 the pitch to those values when the sample loads.
 
+### Copying file details
+
+Each metadata field in the sample info panel has a small icon to its left. 
+Hovering over it reveals a tooltip; clicking it copies the corresponding value 
+directly to your clipboard and shows a brief toast confirmation.
+
+This can be useful to find the location of a sample or the name for later use.
+
+| Property  | Copies                                               |
+|-----------|------------------------------------------------------|
+| Name      | The filename of the sample (e.g. `BREAK_120BPM.wav`) |
+| Directory | The full folder path on disk                         |
+| Size      | The formatted file size (e.g. `4.2 MB`)              |
+| Duration  | The formatted duration (e.g. `0:03.4`)               |
+| Offset    | The zero-padded sample offset (e.g. `00043050`)      |
+
+This is handy for quickly building filenames, noting where a sample lives, or 
+pasting an offset into another tool without having to select and copy the text 
+manually.
+
 ### Saving a slice
 
 Press **`S`** to export a 10-second WAV clip starting from the randomized 

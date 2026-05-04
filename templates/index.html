@@ -262,6 +262,32 @@
             color: var(--text-color);
         }
 
+        .info-row-label-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .info-copy-icon {
+            color: var(--accent-color);
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.15s;
+            font-size: 0.85em;
+            flex-shrink: 0;
+            display: inline-block;
+            width: 1.25em;
+            text-align: center;
+            margin-right: 0.5em;
+        }
+
+        .info-copy-icon:hover {
+            opacity: 1;
+        }
+
+        [data-theme="theme-protracker"] .info-copy-icon {
+            color: var(--secondary-color);
+        }
+
         #sample-dir {
             white-space: nowrap;
             overflow: hidden;
@@ -1150,23 +1176,38 @@
                     <span id="total-samples">0</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Name:</span>
+                    <span class="info-row-label-group">
+                        <i class="fa-solid fa-file-audio info-copy-icon" id="copy-icon-name" title="Copy filename"></i>
+                        <span class="info-label">Name:</span>
+                    </span>
                     <span id="sample-name">Waiting for samples to be indexed</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Directory:</span>
+                    <span class="info-row-label-group">
+                        <i class="fa-solid fa-folder info-copy-icon" id="copy-icon-dir" title="Copy directory path"></i>
+                        <span class="info-label">Directory:</span>
+                    </span>
                     <span id="sample-dir">-</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Size:</span>
+                    <span class="info-row-label-group">
+                        <i class="fa-solid fa-weight-hanging info-copy-icon" id="copy-icon-size" title="Copy file size"></i>
+                        <span class="info-label">Size:</span>
+                    </span>
                     <span id="sample-size">-</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Duration:</span>
+                    <span class="info-row-label-group">
+                        <i class="fa-solid fa-clock info-copy-icon" id="copy-icon-duration" title="Copy duration"></i>
+                        <span class="info-label">Duration:</span>
+                    </span>
                     <span id="sample-duration">-</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Offset:</span>
+                    <span class="info-row-label-group">
+                        <i class="fa-solid fa-crosshairs info-copy-icon" id="copy-icon-offset" title="Copy offset"></i>
+                        <span class="info-label">Offset:</span>
+                    </span>
                     <input type="text" id="sample-offset" class="index-input" value="00000000" readonly tabindex="-1">
                 </div>
                 <div class="info-row" id="scan-status-row">
