@@ -208,7 +208,6 @@ const GrooveDropper = {
             if (config.theme) {
                 document.documentElement.setAttribute('data-theme', config.theme);
                 this.elements.themeSelect.value = config.theme;
-                this.syncLabelColorInputToTheme();
             }
             if (config.loop !== undefined) {
                 this.state.loopEnabled = config.loop === 'true';
