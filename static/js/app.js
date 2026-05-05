@@ -733,10 +733,10 @@ const GrooveDropper = {
     renderUntaggedRow() {
         const row = this.elements.untaggedRow;
         if (!row) return;
-        row.className = this.state.untaggedFilterActive ? 'active' : '';
         row.innerHTML = '';
         const tag = document.createElement('span');
-        tag.className = 'label-tag';
+        tag.className = this.state.untaggedFilterActive ? 'label-tag' : 'label-tag dimmed';
+        tag.style.backgroundColor = 'var(--accent-color)';
         const nameSpan = document.createElement('span');
         nameSpan.className = 'label-name';
         nameSpan.textContent = 'UNTAGGED';
