@@ -342,8 +342,9 @@ def slice_audio(sample_id):
         return "Not found", 404
 
     samplerate = row['samplerate'] or 44100
-    start_time = start_offset / samplerate
     stem = os.path.splitext(row['name'])[0]
+
+    logger.info(f"Exporting with sample rate {samplerate}, offset {start_offset}")
 
     pitch_suffix = ''
     if pitch_semi != 0 or pitch_cents != 0:
@@ -355,7 +356,7 @@ def slice_audio(sample_id):
         pitch_suffix = f"_{parts}"
 
     try:
-        buf = wav.make_audio_slice(row['path'], start_time)
+        buf = wav.make_audio_slice(row['path'], start_offset, samplerate)
         return send_file(buf, as_attachment=True,
                          download_name=f"{stem}_{start_offset:08d}{pitch_suffix}.wav",
                          mimetype='audio/wav')

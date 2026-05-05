@@ -49,11 +49,10 @@ def generate_waveform(wav_path, width=1024, height=204):
         return None
 
 
-def make_audio_slice(path, start_time, duration_secs=10):
-    """Return a BytesIO WAV buffer for duration_secs seconds starting at start_time."""
+def make_audio_slice(path, start_offset, samplerate, duration_secs=10):
+    """Return a BytesIO WAV buffer for duration_secs seconds starting at start_offset (samples)."""
     info = sf.info(path)
-    start_frame = int(start_time * info.samplerate)
-    data, sr = sf.read(path, start=start_frame, frames=int(duration_secs * info.samplerate))
+    data, sr = sf.read(path, start=start_offset, frames=int(duration_secs * samplerate))
     buf = io.BytesIO()
     sf.write(buf, data, sr, subtype=info.subtype, format='WAV')
     buf.seek(0)

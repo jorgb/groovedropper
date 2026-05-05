@@ -1,12 +1,9 @@
 ## DOING
 
-- feat: Make sample name searchable
-  - Index tokenized names (lower case), table sample-to-token?
-  - Make keyword box that chooses parts of the name
-  - When randomizing, send along a query that checks if words are in name 
-    (if not emppty), but AND it with the labels  
-- feat: Input description box to add to sample name (or maybe to be changed 
-  from keywords?)
+- fix: bug in sample rendering + offset display + export
+  - This is a problematic sample: http://127.0.0.1:5000/?sample=dbcd23060a99b3baf3475fe477dcdcb9&start=472052
+  - Doesn't happen all the time but consistently with this sample: http://127.0.0.1:5000/?sample=1c158fc6d4e219fd080a50bdadb02406&start=79530
+  - Bug here it seems relatively ok? http://127.0.0.1:5000/?sample=bcf30f1a18a79d13901566106fd4d448&start=416546
 - feat: Adjust sample random offset manually
   - Manual editing of offset box
   - Arrow up / down micro adjust sample offset, left / right macro adjust offset (200ms / 0.5s?)
@@ -25,6 +22,13 @@
   - Shift+S saves the whole sample (from location as-is without conversion)
   - Slice management + offset rework (do not use seconds to randomize but slice offset?)
   - Save slice time customizable, 5s by default? -- NEEDED?
+- feat: Make sample name searchable
+  - Index tokenized names (lower case), table sample-to-token?
+  - Make keyword box that chooses parts of the name
+  - When randomizing, send along a query that checks if words are in name 
+    (if not emppty), but AND it with the labels  
+- feat: Input description box to add to sample name (or maybe to be changed 
+  from keywords?)
 - feat: label auto keyword addition
   - for a label, when created or edited, enter comma separated keywords that can be in a path to auto-match
   - what to do with re-scanning?
