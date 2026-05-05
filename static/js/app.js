@@ -548,10 +548,15 @@ const GrooveDropper = {
         this.state.currentOffset = this.state.originalStartOffset;
         this.state.skipEndedEvent = true;
         this.elements.audio.currentTime = this.state.currentOffset / this.state.sampleRate;
+        this.updateOffsetDisplay(this.state.currentOffset);
         this.updatePlayhead();
         this.flashPlayhead();
 
-        if (this.state.isPlaying) this.elements.audio.play();
+        if (this.state.isPlaying) {
+            this._stopPlayheadUpdater();
+            this.elements.audio.play();
+            this._startPlayheadUpdater();
+        }
         setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
     },
 
@@ -1124,6 +1129,8 @@ const GrooveDropper = {
     renderFolderDialogLabels() {
         const container = this.elements.folderDialogLabels;
         container.innerHTML = '';
+        const hint = document.getElementById('dialog-label-hint');
+        if (hint) hint.style.display = this.state.allLabels.length > 0 ? '' : 'none';
         const selected = new Set(this.state.folderDialogLabelIds);
         for (const label of this.state.allLabels) {
             const tag = document.createElement('span');
@@ -1433,8 +1440,8 @@ const GrooveDropper = {
         this.elements.audio.addEventListener('ended', () => {
             if (this.state.skipEndedEvent) return;
             if (this.state.loopEnabled) {
-                this.elements.audio.currentTime = 0;
-                this.state.currentOffset = 0;
+                this.elements.audio.currentTime = this.state.originalStartOffset / this.state.sampleRate;
+                this.state.currentOffset = this.state.originalStartOffset;
                 this._applyPitch();
                 this.elements.audio.play();
             } else {
