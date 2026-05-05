@@ -48,6 +48,7 @@ const GrooveDropper = {
         sampleSize: document.getElementById('sample-size'),
         sampleDuration: document.getElementById('sample-duration'),
         sampleOffset: document.getElementById('sample-offset'),
+        offsetLabel: document.getElementById('offset-label'),
         playStatus: document.getElementById('play-status-icon'),
         themeSelect: document.getElementById('theme-select'),
         toast: document.getElementById('toast'),
@@ -442,6 +443,7 @@ const GrooveDropper = {
         this.elements.sampleSize.textContent = this.formatBytes(data.size);
         this.elements.sampleDuration.textContent = this.formatTime(data.duration);
         this.updateOffsetDisplay(data.start_offset);
+        this.updateOffsetMax();
 
         this.elements.waveformImg.src = `/waveform/${data.id}?t=${Date.now()}`;
         this.elements.waveformImg.style.display = 'block';
@@ -506,6 +508,11 @@ const GrooveDropper = {
 
     updateOffsetDisplay(sampleOffset) {
         this.elements.sampleOffset.value = this.formatSampleOffset(sampleOffset);
+    },
+
+    updateOffsetMax() {
+        const max = this.state.durationSamples > 0 ? this.formatSampleOffset(this.state.durationSamples) : '--------';
+        this.elements.offsetLabel.textContent = `Offset (${max}):`;
     },
 
     flashPlayhead() {
@@ -1317,6 +1324,50 @@ const GrooveDropper = {
 
         this.elements.indexInput.addEventListener('blur', () => {
             this.elements.indexInput.classList.remove('error');
+        });
+
+        this.elements.sampleOffset.addEventListener('keydown', (e) => {
+            if (e.code === 'Enter') {
+                e.preventDefault();
+                if (!this.state.currentSampleId || this.state.durationSamples <= 0) return;
+                const val = parseInt(this.elements.sampleOffset.value.trim(), 10);
+                if (isNaN(val) || val < 0 || val > this.state.durationSamples) {
+                    this.elements.sampleOffset.classList.add('error');
+                } else {
+                    this.elements.sampleOffset.classList.remove('error');
+                    this.elements.sampleOffset.blur();
+                    const newOffset = val;
+                    this.state.originalStartOffset = newOffset;
+                    this.state.currentOffset = newOffset;
+                    const wasPlaying = this.state.isPlaying;
+                    this.state.skipEndedEvent = true;
+                    this.elements.audio.pause();
+                    this.elements.audio.currentTime = newOffset / this.state.sampleRate;
+                    this.updateOffsetDisplay(newOffset);
+                    this.updatePlayhead();
+                    this.flashPlayhead();
+                    if (wasPlaying) {
+                        this._stopPlayheadUpdater();
+                        this.elements.audio.play();
+                        this._startPlayheadUpdater();
+                    }
+                    setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
+                }
+            } else if (e.code === 'Escape') {
+                e.preventDefault();
+                this.elements.sampleOffset.classList.remove('error');
+                this.elements.sampleOffset.blur();
+                this.updateOffsetDisplay(this.state.currentOffset);
+            }
+        });
+
+        this.elements.sampleOffset.addEventListener('input', () => {
+            this.elements.sampleOffset.classList.remove('error');
+        });
+
+        this.elements.sampleOffset.addEventListener('blur', () => {
+            this.elements.sampleOffset.classList.remove('error');
+            this.updateOffsetDisplay(this.state.currentOffset);
         });
 
         // Refresh button + dialog
