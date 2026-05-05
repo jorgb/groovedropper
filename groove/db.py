@@ -130,12 +130,6 @@ def _migrate_v1(conn):
         "INSERT OR IGNORE INTO presets (name, is_system, filter_mode, created_at) VALUES ('ALL', 1, 'OR', ?)",
         (time.time(),)
     )
-    _now = time.time()
-    for _name in ('Vinyl', 'Spoken', 'Tape', 'Melodics', 'Vocals', 'Chops'):
-        conn.execute(
-            "INSERT OR IGNORE INTO labels (name, created_at) VALUES (?, ?)",
-            (_name, _now)
-        )
 
 
 _MIGRATION_FNS = {
