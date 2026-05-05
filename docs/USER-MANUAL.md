@@ -218,6 +218,8 @@ original pitch. Transpose it in your DAW after importing.
 - The ALL preset will reset all labels to dimmed so that all samples match
 - If you added a preset by hand, clicking that preset will highlight the 
   labels in that preset
+- The special **UNTAGGED** entry at the top of the list restricts **`R`** to
+  samples that have no labels at all — see [The UNTAGGED filter](#the-untagged-filter)
 
 ### Labelling samples
 
@@ -232,6 +234,24 @@ When one or more labels are active, random picks are restricted to files
 that carry **at least one** of those labels (OR logic). Select "Soul" and
 "Funk" and you'll get files tagged with either. In the future maybe and 
 logic might be added but for now just include what you need is best.
+
+### The UNTAGGED filter
+
+Directly below the **Labels** header sits a special **UNTAGGED** entry. It
+has no fill — just an outlined border — and it cannot be edited or assigned
+to samples. Its count badge shows how many samples in your library currently
+carry **no labels at all**.
+
+Click **UNTAGGED** to activate it as a toggle:
+
+- All other label selections are cleared while UNTAGGED is active.
+- Pressing **`R`** now randomizes exclusively over your unlabeled samples.
+- Click **UNTAGGED** again — or click any regular label or preset — to
+  deactivate it and return to normal filtering.
+
+This is handy for working through an "inbox" of uncategorized samples: activate
+UNTAGGED, hit **`R`** repeatedly, and tag each sample as you go. The count
+updates live as you label samples so you can see your inbox shrink.
 
 
 ### Presets

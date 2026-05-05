@@ -22,6 +22,7 @@ const GrooveDropper = {
         allPresets: [],
         currentSampleLabelIds: [],
         allPresetSelectedLabelIds: [],  // transient label filter used when the "ALL" preset is active
+        untaggedFilterActive: false,
         controlsFolded: false,
         folderDialogLabelIds: [],
         dbPath: null,
@@ -56,6 +57,7 @@ const GrooveDropper = {
         presetDeleteBtn: document.getElementById('preset-delete-btn'),
         presetList: document.getElementById('preset-list'),
         labelList: document.getElementById('label-list'),
+        untaggedRow: document.getElementById('untagged-label-row'),
         labelAddBtn: document.getElementById('label-add-btn'),
         labelAddForm: document.getElementById('label-add-form'),
         labelNameInput: document.getElementById('label-name-input'),
@@ -124,6 +126,7 @@ const GrooveDropper = {
         });
 
         this.loadLabels()
+            .then(() => this.loadUntaggedCount())
             .then(() => this.loadPresets())
             .then(() => {
                 this.renderLabelPanel();
@@ -311,6 +314,7 @@ const GrooveDropper = {
                 this.elements.scanStatus.innerHTML = `<i class="fa-solid fa-check"></i> <span>Scan complete</span>`;
                 if (this.state.isScanning === true) {
                     this.loadLabels()
+                        .then(() => this.loadUntaggedCount())
                         .then(() => this.renderLabelPanel())
                         .catch(e => console.error('Label refresh after scan:', e));
                 }
@@ -339,10 +343,16 @@ const GrooveDropper = {
                 : this.state.activePresetLabelIds;
             const filterMode = isAll ? 'OR' : this.state.activeFilterMode;
 
+            const body = { label_ids: labelIds, filter_mode: filterMode };
+            if (this.state.untaggedFilterActive) {
+                body.untagged_only = true;
+                body.label_ids = [];
+            }
+
             const res = await fetch('/api/sample/random', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ label_ids: labelIds, filter_mode: filterMode }),
+                body: JSON.stringify(body),
             });
             if (!res.ok) { console.error("No samples"); return; }
             const data = await res.json();
@@ -669,6 +679,7 @@ const GrooveDropper = {
             this.showToast('Sample index cleared — re-scanning now.');
             await this.loadLabels();
             await this.loadPresets();
+            await this.loadUntaggedCount();
             this.renderLabelPanel();
             this.renderSampleLabelBar();
         } catch (e) {
@@ -701,6 +712,16 @@ const GrooveDropper = {
         this.state.currentSampleLabelIds = await res.json();
     },
 
+    async loadUntaggedCount() {
+        try {
+            const res = await fetch('/api/samples/untagged-count');
+            const data = await res.json();
+            this.untaggedCount = data.count;
+        } catch (e) {
+            console.error('Failed to load untagged count', e);
+        }
+    },
+
     // -------------------------------------------------------------------------
     // Render helpers
     // -------------------------------------------------------------------------
@@ -708,6 +729,33 @@ const GrooveDropper = {
     renderLabelPanel() {
         this.renderPresetBox();
         this.renderLabelList();
+    },
+
+    renderUntaggedRow() {
+        const row = this.elements.untaggedRow;
+        if (!row) return;
+        row.className = this.state.untaggedFilterActive ? 'active' : '';
+        row.innerHTML = '';
+        const tag = document.createElement('span');
+        tag.className = 'label-tag';
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'label-name';
+        nameSpan.textContent = 'UNTAGGED';
+        const countSpan = document.createElement('span');
+        countSpan.className = 'label-count';
+        countSpan.textContent = this.untaggedCount ?? '…';
+        tag.appendChild(nameSpan);
+        tag.appendChild(countSpan);
+        row.appendChild(tag);
+    },
+
+    toggleUntaggedFilter() {
+        this.state.untaggedFilterActive = !this.state.untaggedFilterActive;
+        if (this.state.untaggedFilterActive) {
+            this.state.allPresetSelectedLabelIds = [];
+        }
+        this.renderLabelList();
+        this.renderPresetBox();
     },
 
     renderPresetBox() {
@@ -738,6 +786,7 @@ const GrooveDropper = {
     },
 
     renderLabelList() {
+        this.renderUntaggedRow();
         this.elements.labelList.innerHTML = '';
         const isAll = this.state.activePresetId === null;
         const activePreset = this.state.allPresets.find(p => p.id === this.state.activePresetId);
@@ -839,6 +888,7 @@ const GrooveDropper = {
     // -------------------------------------------------------------------------
 
     selectPreset(preset) {
+        this.state.untaggedFilterActive = false;
         const wasAll = this.state.activePresetId === null;
         this.state.activePresetId = preset.is_system ? null : preset.id;
         if (!preset.is_system) {
@@ -919,6 +969,7 @@ const GrooveDropper = {
     },
 
     async togglePresetLabel(labelId, add) {
+        this.state.untaggedFilterActive = false;
         const pid = this.state.activePresetId;
         if (!pid) return;
         const preset = this.state.allPresets.find(p => p.id === pid);
@@ -955,6 +1006,7 @@ const GrooveDropper = {
     },
 
     toggleAllPresetSelection(labelId) {
+        this.state.untaggedFilterActive = false;
         const idx = this.state.allPresetSelectedLabelIds.indexOf(labelId);
         if (idx === -1) {
             this.state.allPresetSelectedLabelIds.push(labelId);
@@ -1004,6 +1056,7 @@ const GrooveDropper = {
             this.state.allPresetSelectedLabelIds = this.state.allPresetSelectedLabelIds.filter(id => id !== label.id);
             await this.loadLabels();
             await this.loadPresets();
+            await this.loadUntaggedCount();
             this.renderLabelPanel();
             this.renderSampleLabelBar();
         } catch (e) {
@@ -1030,8 +1083,10 @@ const GrooveDropper = {
             await this.loadSampleLabels(digest);
             // Also reload label list so sample_count badges stay accurate
             await this.loadLabels();
+            await this.loadUntaggedCount();
             this.renderSampleLabelBar();
             this.renderLabelListCheckboxes();
+            this.renderUntaggedRow();
             // Update count badges without full re-render
             this.elements.labelList.querySelectorAll('.label-count').forEach(el => {
                 const row = el.closest('.label-tag-row');
@@ -1326,6 +1381,14 @@ const GrooveDropper = {
                 this.elements.presetNameInput.blur();
             }
         });
+
+        // UNTAGGED toggle
+        if (this.elements.untaggedRow) {
+            this.elements.untaggedRow.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                this.toggleUntaggedFilter();
+            });
+        }
 
         // Label add form
         this.elements.labelAddBtn.addEventListener('click', () => {

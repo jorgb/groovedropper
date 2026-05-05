@@ -828,6 +828,39 @@
             color: #fff;
         }
 
+        /* UNTAGGED pseudo-label row */
+        #untagged-label-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        #untagged-label-row .label-tag {
+            background: color-mix(in srgb, var(--accent-color) 35%, transparent);
+            color: var(--accent-color);
+        }
+
+        #untagged-label-row .label-tag::before {
+            display: none;
+        }
+
+        #untagged-label-row .label-count {
+            color: var(--accent-color);
+        }
+
+        #untagged-label-row.active .label-tag {
+            background: var(--accent-color);
+            color: #000;
+        }
+
+        #untagged-label-row.active .label-name,
+        #untagged-label-row.active .label-count {
+            color: #000;
+            opacity: 1;
+        }
+
         /* Toast Notification */
         #toast {
             visibility: hidden;
@@ -1274,6 +1307,7 @@
                     <button id="label-save-btn" class="panel-icon-btn" title="Save"><i class="fa-solid fa-check"></i></button>
                     <button id="label-cancel-btn" class="panel-icon-btn" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
                 </div>
+                <div id="untagged-label-row"></div>
                 <ul id="label-list"></ul>
             </div>
             <button id="loop-toggle" class="toggle-btn">

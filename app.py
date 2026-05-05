@@ -197,11 +197,19 @@ def stats():
     })
 
 
+@app.route('/api/samples/untagged-count')
+def untagged_count():
+    with db.get_db() as conn:
+        count = db.fetch_untagged_sample_count(conn)
+    return jsonify({'count': count})
+
+
 @app.route('/api/sample/random', methods=['POST'])
 def random_sample():
     data = request.get_json(silent=True) or {}
     sample_id_override = data.get('sample_id')
     randomize_only = data.get('randomize_only', False)
+    untagged_only = data.get('untagged_only', False)
     label_ids = data.get('label_ids') or []
     filter_mode = data.get('filter_mode', 'OR')
 
@@ -210,6 +218,10 @@ def random_sample():
             row = db.fetch_sample_by_id(conn, sample_id_override)
             if not row:
                 return jsonify({"error": "Specified sample not found"}), 404
+        elif untagged_only:
+            row = db.fetch_random_untagged_sample(conn)
+            if not row:
+                return jsonify({"error": "no_samples"})
         elif label_ids:
             row = db.fetch_random_sample(conn, label_ids, filter_mode)
             if not row:

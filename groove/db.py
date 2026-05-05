@@ -204,6 +204,35 @@ def fetch_sample_count(conn):
     return conn.execute('SELECT COUNT(*) FROM samples').fetchone()[0]
 
 
+def fetch_untagged_sample_count(conn):
+    return conn.execute('''
+        SELECT COUNT(*) FROM samples s
+        WHERE NOT EXISTS (
+            SELECT 1 FROM sample_labels sl WHERE sl.digest = s.digest
+        )
+    ''').fetchone()[0]
+
+
+def fetch_random_untagged_sample(conn, excluded_digest=None):
+    if excluded_digest:
+        return conn.execute('''
+            SELECT id, name, directory, size, duration, samplerate, duration_samples, digest
+            FROM samples s
+            WHERE NOT EXISTS (
+                SELECT 1 FROM sample_labels sl WHERE sl.digest = s.digest
+            ) AND s.digest != ?
+            ORDER BY RANDOM() LIMIT 1
+        ''', (excluded_digest,)).fetchone()
+    return conn.execute('''
+        SELECT id, name, directory, size, duration, samplerate, duration_samples, digest
+        FROM samples s
+        WHERE NOT EXISTS (
+            SELECT 1 FROM sample_labels sl WHERE sl.digest = s.digest
+        )
+        ORDER BY RANDOM() LIMIT 1
+    ''').fetchone()
+
+
 # ---------------------------------------------------------------------------
 # Samples
 # ---------------------------------------------------------------------------

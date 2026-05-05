@@ -1,15 +1,44 @@
 ## DOING
 
+Create a design document in @docs/UNTAGGED-DESIGN.md and summarize this 
+behaviour and the changes needed to create it:
+The application has a special label under the label-list-header that:
+- Is outlined in the dimmed accent color but not filled like the other labels
+- Has the text UNTAGGED in it in the same ACCENT color
+- Has the count of samples on the side that have no associated tags
+- When selected, it is highlighted like any other label, with accent color 
+  transparency but black font (invert the font)
+- When selected all other labels deselect
+- When a label is selected or preset, it deselects again
+- This is a toggle to randomize over all samples that do not belong to a label
+- Once a sample is tagged to a label by the checkbox, the facet count of 
+  this UNTAGGED label updates as well
+- Pressing R will randomize over all samples that have no label associated 
+  with it
+- This label cannot be edited, as it acts like a toggle
+- There should be a slight margin between this label and the others
+- there should be no checkbox in front of it
+- The label should only activate when it's used clicked and deactivated 
+  again when it was activated
+- The focus should be released (blur) upon clicking so keyboard shortcuts 
+  will stay working
+
+- feat: select "untagged" find all samples that are not tagged
+  - Simple label that deselects all, but is different in color, find all untagged labels for quick classification
+- feat: Make sample name searchable
+  - Index tokenized names (lower case), table sample-to-token?
+  - Make keyword box that chooses parts of the name
+  - When randomizing, send along a query that checks if words are in name 
+    (if not emppty), but AND it with the labels  
+- feat: Input description box to add to sample name (or maybe to be changed 
+  from keywords?)
 - feat: Adjust sample random offset manually
   - Manual editing of offset box
   - Arrow up / down micro adjust sample offset, left / right macro adjust offset (200ms / 0.5s?)
   - playhead moves to offset, replays when playing, or moves when stopped
 
-
 ## LATER
 
-- feat: select "untagged" find all samples that are not tagged
-  - Simple label that deselects all, but is different in color, find all untagged labels for quick classification
 - 1.0 release!
   - Publish on Reddit
 - feat: draw sample start offset marker in waveform (upon click, or randomize Shift+R) to indicate where sthe slice save or restart is of the sampe
