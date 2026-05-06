@@ -1,11 +1,9 @@
 ## DOING
 
-- fix: bug in sample rendering + offset display + export
-  - This is a problematic sample: http://127.0.0.1:5000/?sample=dbcd23060a99b3baf3475fe477dcdcb9&start=472052
-  - Doesn't happen all the time but consistently with this sample: http://127.0.0.1:5000/?sample=1c158fc6d4e219fd080a50bdadb02406&start=79530
-  - Bug here it seems relatively ok? http://127.0.0.1:5000/?sample=bcf30f1a18a79d13901566106fd4d448&start=416546
+- feat: Store presets 1 .. 0 (shift+1 .. 0 stores), 1 .. 9 plays preset edit 
+  box, play instantly, remove preset, all in dropdown
 - feat: Adjust sample random offset manually
-  - Manual editing of offset box
+  - DONE: Manual editing of offset box
   - Arrow up / down micro adjust sample offset, left / right macro adjust offset (200ms / 0.5s?)
   - playhead moves to offset, replays when playing, or moves when stopped
 

@@ -402,6 +402,14 @@ def delete_label(conn, label_id):
     return row is not None
 
 
+def update_label(conn, label_id, name):
+    row = conn.execute('SELECT id FROM labels WHERE id = ?', (label_id,)).fetchone()
+    if not row:
+        return None
+    conn.execute('UPDATE labels SET name = ? WHERE id = ?', (name, label_id))
+    return conn.execute('SELECT id, name FROM labels WHERE id = ?', (label_id,)).fetchone()
+
+
 def prune_orphan_sample_labels(conn):
     cursor = conn.execute(
         'DELETE FROM sample_labels WHERE digest NOT IN (SELECT digest FROM samples)'

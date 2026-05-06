@@ -424,6 +424,19 @@ def label_usage(label_id):
     return jsonify({"sample_count": count})
 
 
+@app.route('/api/labels/<int:label_id>', methods=['PATCH'])
+def rename_label(label_id):
+    data = request.get_json(force=True) or {}
+    name = (data.get('name') or '').strip()
+    if not name:
+        return jsonify({"error": "name required"}), 400
+    with db.get_db() as conn:
+        row = db.update_label(conn, label_id, name)
+    if row is None:
+        return jsonify({"error": "Label not found"}), 404
+    return jsonify(dict(row))
+
+
 @app.route('/api/labels/<int:label_id>', methods=['DELETE'])
 def delete_label(label_id):
     with db.get_db() as conn:

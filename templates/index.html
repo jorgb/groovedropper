@@ -807,7 +807,8 @@
             flex-shrink: 0;
         }
 
-        .label-delete {
+        .label-delete,
+        .label-edit {
             display: none;
             margin-left: 4px;
             padding: 0 2px;
@@ -820,12 +821,26 @@
             font-size: 0.85em;
         }
 
-        .label-tag:hover .label-delete {
+        .label-tag:hover .label-delete,
+        .label-tag:hover .label-edit {
             display: inline;
         }
 
-        .label-delete:hover {
+        .label-delete:hover,
+        .label-edit:hover {
             color: #fff;
+        }
+
+        .label-edit-input {
+            flex: 1;
+            min-width: 0;
+            background: none;
+            border: none;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+            color: inherit;
+            font: inherit;
+            padding: 0;
+            outline: none;
         }
 
         /* UNTAGGED pseudo-label row */

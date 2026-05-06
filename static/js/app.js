@@ -867,6 +867,15 @@ const GrooveDropper = {
             countSpan.className = 'label-count';
             countSpan.textContent = label.sample_count;
 
+            const editBtn = document.createElement('button');
+            editBtn.className = 'label-edit';
+            editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+            editBtn.title = 'Rename label';
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.startLabelEdit(label, tag, nameSpan, countSpan);
+            });
+
             const delBtn = document.createElement('button');
             delBtn.className = 'label-delete';
             delBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
@@ -878,6 +887,7 @@ const GrooveDropper = {
 
             tag.appendChild(nameSpan);
             tag.appendChild(countSpan);
+            tag.appendChild(editBtn);
             tag.appendChild(delBtn);
 
             tag.addEventListener('click', () => {
@@ -1098,6 +1108,63 @@ const GrooveDropper = {
             await this.loadLabels();
             await this.loadPresets();
             await this.loadUntaggedCount();
+            this.renderLabelPanel();
+            this.renderSampleLabelBar();
+        } catch (e) {
+            console.error(e);
+        }
+    },
+
+    startLabelEdit(label, tag, nameSpan, countSpan) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'label-edit-input';
+        input.value = label.name;
+
+        nameSpan.replaceWith(input);
+        countSpan.style.display = 'none';
+        input.focus();
+        input.select();
+
+        let committed = false;
+
+        const commit = async () => {
+            if (committed) return;
+            committed = true;
+            const newName = input.value.trim();
+            if (newName && newName !== label.name) {
+                await this.renameLabel(label.id, newName);
+            } else {
+                input.replaceWith(nameSpan);
+                countSpan.style.display = '';
+            }
+        };
+
+        const cancel = () => {
+            if (committed) return;
+            committed = true;
+            input.replaceWith(nameSpan);
+            countSpan.style.display = '';
+        };
+
+        input.addEventListener('click', (e) => e.stopPropagation());
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); commit(); }
+            else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+            e.stopPropagation();
+        });
+        input.addEventListener('blur', cancel);
+    },
+
+    async renameLabel(labelId, newName) {
+        try {
+            const res = await fetch(`/api/labels/${labelId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName }),
+            });
+            if (!res.ok) return;
+            await this.loadLabels();
             this.renderLabelPanel();
             this.renderSampleLabelBar();
         } catch (e) {
