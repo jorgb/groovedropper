@@ -1283,6 +1283,31 @@ const GrooveDropper = {
         document.getElementById('controls-header').addEventListener('click', () => this.toggleControlsFold());
 
         this.elements.waveformContainer.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            if (!this.state.currentSampleId || this.state.durationSamples <= 0) return;
+            this.elements.indexInput.classList.remove('error');
+
+            const rect = this.elements.waveformContainer.getBoundingClientRect();
+            const fraction = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            const newOffset = Math.round(fraction * this.state.durationSamples);
+
+            this.state.originalStartOffset = newOffset;
+            this.state.currentOffset = newOffset;
+
+            const wasPlaying = this.state.isPlaying;
+            this.state.skipEndedEvent = true;
+            this.elements.audio.pause();
+            this.elements.audio.currentTime = newOffset / this.state.sampleRate;
+            this.updateOffsetDisplay(newOffset);
+            this.updatePlayhead();
+            this.flashPlayhead();
+
+            if (wasPlaying) this.elements.audio.play();
+            setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
+        });
+
+        this.elements.waveformContainer.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
             if (!this.state.currentSampleId || this.state.durationSamples <= 0) return;
             this.elements.indexInput.classList.remove('error');
 
