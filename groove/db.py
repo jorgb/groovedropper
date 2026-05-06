@@ -134,6 +134,7 @@ def _migrate_v1(conn):
 
 
 def _migrate_v2(conn):
+    conn.execute("INSERT OR IGNORE INTO config (key, value) VALUES ('quick-play-instantly', 'true')")
     conn.execute('''
         CREATE TABLE IF NOT EXISTS quickpick_presets (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,

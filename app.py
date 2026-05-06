@@ -43,7 +43,7 @@ app = Flask(__name__,
             static_folder=_resource('static'))
 
 
-ALLOWED_CONFIG_KEYS = frozenset({'theme', 'loop', 'controls-folded', 'offset-preview', 'quick-pick-preset'})
+ALLOWED_CONFIG_KEYS = frozenset({'theme', 'loop', 'controls-folded', 'offset-preview', 'quick-pick-preset', 'quick-play-instantly'})
 
 
 def scan_worker():

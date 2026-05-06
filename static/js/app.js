@@ -234,6 +234,10 @@ const GrooveDropper = {
                 this.state.controlsFolded = config['controls-folded'] === 'true';
                 this.applyControlsFold();
             }
+            if (config['quick-play-instantly'] !== undefined) {
+                this.state.quickpick.playInstantly = config['quick-play-instantly'] === 'true';
+                this.elements.qpPlayInstantly.checked = this.state.quickpick.playInstantly;
+            }
             if (config['quick-pick-preset']) {
                 const presetId = parseInt(config['quick-pick-preset']);
                 if (!isNaN(presetId) && this.state.quickpick.presets.find(p => p.id === presetId)) {
@@ -1889,6 +1893,7 @@ const GrooveDropper = {
         this.elements.qpPlayInstantly.addEventListener('change', () => {
             this.state.quickpick.playInstantly = this.elements.qpPlayInstantly.checked;
             this.elements.qpPlayInstantly.blur();
+            this.saveConfig('quick-play-instantly', String(this.state.quickpick.playInstantly)).catch(e => console.error(e));
         });
 
         this.elements.audio.addEventListener('ended', () => {
