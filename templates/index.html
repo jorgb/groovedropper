@@ -339,6 +339,119 @@
             margin: 4px 0;
         }
 
+        /* Quick Pick Bar */
+        #quickpick-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 6px;
+            background-color: var(--box-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 6px;
+        }
+
+        .qp-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #qp-preset-select {
+            flex: 1;
+            min-width: 0;
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            font: inherit;
+            font-size: 0.8em;
+            padding: 2px 4px;
+            cursor: pointer;
+        }
+
+        .qp-rename-input {
+            flex: 1;
+            min-width: 0;
+            background: none;
+            border: none;
+            border-bottom: 1px solid var(--accent-color);
+            color: inherit;
+            font: inherit;
+            font-size: 0.8em;
+            padding: 0 2px;
+            outline: none;
+        }
+
+        #qp-play-instantly-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8em;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        #qp-slots {
+            display: flex;
+            gap: 3px;
+            flex: 1;
+        }
+
+        .qp-slot {
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--accent-color);
+            border-radius: 3px;
+            color: var(--accent-color);
+            background: none;
+            cursor: pointer;
+            font-size: 0.7em;
+            font-weight: bold;
+            position: relative;
+            flex-shrink: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .qp-slot.filled {
+            background: var(--accent-color);
+            color: var(--bg-color, #000);
+        }
+
+        .qp-slot.filled > span {
+            transition: opacity 0.1s;
+        }
+
+        .qp-slot.filled:hover > span {
+            opacity: 0.2;
+        }
+
+        .qp-slot.filled::after {
+            content: '\00d7';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4em;
+            opacity: 0;
+            transition: opacity 0.1s;
+            pointer-events: none;
+        }
+
+        .qp-slot.filled:hover::after {
+            opacity: 1;
+        }
+
+        .qp-btn {
+            font-size: 0.8em;
+            padding: 2px 5px;
+            flex-shrink: 0;
+        }
+
         #waveform-col-left,
         #waveform-col-right {
             flex: 1;
@@ -1283,6 +1396,26 @@
         </div>
 
         <div id="label-panel">
+
+            <div id="quickpick-bar">
+                <div class="qp-row">
+                    <button id="qp-add-btn" class="panel-icon-btn qp-btn" title="New quick pick preset"><i class="fa-solid fa-plus"></i></button>
+                    <select id="qp-preset-select"><option value="">— select preset —</option></select>
+                    <button id="qp-rename-btn" class="panel-icon-btn qp-btn" title="Rename preset" disabled><i class="fa-solid fa-pen-to-square"></i></button>
+                </div>
+                <div class="qp-row">
+                    <div id="qp-slots"></div>
+                    <button id="qp-delete-btn" class="panel-icon-btn qp-btn" title="Delete this quick pick preset" disabled><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+                <div class="qp-row">
+                    <label id="qp-play-instantly-label" title="Play immediately when recalling a slot">
+                        <input type="checkbox" id="qp-play-instantly">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>Play Instantly</span>
+                    </label>
+                </div>
+            </div>
+
             <div id="preset-box">
                 <div id="preset-header">
                     <input type="text" id="preset-name-input" placeholder="Preset name" readonly>
