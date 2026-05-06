@@ -1861,7 +1861,10 @@ const GrooveDropper = {
 
         // Quick Pick bar
         this.elements.qpAddBtn.addEventListener('click', () => this.addQuickpickPreset().catch(e => console.error(e)));
-        this.elements.qpDeleteBtn.addEventListener('click', () => this.deleteQuickpickPreset().catch(e => console.error(e)));
+        this.elements.qpDeleteBtn.addEventListener('click', () => {
+            this.elements.qpDeleteBtn.blur();
+            this.deleteQuickpickPreset().catch(e => console.error(e));
+        });
 
         this.elements.qpPresetSelect.addEventListener('change', async () => {
             const val = this.elements.qpPresetSelect.value;
@@ -1875,12 +1878,17 @@ const GrooveDropper = {
                 await this.saveConfig('quick-pick-preset', '');
             }
             this.renderQuickpickBar();
+            this.elements.qpPresetSelect.blur();
         });
 
-        this.elements.qpRenameBtn.addEventListener('click', () => this.startQuickpickRename());
+        this.elements.qpRenameBtn.addEventListener('click', () => {
+            this.elements.qpRenameBtn.blur();
+            this.startQuickpickRename();
+        });
 
         this.elements.qpPlayInstantly.addEventListener('change', () => {
             this.state.quickpick.playInstantly = this.elements.qpPlayInstantly.checked;
+            this.elements.qpPlayInstantly.blur();
         });
 
         this.elements.audio.addEventListener('ended', () => {
