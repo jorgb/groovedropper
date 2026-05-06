@@ -2,6 +2,22 @@
 
 - feat: Store presets 1 .. 0 (shift+1 .. 0 stores), 1 .. 9 plays preset edit 
   box, play instantly, remove preset, all in dropdown
+  - fix: vibe title above the presets similar to LABELS style 
+  - fix: checkbox play instantly blur(), dropdown deselect upon selection, blur()
+  - fix: small gap between 5 and 6 to denote a group (align second group 
+    with trashcan)
+  - fix: play instantly needs to be preserved as config, and default set to 
+    true in _migrate_v2
+  - fix: Plus button needs to not make the selection text editable, just 
+    create a new preset
+  - fix: add vibe title above the selector
+  - doc: change manual to reflect vibes
+  - feat: V adds sample, offset to first empty vibe unless sample, offset is 
+    already taken (post call to back end), toast if this is the case 
+  - fix: pressing V or 1,2,3 .. 0 with no preset selected needs to instantly 
+    create one
+
+- investigate: Key detection algorithm on current offset?
 - feat: Adjust sample random offset manually
   - DONE: Manual editing of offset box
   - Arrow up / down micro adjust sample offset, left / right macro adjust offset (200ms / 0.5s?)
