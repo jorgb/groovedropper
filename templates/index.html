@@ -340,11 +340,20 @@
         }
 
         /* Quick Pick Bar */
+        #qp-header {
+            font-size: 0.82em;
+            font-weight: bold;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
         #quickpick-bar {
             display: flex;
             flex-direction: column;
             gap: 4px;
-            padding: 6px;
+            padding: 10px;
             background-color: var(--box-bg);
             border: 1px solid var(--border-color);
             border-radius: 4px;
@@ -1398,6 +1407,7 @@
         <div id="label-panel">
 
             <div id="quickpick-bar">
+                <div id="qp-header">Vibe Picks</div>
                 <div class="qp-row">
                     <button id="qp-add-btn" class="panel-icon-btn qp-btn" title="New quick pick preset"><i class="fa-solid fa-plus"></i></button>
                     <select id="qp-preset-select"><option value="">— select preset —</option></select>
@@ -1405,7 +1415,7 @@
                 </div>
                 <div class="qp-row">
                     <div id="qp-slots"></div>
-                    <button id="qp-delete-btn" class="panel-icon-btn qp-btn" title="Delete this quick pick preset" disabled><i class="fa-solid fa-trash-can"></i></button>
+                    <button id="qp-delete-btn" class="panel-icon-btn qp-btn" title="Delete this quick pick preset" disabled><i class="fa-solid fa-trash"></i></button>
                 </div>
                 <div class="qp-row">
                     <label id="qp-play-instantly-label" title="Play immediately when recalling a slot">
