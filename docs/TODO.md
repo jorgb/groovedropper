@@ -2,16 +2,6 @@
 
 - feat: Vibe presets - store presets 1 .. 0 (shift+1 .. 0 stores), 1 .. 9 plays 
   preset edit box, play instantly, remove preset, all in dropdown
-  - feat: "V" adds sample, offset to first empty vibe unless sample, offset is 
-    already taken (post call to back end), toast if this is the case 
-  - fix: pressing "V" or 1,2,3 .. 0 with no preset selected needs to instantly 
-    create one
-  - fix: Plus button needs to not make the selection text editable, just 
-    create a new preset
-  - feat: Random vibe generator - random name generator
-    - Later? A button next to the vibe edit, that randomizes the name from a 
-      long list (like polyend tracker, digitakt 2)
-    - Later? Song name randomizer (same code, back end) for inspiration
   - doc: change manual to reflect vibes
 
 - reconsider: Copy whole path + filename on shift+click on folder icon (with 
@@ -25,6 +15,10 @@
 
 ## LATER
 
+- feat: Random vibe generator - random name generator
+  - Later? A button next to the vibe edit, that randomizes the name from a 
+    long list (like polyend tracker, digitakt 2)
+  - Later? Song name randomizer (same code, back end) for inspiration
 - Test phase
 - 1.0 release!
   - Publish on Reddit

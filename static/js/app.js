@@ -1705,6 +1705,51 @@ const GrooveDropper = {
         } catch (e) { console.error(e); }
     },
 
+    async storeToNextFreeQpSlot() {
+        if (!this.state.currentSampleId || !this.state.currentDigest) return;
+
+        for (let n = 1; n <= 10; n++) {
+            const slot = this.state.quickpick.slots[String(n)];
+            if (slot && slot.digest === this.state.currentDigest && slot.start_offset === this.state.originalStartOffset) {
+                this.showToast(`Sample offset is already quick picked in slot ${n}`);
+                return;
+            }
+        }
+
+        let freeSlot = null;
+        for (let n = 1; n <= 10; n++) {
+            if (!this.state.quickpick.slots[String(n)]) { freeSlot = n; break; }
+        }
+        if (freeSlot === null) {
+            this.showToast('No more free slots to quick pick');
+            return;
+        }
+
+        if (!this.state.quickpick.activePresetId) {
+            await this.addQuickpickPreset();
+            if (!this.state.quickpick.activePresetId) return;
+        }
+
+        const presetId = this.state.quickpick.activePresetId;
+        try {
+            const res = await fetch(`/api/quickpick/presets/${presetId}/slots/${freeSlot}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    digest: this.state.currentDigest,
+                    start_offset: this.state.originalStartOffset,
+                    pitch_semitones: this.state.pitchSemitones,
+                    pitch_cents: this.state.pitchCents,
+                }),
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            this.state.quickpick.slots[String(freeSlot)] = data;
+            this._setFocusedQpSlot(freeSlot);
+            this.showToast(`Sample stored in quick slot ${freeSlot}`);
+        } catch (e) { console.error(e); }
+    },
+
     addEventListeners() {
         this.elements.themeSelect.addEventListener('change', (e) => this.changeTheme(e.target.value));
         this.elements.loopBtn.addEventListener('click', () => this.toggleLoop());
@@ -1835,6 +1880,8 @@ const GrooveDropper = {
                 this.adjustPitch(0, +10);
             } else if (e.key === 'l' || e.key === 'L') {
                 this.resetPitch();
+            } else if (e.code === 'KeyV') {
+                this.storeToNextFreeQpSlot().catch(err => console.error(err));
             } else if (/^Digit[0-9]$/.test(e.code)) {
                 const keyDigit = e.code.slice(-1);
                 const slotNumber = keyDigit === '0' ? 10 : parseInt(keyDigit);
