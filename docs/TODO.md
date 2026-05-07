@@ -14,6 +14,11 @@
     - Later? Song name randomizer (same code, back end) for inspiration
   - doc: change manual to reflect vibes
 
+- reconsider: Copy whole path + filename on shift+click on folder icon (with 
+  toast) it can be easily used to launch a file in default browser?
+
+- fix: Gap between label row and main column, I do not know why it is there!
+
 - investigate: Key detection algorithm on current offset?
   - Investigate key at offset, draw key in text box on export, add the key 
     if set?
