@@ -1467,6 +1467,7 @@ const GrooveDropper = {
     },
 
     async addQuickpickPreset() {
+        this.elements.qpAddBtn.blur();
         try {
             const res = await fetch('/api/quickpick/presets', {
                 method: 'POST',
@@ -1480,7 +1481,7 @@ const GrooveDropper = {
             this.state.quickpick.slots = {};
             this.renderQuickpickBar();
             await this.saveConfig('quick-pick-preset', String(preset.id));
-            this.startQuickpickRename();
+            this.showToast(`Preset "${preset.name}" created`);
         } catch (e) { console.error(e); }
     },
 
