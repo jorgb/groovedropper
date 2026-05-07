@@ -2,8 +2,8 @@
 
 - feat: Vibe presets - store presets 1 .. 0 (shift+1 .. 0 stores), 1 .. 9 plays 
   preset edit box, play instantly, remove preset, all in dropdown
+  - fix: Add 1...9 to controls 
   - doc: change manual to reflect vibes
-
 - reconsider: Copy whole path + filename on shift+click on folder icon (with 
   toast) it can be easily used to launch a file in default browser?
 
