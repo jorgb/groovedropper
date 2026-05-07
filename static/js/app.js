@@ -37,6 +37,7 @@ const GrooveDropper = {
             activePresetId: null,
             slots: {},
             playInstantly: false,
+            focusedSlot: null,
         },
     },
 
@@ -1366,6 +1367,7 @@ const GrooveDropper = {
         }
         this._applyPitch();
         this._renderPitchOverlay();
+        this._syncFocusedQpSlotPitch().catch(e => console.error(e));
     },
 
     resetPitch() {
@@ -1373,6 +1375,7 @@ const GrooveDropper = {
         this.state.pitchCents = 0;
         this._applyPitch();
         this._renderPitchOverlay();
+        this._syncFocusedQpSlotPitch().catch(e => console.error(e));
     },
 
     _attachPitchDrag(el, onStep) {
@@ -1452,8 +1455,9 @@ const GrooveDropper = {
         for (const key of ['1','2','3','4','5','6','7','8','9','0']) {
             const slotNumber = key === '0' ? 10 : parseInt(key);
             const filled = !!this.state.quickpick.slots[String(slotNumber)];
+            const focused = this.state.quickpick.focusedSlot === slotNumber;
             const btn = document.createElement('button');
-            btn.className = 'qp-slot' + (filled ? ' filled' : '');
+            btn.className = 'qp-slot' + (filled ? ' filled' : '') + (focused ? ' focused' : '');
             btn.title = filled ? `Slot ${slotNumber} — click to delete` : `Slot ${slotNumber} — empty`;
             const digit = document.createElement('span');
             digit.textContent = key;
@@ -1464,6 +1468,41 @@ const GrooveDropper = {
             });
             container.appendChild(btn);
         }
+    },
+
+    _setFocusedQpSlot(slotNumber) {
+        this.state.quickpick.focusedSlot = slotNumber;
+        this.renderQuickpickSlots();
+    },
+
+    _clearFocusedQpSlot() {
+        if (this.state.quickpick.focusedSlot === null) return;
+        this.state.quickpick.focusedSlot = null;
+        this.renderQuickpickSlots();
+    },
+
+    async _syncFocusedQpSlotPitch() {
+        const slotNumber = this.state.quickpick.focusedSlot;
+        if (slotNumber === null) return;
+        const presetId = this.state.quickpick.activePresetId;
+        if (!presetId) return;
+        const slot = this.state.quickpick.slots[String(slotNumber)];
+        if (!slot) return;
+        try {
+            const res = await fetch(`/api/quickpick/presets/${presetId}/slots/${slotNumber}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    digest: slot.digest,
+                    start_offset: slot.start_offset,
+                    pitch_semitones: this.state.pitchSemitones,
+                    pitch_cents: this.state.pitchCents,
+                }),
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            this.state.quickpick.slots[String(slotNumber)] = data;
+        } catch (e) { console.error(e); }
     },
 
     async addQuickpickPreset() {
@@ -1558,6 +1597,7 @@ const GrooveDropper = {
             this.state.quickpick.presets = this.state.quickpick.presets.filter(p => p.id !== presetId);
             this.state.quickpick.activePresetId = null;
             this.state.quickpick.slots = {};
+            this.state.quickpick.focusedSlot = null;
             this.renderQuickpickBar();
             await this.saveConfig('quick-pick-preset', '');
         } catch (e) { console.error(e); }
@@ -1653,6 +1693,9 @@ const GrooveDropper = {
             const res = await fetch(`/api/quickpick/presets/${presetId}/slots/${slotNumber}`, { method: 'DELETE' });
             if (!res.ok) return;
             delete this.state.quickpick.slots[String(slotNumber)];
+            if (this.state.quickpick.focusedSlot === slotNumber) {
+                this.state.quickpick.focusedSlot = null;
+            }
             this.renderQuickpickSlots();
             this.showToast(`Slot ${slotNumber} deleted from quick pick preset ${presetName}`);
         } catch (e) { console.error(e); }
@@ -1770,6 +1813,7 @@ const GrooveDropper = {
                 else if (e.shiftKey) this.restartPlay();
                 else this.togglePlay();
             } else if (e.code === 'KeyR') {
+                this._clearFocusedQpSlot();
                 if (e.shiftKey) this.randomizeCurrentOffset(true).catch(err => console.error(err));
                 else this.loadNextRandom(true).catch(err => console.error(err));
             } else if (e.code === 'KeyP') {
@@ -1791,7 +1835,11 @@ const GrooveDropper = {
                 const slotNumber = keyDigit === '0' ? 10 : parseInt(keyDigit);
                 if (e.shiftKey) {
                     this.saveQuickpickSlot(slotNumber).catch(err => console.error(err));
+                    this._setFocusedQpSlot(slotNumber);
                 } else {
+                    if (this.state.quickpick.slots[String(slotNumber)]) {
+                        this._setFocusedQpSlot(slotNumber);
+                    }
                     this.recallQuickpickSlot(slotNumber).catch(err => console.error(err));
                 }
             }
@@ -1876,6 +1924,7 @@ const GrooveDropper = {
             const presetId = val ? parseInt(val) : null;
             this.state.quickpick.activePresetId = presetId;
             this.state.quickpick.slots = {};
+            this.state.quickpick.focusedSlot = null;
             if (presetId) {
                 await this.loadQuickpickSlots(presetId);
                 await this.saveConfig('quick-pick-preset', String(presetId));
