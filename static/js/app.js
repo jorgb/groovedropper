@@ -1464,7 +1464,10 @@ const GrooveDropper = {
             btn.appendChild(digit);
             btn.addEventListener('click', () => {
                 if (filled) this.deleteQuickpickSlot(slotNumber).catch(e => console.error(e));
-                else this.saveQuickpickSlot(slotNumber).catch(e => console.error(e));
+                else {
+                    this.saveQuickpickSlot(slotNumber).catch(e => console.error(e));
+                    this._setFocusedQpSlot(slotNumber);
+                }
             });
             container.appendChild(btn);
         }
@@ -1518,6 +1521,7 @@ const GrooveDropper = {
             this.state.quickpick.presets.push(preset);
             this.state.quickpick.activePresetId = preset.id;
             this.state.quickpick.slots = {};
+            this.state.quickpick.focusedSlot = null;
             this.renderQuickpickBar();
             await this.saveConfig('quick-pick-preset', String(preset.id));
             this.showToast(`Preset "${preset.name}" created`);
@@ -1817,6 +1821,7 @@ const GrooveDropper = {
                 if (e.shiftKey) this.randomizeCurrentOffset(true).catch(err => console.error(err));
                 else this.loadNextRandom(true).catch(err => console.error(err));
             } else if (e.code === 'KeyP') {
+                this._clearFocusedQpSlot();
                 this.loadPrevHistory().catch(err => console.error(err));
             } else if (e.code === 'KeyS') {
                 this.downloadSlice();
