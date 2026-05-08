@@ -47,6 +47,7 @@ Object.assign(GrooveDropper, {
         sel.value = this.state.quickpick.activePresetId || '';
         const hasActive = !!this.state.quickpick.activePresetId;
         this.elements.qpRenameBtn.disabled = !hasActive;
+        this.elements.qpCloneBtn.disabled = !hasActive;
         this.elements.qpDeleteBtn.disabled = !hasActive;
     },
 
@@ -117,6 +118,33 @@ Object.assign(GrooveDropper, {
                 return;
 
             this.state.quickpick.slots[String(slotNumber)] = await res.json();
+        } catch (e) { console.error(e); }
+    },
+
+    // POSTs to clone the active preset (slots included) to a new timestamped preset,
+    // switches to it, and shows a toast naming both source and clone.
+    async cloneQuickpickPreset() {
+        const presetId = this.state.quickpick.activePresetId;
+        if (!presetId) return;
+        try {
+            const res = await fetch('/api/quickpick/clone', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ preset_id: presetId }),
+            });
+
+            if (!res.ok)
+                return;
+
+            const data = await res.json();
+            this.state.quickpick.presets.push({ id: data.id, name: data.name });
+            this.state.quickpick.activePresetId = data.id;
+            this.state.quickpick.focusedSlot = null;
+
+            await this.loadQuickpickSlots(data.id);
+            this.renderQuickpickBar();
+            await this.saveConfig('quick-pick-preset', String(data.id));
+            this.showToast(`Cloned quick pick '${data.source_name}' to '${data.name}'`);
         } catch (e) { console.error(e); }
     },
 

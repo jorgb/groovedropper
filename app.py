@@ -604,6 +604,32 @@ def rename_quickpick_preset(preset_id):
     return jsonify(dict(row))
 
 
+@app.route('/api/quickpick/clone', methods=['POST'])
+def clone_quickpick_preset():
+    import datetime
+    data = request.get_json(force=True) or {}
+    source_id = data.get('preset_id')
+    if not source_id:
+        return jsonify({"error": "preset_id required"}), 400
+    with db.get_db() as conn:
+        source = conn.execute(
+            'SELECT id, name FROM quickpick_presets WHERE id = ?', (source_id,)
+        ).fetchone()
+        if not source:
+            return jsonify({"error": "Preset not found"}), 404
+        now = datetime.datetime.now()
+        name = now.strftime('%Y-%m-%d %H:%M:%S.') + f'{now.microsecond // 1000:03d}'
+        new_id = db.insert_quickpick_preset(conn, name)
+        slots = db.fetch_quickpick_slots(conn, source_id)
+        for slot_number, slot in slots.items():
+            db.upsert_quickpick_slot(
+                conn, new_id, int(slot_number),
+                slot['digest'], slot['start_offset'],
+                slot['pitch_semitones'], slot['pitch_cents'],
+            )
+    return jsonify({'id': new_id, 'name': name, 'source_name': source['name']}), 201
+
+
 @app.route('/api/quickpick/presets/<int:preset_id>', methods=['DELETE'])
 def delete_quickpick_preset(preset_id):
     with db.get_db() as conn:

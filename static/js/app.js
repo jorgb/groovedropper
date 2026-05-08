@@ -104,6 +104,7 @@ const GrooveDropper = {
         refreshDbPathText: document.getElementById('refresh-db-path-text'),
         // Quick Pick
         qpAddBtn: document.getElementById('qp-add-btn'),
+        qpCloneBtn: document.getElementById('qp-clone-btn'),
         qpPresetSelect: document.getElementById('qp-preset-select'),
         qpRenameBtn: document.getElementById('qp-rename-btn'),
         qpPlayInstantly: document.getElementById('qp-play-instantly'),
@@ -764,6 +765,10 @@ const GrooveDropper = {
 
         // Quick Pick bar
         this.elements.qpAddBtn.addEventListener('click', () => this.addQuickpickPreset().catch(e => console.error(e)));
+        this.elements.qpCloneBtn.addEventListener('click', () => {
+            this.elements.qpCloneBtn.blur();
+            this.cloneQuickpickPreset().catch(e => console.error(e));
+        });
         this.elements.qpDeleteBtn.addEventListener('click', () => {
             this.elements.qpDeleteBtn.blur();
             this.deleteQuickpickPreset().catch(e => console.error(e));
