@@ -161,10 +161,26 @@ const GrooveDropper = {
             { id: 'copy-icon-duration', getValue: () => this.elements.sampleDuration.textContent, toast: 'Duration copied!' },
             { id: 'copy-icon-offset',   getValue: () => this.elements.sampleOffset.value,         toast: 'Offset copied!' },
         ];
+        const getFullPath = () => {
+            const dir = this.state.sampleDir;
+            const name = this.state.sampleName;
+            if (!dir || !name) return null;
+            const sep = dir.includes('\\') ? '\\' : '/';
+            return dir.endsWith(sep) ? dir + name : dir + sep + name;
+        };
+
         for (const { id, getValue, toast } of copyMap) {
             const el = document.getElementById(id);
             if (!el) continue;
-            el.addEventListener('click', () => {
+            el.addEventListener('click', (e) => {
+                if (e.shiftKey && (id === 'copy-icon-name' || id === 'copy-icon-dir')) {
+                    const fullPath = getFullPath();
+                    if (!fullPath) return;
+                    navigator.clipboard.writeText(fullPath)
+                        .then(() => this.showToast('Copied full path to sample'))
+                        .catch(err => console.error('Copy failed:', err));
+                    return;
+                }
                 const val = getValue();
                 if (!val || val === '-') return;
                 navigator.clipboard.writeText(val)
@@ -301,11 +317,6 @@ const GrooveDropper = {
         this.elements.playStatus.className = playing ? 'playing' : '';
     },
 
-    shortenPath(path) {
-        if (!path || path.length <= 50) return path ?? '';
-        return `${path.substring(0, 20)}...${path.substring(path.length - 25)}`;
-    },
-
     _startPlayheadUpdater() {
         cancelAnimationFrame(this._rafId);
         const tick = () => {
@@ -348,9 +359,11 @@ const GrooveDropper = {
                 }
                 this.state.isScanning = false;
             } else {
-                const processed = (data.total_wavs || 0) - (data.wavs_queued || 0);
-                let msg = `Scanning ${processed} of ${data.total_wavs || 0}`;
-                if (data.folders_queued > 0) msg += ` (queued ${data.folders_queued} items)`;
+                const totalWavs = data.total_wavs || 0;
+                const foldersQueued = data.folders_queued || 0;
+                const processed = totalWavs - (data.wavs_queued || 0);
+                let msg = `Scanning ${processed} of ${totalWavs}`;
+                if (foldersQueued > 0) msg += ` (queued ${foldersQueued} items)`;
                 this.elements.scanStatus.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>${msg}</span>`;
                 this.state.isScanning = true;
             }
