@@ -681,6 +681,12 @@ const GrooveDropper = {
                 this.resetPitch();
             } else if (e.code === 'KeyV') {
                 this.storeToNextFreeQpSlot().catch(err => console.error(err));
+            } else if (e.code === 'ArrowLeft' || e.code === 'KeyJ') {
+                e.preventDefault();
+                this.navigateQuickpickSlot(-1);
+            } else if (e.code === 'ArrowRight' || e.code === 'KeyK') {
+                e.preventDefault();
+                this.navigateQuickpickSlot(1);
             } else if (/^Digit[0-9]$/.test(e.code)) {
                 const keyDigit = e.code.slice(-1);
                 const slotNumber = keyDigit === '0' ? 10 : parseInt(keyDigit);

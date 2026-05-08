@@ -121,6 +121,22 @@ Object.assign(GrooveDropper, {
         } catch (e) { console.error(e); }
     },
 
+    // Navigates to the next (direction=1) or previous (direction=-1) filled slot, wrapping
+    // circularly. Shows a toast if fewer than 2 slots are filled.
+    navigateQuickpickSlot(direction) {
+        const filled = [1,2,3,4,5,6,7,8,9,10].filter(n => !!this.state.quickpick.slots[String(n)]);
+        if (filled.length < 2) {
+            this.showToast('No other slots available to scroll through');
+            return;
+        }
+        const current = this.state.quickpick.focusedSlot;
+        let idx = current !== null ? filled.indexOf(current) : -1;
+        if (idx === -1) idx = direction === 1 ? filled.length - 1 : 0;
+        const next = filled[(idx + direction + filled.length) % filled.length];
+        this._setFocusedQpSlot(next);
+        this.recallQuickpickSlot(next).catch(e => console.error(e));
+    },
+
     // POSTs to clone the active preset (slots included) to a new timestamped preset,
     // switches to it, and shows a toast naming both source and clone.
     async cloneQuickpickPreset() {
