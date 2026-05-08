@@ -4,6 +4,7 @@
 
 Object.assign(GrooveDropper, {
 
+    // Fetches all quickpick presets from the API and stores them in state.
     async loadQuickpickPresets() {
         try {
             const res = await fetch('/api/quickpick/presets');
@@ -12,6 +13,7 @@ Object.assign(GrooveDropper, {
         } catch (e) { console.error(e); }
     },
 
+    // Fetches slots for a given preset ID from the API and stores them in state.
     async loadQuickpickSlots(presetId) {
         try {
             const res = await fetch(`/api/quickpick/presets/${presetId}/slots`);
@@ -21,11 +23,14 @@ Object.assign(GrooveDropper, {
         } catch (e) { console.error(e); }
     },
 
+    // Renders the full quickpick bar by delegating to the preset select and slot renderers.
     renderQuickpickBar() {
         this.renderQuickpickPresetSelect();
         this.renderQuickpickSlots();
     },
 
+    // Rebuilds the preset <select> from state and enables/disables the rename and delete buttons
+    // based on whether a preset is currently active.
     renderQuickpickPresetSelect() {
         const sel = this.elements.qpPresetSelect;
         sel.innerHTML = '';
@@ -45,6 +50,8 @@ Object.assign(GrooveDropper, {
         this.elements.qpDeleteBtn.disabled = !hasActive;
     },
 
+    // Rebuilds the ten slot buttons (1–0), marking each as filled or focused based on state.
+    // Clicking a filled slot deletes it; clicking an empty slot saves the current sample into it.
     renderQuickpickSlots() {
         const container = this.elements.qpSlots;
         container.innerHTML = '';
@@ -69,24 +76,31 @@ Object.assign(GrooveDropper, {
         }
     },
 
+    // Marks the given slot as focused in state and re-renders the slot buttons.
     _setFocusedQpSlot(slotNumber) {
         this.state.quickpick.focusedSlot = slotNumber;
         this.renderQuickpickSlots();
     },
 
+    // Clears the focused slot in state and re-renders the slot buttons; no-ops if nothing is focused.
     _clearFocusedQpSlot() {
         if (this.state.quickpick.focusedSlot === null) return;
         this.state.quickpick.focusedSlot = null;
         this.renderQuickpickSlots();
     },
 
+    // PUTs the current pitch (semitones + cents) to the focused slot's API endpoint,
+    // updating state with the server response. No-ops if there is no focused slot or active preset.
     async _syncFocusedQpSlotPitch() {
         const slotNumber = this.state.quickpick.focusedSlot;
-        if (slotNumber === null) return;
+        if (slotNumber === null)
+            return;
+
         const presetId = this.state.quickpick.activePresetId;
-        if (!presetId) return;
         const slot = this.state.quickpick.slots[String(slotNumber)];
-        if (!slot) return;
+        if (!presetId || !slot)
+            return;
+
         try {
             const res = await fetch(`/api/quickpick/presets/${presetId}/slots/${slotNumber}`, {
                 method: 'PUT',
@@ -98,12 +112,16 @@ Object.assign(GrooveDropper, {
                     pitch_cents: this.state.pitchCents,
                 }),
             });
-            if (!res.ok) return;
-            const data = await res.json();
-            this.state.quickpick.slots[String(slotNumber)] = data;
+
+            if (!res.ok)
+                return;
+
+            this.state.quickpick.slots[String(slotNumber)] = await res.json();
         } catch (e) { console.error(e); }
     },
 
+    // POSTs to create a new preset, sets it as active, clears slots, and persists the
+    // selection to config. Shows a toast with the new preset name on success.
     async addQuickpickPreset() {
         this.elements.qpAddBtn.blur();
         try {
@@ -120,10 +138,12 @@ Object.assign(GrooveDropper, {
             this.state.quickpick.focusedSlot = null;
             this.renderQuickpickBar();
             await this.saveConfig('quick-pick-preset', String(preset.id));
-            this.showToast(`Preset "${preset.name}" created`);
+            this.showToast(`Quick pick preset '"${preset.name}"' created`);
         } catch (e) { console.error(e); }
     },
 
+    // Replaces the preset <select> with an inline text input for renaming the active preset.
+    // Commits on Enter or blur; cancels on Escape.
     startQuickpickRename() {
         const active = this.state.quickpick.presets.find(p => p.id === this.state.quickpick.activePresetId);
         if (!active) return;
@@ -171,6 +191,7 @@ Object.assign(GrooveDropper, {
         input.addEventListener('blur', cancel);
     },
 
+    // PATCHes the active preset with a new name and updates it in state and the UI.
     async renameQuickpickPreset(name) {
         const presetId = this.state.quickpick.activePresetId;
         if (!presetId || !name) return;
@@ -188,6 +209,8 @@ Object.assign(GrooveDropper, {
         } catch (e) { console.error(e); }
     },
 
+    // DELETEs the active preset via the API, resets all quickpick state, and clears the
+    // persisted config selection.
     async deleteQuickpickPreset() {
         const presetId = this.state.quickpick.activePresetId;
         if (!presetId) return;
@@ -203,6 +226,8 @@ Object.assign(GrooveDropper, {
         } catch (e) { console.error(e); }
     },
 
+    // PUTs the current sample digest, start offset, and pitch into the given slot number.
+    // Auto-creates a new preset if none is active; shows a toast on success or if the slot is occupied.
     async saveQuickpickSlot(slotNumber) {
         if (!this.state.currentSampleId || !this.state.currentDigest) return;
         if (!this.state.quickpick.activePresetId) {
@@ -210,7 +235,7 @@ Object.assign(GrooveDropper, {
             if (!this.state.quickpick.activePresetId) return;
         }
         if (this.state.quickpick.slots[String(slotNumber)]) {
-            this.showToast(`Slot ${slotNumber} is already occupied, click on it to clear it first`);
+            this.showToast(`Slot ${slotNumber} is already occupied (click on it to clear it first)`);
             return;
         }
         const presetId = this.state.quickpick.activePresetId;
@@ -228,13 +253,14 @@ Object.assign(GrooveDropper, {
                 }),
             });
             if (!res.ok) return;
-            const data = await res.json();
-            this.state.quickpick.slots[String(slotNumber)] = data;
+            this.state.quickpick.slots[String(slotNumber)] = await res.json();
             this.renderQuickpickSlots();
-            this.showToast(`Slot ${slotNumber} saved to preset ${presetName}`);
+            this.showToast(`Slot ${slotNumber} saved to quick pick '${presetName}'`);
         } catch (e) { console.error(e); }
     },
 
+    // Recalls a saved slot: seeks in place (preserving playback state) if the digest matches the
+    // current sample, or performs a full sample load otherwise. Applies stored pitch on recall.
     async recallQuickpickSlot(slotNumber) {
         const presetId = this.state.quickpick.activePresetId;
         if (!presetId) { this.showToast('No quick pick preset selected'); return; }
@@ -242,7 +268,7 @@ Object.assign(GrooveDropper, {
         const presetName = preset ? preset.name : '?';
         const slot = this.state.quickpick.slots[String(slotNumber)];
         if (!slot) {
-            this.showToast(`Slot ${slotNumber} is empty of quick pick preset ${presetName}`);
+            this.showToast(`Slot ${slotNumber} is empty of quick pick preset '${presetName}'`);
             return;
         }
         try {
@@ -284,6 +310,8 @@ Object.assign(GrooveDropper, {
         } catch (e) { console.error(e); }
     },
 
+    // DELETEs the given slot from the active preset, removes it from state, and clears
+    // the focused slot if it was the deleted one.
     async deleteQuickpickSlot(slotNumber) {
         const presetId = this.state.quickpick.activePresetId;
         if (!presetId) return;
@@ -297,17 +325,19 @@ Object.assign(GrooveDropper, {
                 this.state.quickpick.focusedSlot = null;
             }
             this.renderQuickpickSlots();
-            this.showToast(`Slot ${slotNumber} deleted from quick pick preset ${presetName}`);
+            this.showToast(`Slot ${slotNumber} deleted from quick pick preset '${presetName}'`);
         } catch (e) { console.error(e); }
     },
 
+    // Saves the current sample to the first free slot (1–10), skipping if the sample/offset is
+    // already present in any slot. Auto-creates a preset if needed; focuses the newly filled slot.
     async storeToNextFreeQpSlot() {
         if (!this.state.currentSampleId || !this.state.currentDigest) return;
 
         for (let n = 1; n <= 10; n++) {
             const slot = this.state.quickpick.slots[String(n)];
             if (slot && slot.digest === this.state.currentDigest && slot.start_offset === this.state.originalStartOffset) {
-                this.showToast(`Sample offset is already quick picked in slot ${n}`);
+                this.showToast(`Sample offset is already present in slot ${n}`);
                 return;
             }
         }
@@ -339,10 +369,9 @@ Object.assign(GrooveDropper, {
                 }),
             });
             if (!res.ok) return;
-            const data = await res.json();
-            this.state.quickpick.slots[String(freeSlot)] = data;
+            this.state.quickpick.slots[String(freeSlot)] = await res.json();
             this._setFocusedQpSlot(freeSlot);
-            this.showToast(`Sample stored in quick slot ${freeSlot}`);
+            this.showToast(`Sample stored in slot ${freeSlot}`);
         } catch (e) { console.error(e); }
     },
 

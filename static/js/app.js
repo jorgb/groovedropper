@@ -385,7 +385,7 @@ const GrooveDropper = {
             if (!res.ok) { console.error("No samples"); return; }
             const data = await res.json();
             if (data.error === 'no_samples') {
-                this.showToast('No samples in current preset');
+                this.showToast('No samples in current preset selection');
                 return;
             }
             this._pushHistory(data.history_id);
