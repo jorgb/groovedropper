@@ -1,25 +1,24 @@
 ## DOING
 
-- feat: Vibe presets - store presets 1 .. 0 (shift+1 .. 0 stores), 1 .. 9 plays 
-  preset edit box, play instantly, remove preset, all in dropdown
-  - fix: Add 1...9 to controls 
-  - doc: change manual to reflect vibes
+- fix: Change database does not work
+- Create groovedropper icon + favicon
+- Create release that works
+- Create VM to release and test on Linux (AppImage)
+- 0.0.9 release
+  - Publish on Reddit
+
+
+## LATER
 
 - investigate: Key detection algorithm on current offset?
   - Investigate key at offset, draw key in text box on export, add the key 
     if set?
-
-## LATER
-
 - Manual offset, button next to the offset box (find next transient)
 - fix: Gap between label row and main column, I do not know why it is there!
 - feat: Random vibe generator - random name generator
   - Later? A button next to the vibe edit, that randomizes the name from a 
     long list (like polyend tracker, digitakt 2)
   - Later? Song name randomizer (same code, back end) for inspiration
-- Test phase
-- 1.0 release!
-  - Publish on Reddit
 - VIBE EXPORT
   - Export icon for all slots to a ZIP file
   - (Shift-V saves all slots to a file as a zip?)
