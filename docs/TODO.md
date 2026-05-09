@@ -4,10 +4,6 @@
   preset edit box, play instantly, remove preset, all in dropdown
   - fix: Add 1...9 to controls 
   - doc: change manual to reflect vibes
-- reconsider: Copy whole path + filename on shift+click on folder icon (with 
-  toast) it can be easily used to launch a file in default browser?
-
-- fix: Gap between label row and main column, I do not know why it is there!
 
 - investigate: Key detection algorithm on current offset?
   - Investigate key at offset, draw key in text box on export, add the key 
@@ -15,6 +11,8 @@
 
 ## LATER
 
+- Manual offset, button next to the offset box (find next transient)
+- fix: Gap between label row and main column, I do not know why it is there!
 - feat: Random vibe generator - random name generator
   - Later? A button next to the vibe edit, that randomizes the name from a 
     long list (like polyend tracker, digitakt 2)
@@ -65,6 +63,10 @@
   - feat: Input description box to add to sample name (or maybe to be changed 
     from keywords?) to have keywords to search for and also maybe write down 
     thoughts about what to do with the (starred) sample
+- Nest labels, when I create a label Melodics/Piano the UI can seperate 
+  these two into Melodics and child of Piano. And when piano is selected it 
+  actually selects Melodics/Piano, when Melodics is selected it should 
+  select all child labels (back-end thing)
 
 ## MAYBE
 

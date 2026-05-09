@@ -13,7 +13,8 @@ a searchable index and stream audio for playback.
 4. [Sharing & Saving](#sharing--saving)
 5. [Pitch Control](#pitch-control)
 6. [Labels & Presets](#labels--presets)
-7. [Themes](#themes)
+7. [Vibe Picks](#vibe-picks)
+8. [Themes](#themes)
 8. [Database Migration Policy](#database-migration-policy)
 9. [Troubleshooting](#troubleshooting)
 
@@ -53,18 +54,31 @@ finishes the waveform will be available upon the next randomization.
 
 ## Keyboard Shortcuts
 
-| Key | Action                                                                                                   |
-|-----|----------------------------------------------------------------------------------------------------------|
-| `Space` | Play / Pause — see [Play and Pause](#play-and-pause)                                                      |
-| `Shift + Space` | Reset playhead to the original randomized position                                                       |
-| `Ctrl + Space` | Copy a direct URL for the current sample and offset — see [Sharing & Saving](#3-sharing-saving)          |
-| `R` | Pick a new random sample and play immediately — see [Digging for Samples](#2-digging-for-samples)        |
-| `Shift + R` | Randomize the playhead offset within the current sample                                                  |
-| `P` | Go back in history                                                                                       |
-| `Click` waveform | Scrub to clicked position                                                                                |
-| `S` | Save a 10-second slice from the current playhead position                                                |
-| `,` / `.` | Pitch down / up 1 semitone (hold `Shift` for 10-cent fine steps) — see [Pitch Control](#4-pitch-control) |
-| `L` | Reset pitch to zero                                                                                      |
+- Sample playback
+  - `Space` — Play / Pause (see [Play and Pause](#play-and-pause))
+  - `Shift + Space` — Reset play head to the original randomized position
+  - `R` — Pick a new random sample and play immediately (see [Digging for 
+    Samples](#digging-for-samples))
+  - `Shift + R` — Randomize the play head offset within the current sample
+  - `P` — Go back in history
+  - `Click` waveform — Scrub to clicked position
+- Tuning
+  - `,` / `.` — Pitch down / up 1 semitone; hold `Shift` for 10-cent fine 
+    steps (see [Pitch Control](#pitch-control))
+  - Dragging with mouse over the pitch controls also works
+  - `L` — Reset pitch to zero
+- Sharing
+  - `Ctrl + Space` — Copy a direct URL for the current sample and offset (see 
+    [Sharing & Saving](#sharing--saving))
+  - `S` — Save a 10-second slice from the current playhead position
+  - `Shift + Click` on the file or folder icon copies the full file path to 
+    clipboard to manipulate or find the sample locally
+- Vibe list
+  - `Shift + 1`–`0` — Save current sample to a specific quick pick slot 1 – 10
+  - `1`–`9` / `0` — Recall quick pick slot 1 – 10
+  - `V` — Store current sample and offset to the next free quick pick slot
+  - `Arrow Left` / `J` — Navigate to the previous filled quick pick slot
+  - `Arrow Right` / `K` — Navigate to the next filled quick pick slot
 
 ---
 
@@ -84,7 +98,7 @@ required.
 
 ### Randomize within the sample
 
-If you are digging the sample but you want to explore more part of it, press 
+If you are digging the sample, but you want to explore more part of it, press 
 **`Shift + R`** to stay on the same file but jump to a different random 
 positions. This is useful when a sample sounds promising but the current 
 chop is not what you want.
@@ -117,6 +131,7 @@ Press **`P`** to step back through history.
 
 ⚠️ Pressing **`R`** will void all history that comes after the last selected 
 sample.
+
 
 ---
 
@@ -261,6 +276,46 @@ preset field and click `+` to save the current active labels as a preset.
 Clicking a preset later restores that exact label combination in one shot which 
 is handy for quickly switching between "Drums only", "Keys only", or any other 
 mood that you feel at the moment.
+
+---
+
+## Vibe Picks
+
+The vibe pick window looks like this:
+
+![Vibe Picks](images/vibe-picks.png)
+
+A vibe pick is used when you're randomly selecting samples, and you dig how 
+they sound together. It could be a break, a vocal or a melodic. 
+
+You can see a vibe list as a sketch list for samples you would like to 
+export together, for example:
+
+- You find a melodic that you really like, add it to a slot with the proper 
+  pitch
+- Now to find drums you categorized so you select `< ⸰ DRUMS` as a label and 
+  randomize until you find a break, add this to a vibe 
+- Now select `< ⸰ VOCALS` and find a cool phrase
+- Also, you can paste a bookmark (see [sharing a link](#sharing-a-link)) and 
+  add this to a vibe later
+
+Just start pressing `V` to create a new list and assign the current sample, 
+offset and pitch to this slot, or press `Shift` + `1 - 0` to assign a free 
+slot. Pressing `1 - 0` will recall this slot if occupied, and select it as a 
+focused item.
+
+When it is focused (e.g. selected), you can change the pitch and it will 
+automatically save it to the picked slot, so that you do not have to re-add 
+the slot.
+
+Pressing `+` will create a new list, and pressing the clone button will 
+clone the current list.
+
+Why cloning? If you are digging a vibe, but stumble upon a new sample that 
+takes you down a rabbit hole, clone the list and continue altering it so 
+that you can remove the samples that do not match the new path, but keep all 
+other presets.
+
 
 ---
 
