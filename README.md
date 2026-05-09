@@ -43,18 +43,21 @@ over the years.
   your song
 - You can add or edit tags to filter the random picking
 - You can add presets which toggle on or off a set of labels
+- You can add the samples you find to a vibe list, to group together 
+  matching samples and pitches
 - The links are sharable, which means the URL that you copy out could work 
   for someone else (if they have the same sample), or from a note if a chop 
   matches a future song 
-- The randomly selected sample drop location can be exported out as a WAV 
-  file and downloaded
+- The randomly selected sample drop location can be exported out as a 
+  sample slice and downloaded to import into your sampler or DAW.
 
 Check [the manual](docs/USER-MANUAL.md) for a more in depth guide. 
 
 ## Usage
 
 This project consists of a Python backend (Flask API + SQLite database) and 
-an Electron application that packages the whole thing into a standalone GUI. 
+a web front-end. It also has an Electron wrapper application that packages the 
+whole thing into a standalone GUI (in beta). 
 
 ### Running from source
 
@@ -69,7 +72,7 @@ You can run the Flask app via the command line. It will automatically open a tab
 Then run from the project directory:
 
 ```bat
-> run.bat c:\users\{yourname}\groovedropper.db
+> run.bat c:\users\{yourname}\groovedropper.db --db-file {path-to-database}\groovedropper.db
 ```
 
 The batch file creates a virtual environment and installs all required packages automatically.
@@ -125,9 +128,10 @@ Once the browser opens, use the **Add Folder** button in the UI to point GrooveD
 I am a developer by profession for 30+ years, and I am adept in Python 
 (since 2.7). However, due to time constraints and lack of knowledge in CSS + 
 Javascript, I used Claude to generate most of the front-end, and some of the 
-code generated in the back-end but I made sure to review it all. This project 
-took me two weeks to make, which otherwise would have taken months. I take 
-code quality very seriously and only accept changes which I understand myself.
+code generated in the back-end, but I made sure to review it all. This project 
+took me a few weeks to make, which otherwise would have taken many months. I 
+take code quality very seriously and only accept changes which I understand 
+myself.
 
 ## Built With
 - **Python / Flask** - Backend API and static file server.

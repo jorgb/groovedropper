@@ -37,10 +37,11 @@ def get_db():
         conn.close()
 
 
-CURRENT_VERSION = 1
+CURRENT_VERSION = 2
 
 MIGRATIONS = {
     1: '_migrate_v1',
+    2: '_migrate_v2',
 }
 
 
@@ -132,8 +133,31 @@ def _migrate_v1(conn):
     )
 
 
+def _migrate_v2(conn):
+    conn.execute("INSERT OR IGNORE INTO config (key, value) VALUES ('quick-play-instantly', 'true')")
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS quickpick_presets (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            name       TEXT    NOT NULL,
+            created_at REAL    NOT NULL
+        )
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS quickpick_slots (
+            preset_id       INTEGER NOT NULL REFERENCES quickpick_presets(id) ON DELETE CASCADE,
+            slot_number     INTEGER NOT NULL CHECK (slot_number BETWEEN 1 AND 10),
+            digest          TEXT    NOT NULL REFERENCES samples(digest) ON DELETE CASCADE,
+            start_offset    INTEGER NOT NULL DEFAULT 0,
+            pitch_semitones INTEGER NOT NULL DEFAULT 0,
+            pitch_cents     INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (preset_id, slot_number)
+        )
+    ''')
+
+
 _MIGRATION_FNS = {
     1: _migrate_v1,
+    2: _migrate_v2,
 }
 
 
@@ -633,4 +657,67 @@ def scan_insert_sample_label(cursor, digest, label_id):
     cursor.execute(
         'INSERT OR IGNORE INTO sample_labels (digest, label_id) VALUES (?, ?)',
         (digest, label_id)
+    )
+
+
+# ---------------------------------------------------------------------------
+# Quick Pick
+# ---------------------------------------------------------------------------
+
+def fetch_quickpick_presets(conn):
+    return conn.execute(
+        'SELECT id, name FROM quickpick_presets ORDER BY created_at ASC'
+    ).fetchall()
+
+
+def insert_quickpick_preset(conn, name):
+    cursor = conn.execute(
+        'INSERT INTO quickpick_presets (name, created_at) VALUES (?, ?)',
+        (name, time.time())
+    )
+    return cursor.lastrowid
+
+
+def update_quickpick_preset_name(conn, preset_id, name):
+    row = conn.execute('SELECT id FROM quickpick_presets WHERE id = ?', (preset_id,)).fetchone()
+    if not row:
+        return None
+    conn.execute('UPDATE quickpick_presets SET name = ? WHERE id = ?', (name, preset_id))
+    return conn.execute('SELECT id, name FROM quickpick_presets WHERE id = ?', (preset_id,)).fetchone()
+
+
+def delete_quickpick_preset(conn, preset_id):
+    row = conn.execute('SELECT id FROM quickpick_presets WHERE id = ?', (preset_id,)).fetchone()
+    if row:
+        conn.execute('DELETE FROM quickpick_presets WHERE id = ?', (preset_id,))
+    return row is not None
+
+
+def fetch_quickpick_slots(conn, preset_id):
+    rows = conn.execute('''
+        SELECT qs.slot_number, qs.digest, qs.start_offset, qs.pitch_semitones, qs.pitch_cents,
+               s.name AS sample_name
+        FROM quickpick_slots qs
+        JOIN samples s ON s.digest = qs.digest
+        WHERE qs.preset_id = ?
+    ''', (preset_id,)).fetchall()
+    return {str(row['slot_number']): dict(row) for row in rows}
+
+
+def upsert_quickpick_slot(conn, preset_id, slot_number, digest, start_offset, pitch_semitones, pitch_cents):
+    conn.execute('''
+        INSERT INTO quickpick_slots (preset_id, slot_number, digest, start_offset, pitch_semitones, pitch_cents)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT (preset_id, slot_number) DO UPDATE SET
+            digest = excluded.digest,
+            start_offset = excluded.start_offset,
+            pitch_semitones = excluded.pitch_semitones,
+            pitch_cents = excluded.pitch_cents
+    ''', (preset_id, slot_number, digest, start_offset, pitch_semitones, pitch_cents))
+
+
+def delete_quickpick_slot(conn, preset_id, slot_number):
+    conn.execute(
+        'DELETE FROM quickpick_slots WHERE preset_id = ? AND slot_number = ?',
+        (preset_id, slot_number)
     )
