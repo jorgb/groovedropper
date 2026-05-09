@@ -129,3 +129,4 @@ dist
 # Electron packager / builder outputs
 out/
 release/
+dist-backend/
