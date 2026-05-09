@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, BrowserWindow, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -113,7 +113,44 @@ function waitForFlask(url, maxRetries = 40, delayMs = 500) {
     });
 }
 
+async function changeDatabase() {
+    const settings = loadSettings();
+    const result = await dialog.showSaveDialog(mainWindow, {
+        title: 'Select GrooveDropper Database',
+        defaultPath: settings.dbFile || path.join(app.getPath('documents'), 'groovedropper.db'),
+        filters: [{ name: 'SQLite Database', extensions: ['db'] }],
+        buttonLabel: 'Use this database',
+    });
+
+    if (result.canceled || !result.filePath) return;
+
+    saveSettings({ ...settings, dbFile: result.filePath });
+
+    // Relaunch so Flask starts fresh on the new database with no port conflicts.
+    // The will-quit handler kills the current Flask process before exit.
+    app.relaunch();
+    app.exit(0);
+}
+
+function buildMenu() {
+    const template = [
+        {
+            label: 'File',
+            submenu: [
+                {
+                    label: 'Change Database...',
+                    click: changeDatabase,
+                },
+                { type: 'separator' },
+                { role: 'quit' },
+            ],
+        },
+    ];
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 app.on('ready', async () => {
+    buildMenu();
     createWindow();
 
     const dbFile = await resolveDbFile();
