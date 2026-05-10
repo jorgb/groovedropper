@@ -111,6 +111,30 @@ runtime is required — WebView2 ships with Windows 10/11.
 
 The first run installs `pywebview` automatically via the virtual environment.
 
+### Building a standalone distributable
+
+To package GrooveDropper into a file you can hand to someone without Python installed,
+use the build scripts. Both scripts manage the virtual environment automatically.
+
+**Windows — produces `GrooveDropper-win.zip`:**
+```powershell
+> .\build_win.ps1
+```
+Unzip and run `GrooveDropper.exe`. The database defaults to `%USERPROFILE%\groovedropper.db`.
+
+**Linux — produces `GrooveDropper-x86_64.AppImage`:**
+```bash
+> chmod +x build_linux.sh
+> ./build_linux.sh
+> chmod +x GrooveDropper-x86_64.AppImage
+> ./GrooveDropper-x86_64.AppImage
+```
+The host system must have `libwebkit2gtk-4.0` or `libwebkit2gtk-4.1` installed
+(`sudo apt install libwebkit2gtk-4.1-0` on Ubuntu/Debian).
+The database defaults to `~/groovedropper.db`.
+
+Both builds accept `--db-file /path/to/your.db` to override the default location.
+
 ## AI disclaimer
 
 I am a developer by profession for 30+ years, and I am adept in Python 

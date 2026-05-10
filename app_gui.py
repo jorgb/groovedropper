@@ -28,8 +28,9 @@ def _wait_for_server(port, timeout=10):
 
 
 def main():
+    default_db = str(Path.home() / 'groovedropper.db')
     parser = argparse.ArgumentParser(description="GrooveDropper - Desktop GUI mode")
-    parser.add_argument('--db-file', required=True)
+    parser.add_argument('--db-file', default=default_db)
     parser.add_argument('--port', type=int, default=5000)
     args = parser.parse_args()
 

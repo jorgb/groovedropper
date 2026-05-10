@@ -75,3 +75,9 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
+# Build outputs
+AppDir/
+*.AppImage
+*-win.zip
+.appimagetool
+
