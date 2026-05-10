@@ -56,12 +56,8 @@ Check [the manual](docs/USER-MANUAL.md) for a more in depth guide.
 ## Usage
 
 This project consists of a Python backend (Flask API + SQLite database) and 
-a web front-end. It also has an Electron wrapper application that packages the 
-whole thing into a standalone GUI (in beta). 
-
-### Running from source
-
-You can run the Flask app via the command line. It will automatically open a tab in your default web browser.
+a web front-end. Run it from the command line, it will automatically open a 
+tab in your default web browser.
 
 **Windows** — install Python if you haven't already:
 
@@ -72,10 +68,14 @@ You can run the Flask app via the command line. It will automatically open a tab
 Then run from the project directory:
 
 ```bat
-> run.bat c:\users\{yourname}\groovedropper.db --db-file {path-to-database}\groovedropper.db
+> run.bat --db-file c:\users\{yourname}\groovedropper.db
 ```
 
-The batch file creates a virtual environment and installs all required packages automatically.
+The batch file creates a virtual environment and installs all required packages automatically. There is also a PowerShell variant:
+
+```powershell
+> .\run.ps1 "C:\users\{yourname}\groovedropper.db"
+```
 
 **Linux / macOS** — install Python 3 via your package manager if needed (e.g. `sudo apt install python3` on Ubuntu/Debian), then:
 
@@ -83,38 +83,6 @@ The batch file creates a virtual environment and installs all required packages 
 > chmod +x run.sh
 > ./run.sh ~/groovedropper.db
 ```
-
-The shell script handles the virtual environment the same way the batch file does.
-
-### Running as an Electron App
-
-⚠️ This is still untested, but it should work.
-
-#### Developer Setup
-
-1. **Install Node.js** (includes `npm`) if you haven't already.
-2. **Install Python dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. **Install Node dependencies:**
-   Navigate to the project root and install the required electron libraries:
-   ```bash
-   npm install
-   ```
-4. **Start the App:**
-   ```bash
-   npm start
-   ```
-
-When you start the app for the first time, it will prompt you to select the folder where you keep your long `.wav` files. The SQLite database will be automatically created in your user's AppData/Roaming folder (or the equivalent OS-specific user data folder).
-
-#### End-User Installation (Compiled App)
-*If you plan to package this app using electron-packager or electron-builder for end users, they will not need to touch the command line.*
-
-1. Run the `.exe` (Windows), `.app` (Mac), or binary (Linux).
-2. The application will ask you to select a directory containing your long `.wav` audio files.
-3. The app will scan your files, generate waveforms, and you can immediately start chopping!
 
 Once the browser opens, use the **Add Folder** button in the UI to point GrooveDropper at your directory of `.wav` files. Folders and their labels are managed through the web interface and persisted in the database.
 
@@ -137,5 +105,4 @@ myself.
 - **Python / Flask** - Backend API and static file server.
 - **SQLite** - Fast, local, file-based database for tracking files and history.
 - **Soundfile / Numpy / Pillow** - For analyzing audio and generating the custom waveform images.
-- **Electron** - Cross-platform wrapper to give the app a desktop UI.
 - **HTML / Vanilla JS / CSS** - The front end. No heavy frameworks!
