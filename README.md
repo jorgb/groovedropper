@@ -91,6 +91,26 @@ Once the browser opens, use the **Add Folder** button in the UI to point GrooveD
 * `--refresh` *(optional)*: Pass this flag to drop all existing data and rescan everything from scratch.
 * `--no-browser` *(optional)*: Start the server without opening a browser tab.
 
+### Running as a desktop window (pywebview)
+
+If you prefer a native application window instead of a browser tab, use the `run_gui` 
+scripts. They use [pywebview](https://pywebview.flowrl.com/), which wraps the platform 
+WebView (WebView2 on Windows, WKWebView on macOS, WebKitGTK on Linux). No additional 
+runtime is required — WebView2 ships with Windows 10/11.
+
+**Windows:**
+```bat
+> run_gui.bat "C:\users\{yourname}\groovedropper.db"
+```
+
+**Linux / macOS:**
+```bash
+> chmod +x run_gui.sh
+> ./run_gui.sh ~/groovedropper.db
+```
+
+The first run installs `pywebview` automatically via the virtual environment.
+
 ## AI disclaimer
 
 I am a developer by profession for 30+ years, and I am adept in Python 
@@ -105,4 +125,5 @@ myself.
 - **Python / Flask** - Backend API and static file server.
 - **SQLite** - Fast, local, file-based database for tracking files and history.
 - **Soundfile / Numpy / Pillow** - For analyzing audio and generating the custom waveform images.
+- **pywebview** - Optional native desktop window (WebView2/WKWebView/WebKitGTK).
 - **HTML / Vanilla JS / CSS** - The front end. No heavy frameworks!
