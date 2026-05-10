@@ -55,6 +55,7 @@ def main():
         width=1280,
         height=800,
         min_size=(800, 600),
+        maximized=True,
     )
     webview.start()
     os._exit(0)
