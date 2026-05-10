@@ -47,14 +47,23 @@ function createWindow() {
 
     mainWindow.on('closed', () => {
         mainWindow = null;
-        if (flaskProcess) flaskProcess.kill();
     });
 }
 
 async function resolveDbFile() {
-    // CLI arg takes precedence (dev / manual launch)
-    const cliArg = process.argv.find(arg => arg.startsWith('--db-file='));
-    if (cliArg) return cliArg.split('=')[1];
+    // CLI arg takes precedence (dev / manual launch).
+    // app.commandLine is Chromium's canonical parser and is reliable in packaged builds.
+    // process.argv fallback handles both --db-file=path and --db-file path forms.
+    const switchValue = app.commandLine.getSwitchValue('db-file');
+    if (switchValue) return switchValue;
+
+    const eqArg = process.argv.find(arg => arg.startsWith('--db-file='));
+    if (eqArg) return eqArg.split('=').slice(1).join('=');
+
+    const spaceIdx = process.argv.indexOf('--db-file');
+    if (spaceIdx !== -1 && process.argv[spaceIdx + 1]) return process.argv[spaceIdx + 1];
+
+    console.log('argv:', process.argv);
 
     // Stored from a previous run
     const settings = loadSettings();
@@ -176,6 +185,31 @@ app.on('activate', () => {
     if (mainWindow === null) createWindow();
 });
 
+let isQuitting = false;
+
+app.on('before-quit', (event) => {
+    if (!flaskProcess || isQuitting) return;
+    event.preventDefault();
+    isQuitting = true;
+
+    const done = () => {
+        flaskProcess = null;
+        app.quit();
+    };
+
+    const timer = setTimeout(() => {
+        if (flaskProcess) flaskProcess.kill();
+        done();
+    }, 2000);
+
+    const req = http.request(
+        { host: '127.0.0.1', port, path: '/api/quit', method: 'POST' },
+        () => { clearTimeout(timer); done(); }
+    );
+    req.on('error', () => { clearTimeout(timer); if (flaskProcess) flaskProcess.kill(); done(); });
+    req.end();
+});
+
 app.on('will-quit', () => {
-    if (flaskProcess) flaskProcess.kill();
+    if (flaskProcess) { flaskProcess.kill(); flaskProcess = null; }
 });

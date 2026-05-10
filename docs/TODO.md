@@ -1,6 +1,7 @@
 ## DOING
 
 - fix: Change database does not work
+- fix: Always show database path somewhere on screen
 - Create groovedropper icon + favicon
 - Create release that works
 - Create VM to release and test on Linux (AppImage)

@@ -31,7 +31,7 @@
       { "from": "dist-backend/", "to": "backend/" }
     ],
     "win": {
-      "target": "nsis",
+      "target": "portable",
       "icon": "assets/icon.ico"
     },
     "mac": {

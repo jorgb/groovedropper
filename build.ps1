@@ -49,13 +49,15 @@ if (-not $SkipInstall) {
     Write-Host "`n[2/3] Skipping npm install (--SkipInstall)" -ForegroundColor DarkGray
 }
 
-# --- Electron installer -----------------------------------------------------
-Write-Host "`n[3/3] Building Windows installer with electron-builder..." -ForegroundColor Yellow
+# --- Electron portable exe --------------------------------------------------
+Write-Host "`n[3/3] Building Windows portable exe with electron-builder..." -ForegroundColor Yellow
 $env:CSC_IDENTITY_AUTO_DISCOVERY = 'false'
-npx electron-builder --win --publish never
+npx electron-builder --win portable --publish never
 if ($LASTEXITCODE -ne 0) { Write-Host "electron-builder failed" -ForegroundColor Red; exit 1 }
 
 Write-Host "`n=== Build complete ===" -ForegroundColor Green
+Write-Host "Portable exe (no installation required):" -ForegroundColor Cyan
+Write-Host "  Usage: GrooveDropper.exe [--db-file=<path>]" -ForegroundColor Cyan
 Get-ChildItem dist\*.exe -ErrorAction SilentlyContinue |
     Select-Object Name, @{L='Size';E={"{0:N1} MB" -f ($_.Length / 1MB)}} |
     Format-Table -AutoSize
