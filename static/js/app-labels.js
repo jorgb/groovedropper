@@ -1,72 +1,15 @@
 Object.assign(GrooveDropper, {
 
-    async openRefreshDialog() {
-        // check if we have a running queue already, and if so,
-        // we show a toast and exit this
+    async _doRefresh() {
         try {
-            const res = await fetch('/api/stats');
-            const data = await res.json();
-
-            if (data.is_scanning) {
-                this.showToast('A scan is already running — wait for it to finish before refreshing.');
-                return;
-            }
-        }
-        catch(e) {
-            console.error('Failed to get stats', e);
-            return;
-        }
-
-        const count = this.state.totalSamplesCount;
-        if (count === 0) {
-            await this._doRefresh(false);
-            return;
-        }
-        this.elements.refreshDeleteLabelsCb.checked = false;
-        this._updateRefreshBulletLabels(false);
-        const label = count === 1 ? '1 sample' : `${count} samples`;
-        this.elements.refreshCountBullet.textContent = label;
-        this.elements.refreshDbPathText.textContent = this.state.dbPath || 'unknown';
-        this.elements.refreshDialogOverlay.classList.remove('hidden');
-    },
-
-    closeRefreshDialog() {
-        this.elements.refreshDialogOverlay.classList.add('hidden');
-        this.elements.refreshDeleteLabelsCb.checked = false;
-        this._updateRefreshBulletLabels(false);
-    },
-
-    _updateRefreshBulletLabels(deleteLabels) {
-        this.elements.refreshBulletLabels.textContent = deleteLabels
-            ? 'Per-sample label assignments will be permanently deleted.'
-            : 'Your per-sample labels will be restored when each file is re-indexed.';
-    },
-
-    async submitRefresh() {
-        const deleteLabels = this.elements.refreshDeleteLabelsCb.checked;
-        this.closeRefreshDialog();
-        await this._doRefresh(deleteLabels);
-    },
-
-    async _doRefresh(deleteLabels) {
-        try {
-            const res = await fetch('/api/samples/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ delete_sample_labels: deleteLabels }),
-            });
+            const res = await fetch('/api/samples/refresh', { method: 'POST' });
             const data = await res.json();
             if (res.status === 409 && data.error === 'scan_in_progress') {
                 this.showToast('A scan is already running — wait for it to finish before refreshing.');
                 return;
             }
             if (!res.ok) { this.showToast('Refresh failed'); return; }
-            this.showToast('Sample index cleared — re-scanning now.');
-            await this.loadLabels();
-            await this.loadPresets();
-            await this.loadUntaggedCount();
-            this.renderLabelPanel();
-            this.renderSampleLabelBar();
+            this.showToast('Re-scanning folders now.');
         } catch (e) {
             console.error('Refresh failed', e);
             this.showToast('Refresh failed');

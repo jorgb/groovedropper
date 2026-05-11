@@ -1183,59 +1183,6 @@
             color: var(--bg-color);
         }
 
-        /* Refresh dialog                                                      */
-        /* ------------------------------------------------------------------ */
-
-        .refresh-dialog-bullets {
-            margin: 0;
-            padding-left: 18px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            font-size: 0.9em;
-        }
-
-        .refresh-dialog-checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            font-size: 0.9em;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .refresh-dialog-checkbox-label input[type="checkbox"] {
-            cursor: pointer;
-            accent-color: var(--accent-color);
-            width: 14px;
-            height: 14px;
-        }
-
-        .refresh-dialog-db-hint {
-            font-size: 0.78em;
-            opacity: 0.6;
-        }
-
-        .refresh-dialog-db-path {
-            font-size: 0.8em;
-            opacity: 0.75;
-            word-break: break-all;
-            font-family: monospace;
-        }
-
-        #refresh-dialog-confirm {
-            background: #b03030;
-            color: #fff;
-            font-weight: bold;
-            border-color: #b03030;
-        }
-
-        #refresh-dialog-confirm:hover:not(:disabled) {
-            background: #d04040;
-            border-color: #d04040;
-            color: #fff;
-        }
-
         /* ------------------------------------------------------------------ */
         /* Pitch badge                                                         */
         /* ------------------------------------------------------------------ */
@@ -1488,38 +1435,6 @@
         </div>
     </div>
 
-    <!-- Refresh dialog -->
-    <div id="refresh-dialog-overlay" class="dialog-overlay hidden">
-        <div id="refresh-dialog" class="dialog-card">
-            <div class="dialog-header">
-                <span>Refresh sample index</span>
-                <button id="refresh-dialog-close" class="dialog-close-btn" title="Close">&times;</button>
-            </div>
-            <div class="dialog-body">
-                <span>Are you sure you want to refresh?</span>
-                <ul class="refresh-dialog-bullets">
-                    <li><span id="refresh-count-bullet"></span> will be removed from the database.</li>
-                    <li>No files will be deleted on disk.</li>
-                    <li>All labels and presets are untouched.</li>
-                    <li id="refresh-bullet-labels"></li>
-                    <li>Play history will be cleared.</li>
-                    <li>All configured scan folders will be re-indexed automatically.</li>
-                </ul>
-                <label class="refresh-dialog-checkbox-label">
-                    <input type="checkbox" id="refresh-delete-labels-cb">
-                    Also delete per-sample labels
-                </label>
-                <div>
-                    <div class="refresh-dialog-db-hint">Database location (for backup)</div>
-                    <div id="refresh-db-path-text" class="refresh-dialog-db-path"></div>
-                </div>
-            </div>
-            <div class="dialog-footer">
-                <button id="refresh-dialog-cancel">Cancel</button>
-                <button id="refresh-dialog-confirm">Refresh</button>
-            </div>
-        </div>
-    </div>
 
     <div id="first-run-overlay">
         <div id="first-run-card">

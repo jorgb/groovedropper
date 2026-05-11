@@ -386,21 +386,17 @@ def quit_app():
 
 @app.route('/api/samples/refresh', methods=['POST'])
 def refresh_samples():
-    data = request.get_json(silent=True) or {}
-    delete_sample_labels = bool(data.get('delete_sample_labels', False))
-
     if scan_queue.is_active():
         return jsonify({"error": "scan_in_progress"}), 409
 
     with db.get_db() as conn:
-        removed = db.refresh_samples(conn, delete_sample_labels)
         folders = db.fetch_scan_folder_paths(conn)
 
     for folder_path in folders:
         scan_queue.push_folder(folder_path)
 
-    logger.info(f"Refresh: removed {removed} samples, re-queued {len(folders)} folder(s)")
-    return jsonify({"status": "ok", "removed": removed})
+    logger.info(f"Refresh: re-queued {len(folders)} folder(s)")
+    return jsonify({"status": "ok"})
 
 
 # ---------------------------------------------------------------------------

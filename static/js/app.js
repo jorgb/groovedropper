@@ -92,16 +92,8 @@ const GrooveDropper = {
         folderDialogLabels: document.getElementById('folder-dialog-labels'),
         folderDialogCancel: document.getElementById('folder-dialog-cancel'),
         folderDialogOk: document.getElementById('folder-dialog-ok'),
-        // Refresh button + dialog
+        // Refresh button
         refreshBtn: document.getElementById('refresh-btn'),
-        refreshDialogOverlay: document.getElementById('refresh-dialog-overlay'),
-        refreshDialogClose: document.getElementById('refresh-dialog-close'),
-        refreshDialogCancel: document.getElementById('refresh-dialog-cancel'),
-        refreshDialogConfirm: document.getElementById('refresh-dialog-confirm'),
-        refreshDeleteLabelsCb: document.getElementById('refresh-delete-labels-cb'),
-        refreshCountBullet: document.getElementById('refresh-count-bullet'),
-        refreshBulletLabels: document.getElementById('refresh-bullet-labels'),
-        refreshDbPathText: document.getElementById('refresh-db-path-text'),
         // Quick Pick
         qpAddBtn: document.getElementById('qp-add-btn'),
         qpCloneBtn: document.getElementById('qp-clone-btn'),
@@ -629,26 +621,13 @@ const GrooveDropper = {
             this.updateOffsetDisplay(this.state.currentOffset);
         });
 
-        // Refresh button + dialog
-        this.elements.refreshBtn.addEventListener('click', () => this.openRefreshDialog().catch(e => console.error(e)));
-        this.elements.refreshDialogClose.addEventListener('click', () => this.closeRefreshDialog());
-        this.elements.refreshDialogCancel.addEventListener('click', () => this.closeRefreshDialog());
-        this.elements.refreshDialogConfirm.addEventListener('click', () => this.submitRefresh().catch(e => console.error(e)));
-        this.elements.refreshDeleteLabelsCb.addEventListener('change', () => {
-            this._updateRefreshBulletLabels(this.elements.refreshDeleteLabelsCb.checked);
-        });
-        this.elements.refreshDialogOverlay.addEventListener('click', (e) => {
-            if (e.target === this.elements.refreshDialogOverlay) this.closeRefreshDialog();
-        });
+        // Refresh button
+        this.elements.refreshBtn.addEventListener('click', () => this._doRefresh().catch(e => console.error(e)));
 
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Escape') {
                 if (!this.elements.folderDialogOverlay.classList.contains('hidden')) {
                     this.closeFolderDialog();
-                    return;
-                }
-                if (!this.elements.refreshDialogOverlay.classList.contains('hidden')) {
-                    this.closeRefreshDialog();
                     return;
                 }
             }
