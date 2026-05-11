@@ -624,6 +624,12 @@ const GrooveDropper = {
         // Refresh button
         this.elements.refreshBtn.addEventListener('click', () => this._doRefresh().catch(e => console.error(e)));
 
+        // Blur panel icon buttons after click so keyboard shortcuts remain active
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.panel-icon-btn');
+            if (btn) btn.blur();
+        });
+
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Escape') {
                 if (!this.elements.folderDialogOverlay.classList.contains('hidden')) {
