@@ -59,7 +59,9 @@ This project consists of a Python backend (Flask API + SQLite database) and
 a web front-end. Run it from the command line, it will automatically open a 
 tab in your default web browser.
 
-**Windows** — install Python if you haven't already:
+### Windows
+
+Install Python if you haven't already:
 
 ```bat
 > winget install python
@@ -71,25 +73,38 @@ Then run from the project directory:
 > run.bat --db-file c:\users\{yourname}\groovedropper.db
 ```
 
-The batch file creates a virtual environment and installs all required packages automatically. There is also a PowerShell variant:
+The batch file creates a virtual environment and installs all required packages automatically. 
+There is also a PowerShell variant:
 
 ```powershell
 > .\run.ps1 "C:\users\{yourname}\groovedropper.db"
 ```
 
-**Linux / macOS** — install Python 3 via your package manager if needed (e.g. `sudo apt install python3` on Ubuntu/Debian), then:
+### Linux / MacOS
+
+**THIS IS THE PREFERRED WAY** (the script `run_gui.sh` does not yet work).
+
+Install Python 3 via your package manager if needed (e.g. `sudo apt install 
+python3` on Ubuntu/Debian), then:
 
 ```bash
+# install your pip, python3-venv as well
 > chmod +x run.sh
 > ./run.sh ~/groovedropper.db
 ```
 
-Once the browser opens, use the **Add Folder** button in the UI to point GrooveDropper at your directory of `.wav` files. Folders and their labels are managed through the web interface and persisted in the database.
+### Running
 
-* `--db-file`: The SQLite database file (e.g. `groovedropper.db`). This file will be created if it does not exist.
-* `--port` *(optional)*: Port to serve the app on (default is 5000).
-* `--refresh` *(optional)*: Pass this flag to drop all existing data and rescan everything from scratch.
-* `--no-browser` *(optional)*: Start the server without opening a browser tab.
+Once the browser opens, use the **Add Folder** button in the UI to point 
+GrooveDropper at your directory of `.wav` files. Folders and their labels 
+are managed through the web interface and persisted in the database.
+
+- `--db-file`: The SQLite database file (e.g. `groovedropper.db`). This file 
+  will be created if it does not exist.
+- `--port` *(optional)*: Port to serve the app on (default is 5000).
+- `--refresh` *(optional)*: Pass this flag to drop all existing data and 
+  rescan everything from scratch.
+- `--no-browser` *(optional)*: Start the server without opening a browser tab.
 
 ### Running as a desktop window (pywebview)
 
@@ -98,12 +113,16 @@ scripts. They use [pywebview](https://pywebview.flowrl.com/), which wraps the pl
 WebView (WebView2 on Windows, WKWebView on macOS, WebKitGTK on Linux). No additional 
 runtime is required — WebView2 ships with Windows 10/11.
 
-**Windows:**
+### Windows
 ```bat
 > run_gui.bat "C:\users\{yourname}\groovedropper.db"
 ```
 
-**Linux / macOS:**
+### Linux / MacOS
+
+**NOTE:** This unfortunately does not yet work, feedback or contributions 
+are welcome.
+
 ```bash
 > chmod +x run_gui.sh
 > ./run_gui.sh ~/groovedropper.db
@@ -123,6 +142,7 @@ use the build scripts. Both scripts manage the virtual environment automatically
 Unzip and run `GrooveDropper.exe`. The database defaults to `%USERPROFILE%\groovedropper.db`.
 
 **Linux — produces `GrooveDropper-x86_64.AppImage`:**
+
 ```bash
 > chmod +x build_linux.sh
 > ./build_linux.sh
