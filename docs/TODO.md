@@ -1,15 +1,16 @@
 ## DOING
 
+- fix: title, add "crate digger" somehow
+- fix: Click full path not shift click, select all?
 - fix: Always show database path somewhere on screen
 - Create groovedropper icon + favicon
-- Create release that works
-- Create VM to release and test on Linux (AppImage)
-- 0.0.9 release
+- 0.9.2-beta release
+  - Ask community to test
   - Publish on Reddit
-
 
 ## LATER
 
+- refactor: MP3 playback 20260511-mp3-support
 - investigate: Key detection algorithm on current offset?
   - Investigate key at offset, draw key in text box on export, add the key 
     if set?
@@ -19,6 +20,10 @@
   - Later? A button next to the vibe edit, that randomizes the name from a 
     long list (like polyend tracker, digitakt 2)
   - Later? Song name randomizer (same code, back end) for inspiration
+- LINUX
+  - fix: run_gui.sh (pywebview issues)
+  - test: installer on linux (AppImage is built, but does not run, maybe let 
+    it run the bash script instead?)
 - VIBE EXPORT
   - Export icon for all slots to a ZIP file
   - (Shift-V saves all slots to a file as a zip?)
@@ -31,15 +36,29 @@
   - Keys for unused buttons?
   - feat: "U" key to toggle untagged labels only
 - feat: draw sample start offset marker in waveform (upon click, or randomize Shift+R) to indicate where sthe slice save or restart is of the sampe
-- feat: Slice mode in waveform editor
-  - Shift+Click or C will set the END point and draw a small masked overlay
-  - HARD!!! Shift+Space will play and loop only between the start and end (or 
-    end sample if no slice stop)
-  - Shift+R will reset the end slice to none, or clicking anywhere in the sample
-  - Saving the slice will save only selected part
-  - Shift+S saves the whole sample (from location as-is without conversion)
-  - Slice management + offset rework (do not use seconds to randomize but slice offset?)
-  - Save slice time customizable, 5s by default? -- NEEDED?
+- SLICING AND CHOPPING
+  - feat: Slice mode in waveform editor
+    - Shift+Click or ?? will set the END point and draw a small masked overlay
+    - HARD!!! Shift+Space will play and loop only between the start and end (or 
+      end sample if no slice stop)
+    - Shift+R will reset the end slice to none, or clicking anywhere in the sample
+    - Saving the slice will save only selected part
+    - Shift+S saves the whole sample (from location as-is without conversion)
+    - Slice management + offset rework (do not use seconds to randomize but slice offset?)
+    - Save slice time customizable, 5s by default? -- NEEDED?
+- WRITE MODE
+  - Ghost  / skull icon, pressed with disclaimer what will happen
+  - Enables renaming of samples to archive / delete (*.wav.bak, *.mp3.bak)
+  - Slice write, allowing a piece of sample to be reindexed as new slice 
+    saved in same folder
+    - Select with slice selection mode
+    - Press C to "cut" which invalidates that region
+    - The invalidated region is dimmed or greyed out in waveform 
+    - Invalidated regions are stored in DB
+    - Invalidated regions cannot be randomly selected anymore
+    - User can "A" archive, or "D" delete the sample (renames to .bak), 
+      never delete, after confirmation dialog
+    - Slice write name is "original-name-{begin-offset}-{end-offset}.wav"
 - fix: scan worker kan crashen, er moet een /stat endpoint komen dat de UI permanent een refresh application message kan sturen
 - UI 
   - CRT bloom in de hacker theme
@@ -69,6 +88,9 @@
 
 ## MAYBE
 
+- Tap BPM?
+  - A BPM tap button that when focussed or mouse press in UI, will determine 
+    BPM (stored in DB metadata, in proper pitch, will transpose!)
 - Download whole sample, as-is?
   - Shift+S Saves whole sample?
   - IF wanting to slice, or run remotely

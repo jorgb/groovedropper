@@ -82,8 +82,6 @@ There is also a PowerShell variant:
 
 ### Linux / MacOS
 
-**THIS IS THE PREFERRED WAY** (the script `run_gui.sh` does not yet work).
-
 Install Python 3 via your package manager if needed (e.g. `sudo apt install 
 python3` on Ubuntu/Debian), then:
 
@@ -93,7 +91,7 @@ python3` on Ubuntu/Debian), then:
 > ./run.sh ~/groovedropper.db
 ```
 
-### Running
+### Command line arguments
 
 Once the browser opens, use the **Add Folder** button in the UI to point 
 GrooveDropper at your directory of `.wav` files. Folders and their labels 
@@ -164,6 +162,9 @@ code generated in the back-end, but I made sure to review it all. This project
 took me a few weeks to make, which otherwise would have taken many months. I 
 take code quality very seriously and only accept changes which I understand 
 myself.
+
+✅ I test all features extensively, and only release a new version if nothing 
+breaks.
 
 ## Built With
 - **Python / Flask** - Backend API and static file server.
