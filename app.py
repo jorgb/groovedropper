@@ -15,6 +15,7 @@ from flask import Flask, render_template, request, send_file, jsonify
 import soundfile as sf
 
 from groove import db, wav
+from groove.db import DatabaseTooNewError
 from groove.queue import scan_queue
 
 HTTP_DEBUG = False
@@ -770,6 +771,14 @@ if __name__ == '__main__':
     logger.info(f"Database: {db_path}")
 
     db.configure(db_path)
-    db.migrate_db(db_path)
+    try:
+        db.migrate_db(db_path)
+    except DatabaseTooNewError as e:
+        print(
+            f"ERROR: This version of GrooveDropper only supports v{e.supported_version} of the database "
+            f"but it is on v{e.db_version}, please use a later version!",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     start_background_scan()
     run_app(args.port, not args.no_browser)

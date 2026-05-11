@@ -14,6 +14,7 @@ import webview
 
 import app as flask_app
 from groove import db
+from groove.db import DatabaseTooNewError
 
 
 def _wait_for_server(port, timeout=10):
@@ -36,7 +37,20 @@ def main():
 
     db_path = str(Path(args.db_file).resolve())
     db.configure(db_path)
-    db.migrate_db(db_path)
+    try:
+        db.migrate_db(db_path)
+    except DatabaseTooNewError as e:
+        import tkinter
+        import tkinter.messagebox
+        root = tkinter.Tk()
+        root.withdraw()
+        tkinter.messagebox.showerror(
+            "GrooveDropper – Database Version Error",
+            f"This version of GrooveDropper only supports v{e.supported_version} of the database "
+            f"but it is on v{e.db_version}, please use a later version!",
+        )
+        root.destroy()
+        sys.exit(1)
     flask_app.start_background_scan()
 
     flask_thread = threading.Thread(

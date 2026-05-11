@@ -10,6 +10,15 @@ logger = logging.getLogger(__name__)
 DB_FILE = None
 
 
+class DatabaseTooNewError(Exception):
+    def __init__(self, db_version, supported_version):
+        self.db_version = db_version
+        self.supported_version = supported_version
+        super().__init__(
+            f"Database is at v{db_version} but this build only supports up to v{supported_version}."
+        )
+
+
 def configure(db_path):
     global DB_FILE
     DB_FILE = db_path
@@ -171,6 +180,8 @@ def migrate_db(db_path):
         ''')
         row = conn.execute('SELECT version FROM schema_version').fetchone()
         current = row[0] if row else 0
+        if current > CURRENT_VERSION:
+            raise DatabaseTooNewError(current, CURRENT_VERSION)
         for version in sorted(_MIGRATION_FNS.keys()):
             if version > current:
                 logger.info(f"Applying DB migration v{version}")
