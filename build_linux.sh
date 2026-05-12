@@ -94,8 +94,8 @@ if [ ! -f "$APPIMAGETOOL" ]; then
     echo "Downloading appimagetool for ${ARCH}..."
     wget -q --show-progress -O "$APPIMAGETOOL" \
         "https://github.com/AppImage/AppImageKit/releases/latest/download/appimagetool-${ARCH}.AppImage"
-    chmod +x "$APPIMAGETOOL"
 fi
+chmod +x "$APPIMAGETOOL"
 
 ARCH="$ARCH" "$APPIMAGETOOL" "$SCRIPT_DIR/AppDir" "$APPIMAGE_OUT"
 
