@@ -97,7 +97,7 @@ if [ ! -f "$APPIMAGETOOL" ]; then
 fi
 chmod +x "$APPIMAGETOOL"
 
-ARCH="$ARCH" "$APPIMAGETOOL" "$SCRIPT_DIR/AppDir" "$APPIMAGE_OUT"
+ARCH="$ARCH" APPIMAGE_EXTRACT_AND_RUN=1 "$APPIMAGETOOL" "$SCRIPT_DIR/AppDir" "$APPIMAGE_OUT"
 
 echo ""
 echo "=== Build complete ==="
