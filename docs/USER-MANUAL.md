@@ -71,7 +71,7 @@ finishes the waveform will be available upon the next randomization.
   - `Ctrl + Space` — Copy a direct URL for the current sample and offset (see 
     [Sharing & Saving](#sharing--saving))
   - `S` — Save a 10-second slice from the current playhead position
-  - `Shift + Click` on the file or folder icon copies the full file path to 
+  - `Ctrl + Click` on the file or folder icon copies the full file path to 
     clipboard to manipulate or find the sample locally
 - Vibe list
   - `Shift + 1`–`0` — Save current sample to a specific quick pick slot 1 – 10

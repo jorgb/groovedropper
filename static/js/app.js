@@ -166,7 +166,7 @@ const GrooveDropper = {
             const el = document.getElementById(id);
             if (!el) continue;
             el.addEventListener('click', (e) => {
-                if (e.shiftKey && (id === 'copy-icon-name' || id === 'copy-icon-dir')) {
+                if (e.ctrlKey && (id === 'copy-icon-name' || id === 'copy-icon-dir')) {
                     const fullPath = getFullPath();
                     if (!fullPath) return;
                     navigator.clipboard.writeText(fullPath)
@@ -247,13 +247,6 @@ const GrooveDropper = {
             if (config['quick-play-instantly'] !== undefined) {
                 this.state.quickpick.playInstantly = config['quick-play-instantly'] === 'true';
                 this.elements.qpPlayInstantly.checked = this.state.quickpick.playInstantly;
-            }
-            if (config['quick-pick-preset']) {
-                const presetId = parseInt(config['quick-pick-preset']);
-                if (!isNaN(presetId) && this.state.quickpick.presets.find(p => p.id === presetId)) {
-                    this.state.quickpick.activePresetId = presetId;
-                    await this.loadQuickpickSlots(presetId);
-                }
             }
         } catch (e) {
             console.error("Failed to load config", e);
