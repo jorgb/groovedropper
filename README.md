@@ -4,15 +4,15 @@
 
 ![Groovedropper Banner](docs/images/groovedropper-banner.png)
 
-This application is designed to randomly pick samples from your sample library, 
-which could be digital vinyl recordings, melodics, whole songs, whatever you 
-want to randomly pick from. 
+If you like to be surprised by "the drop of a needle", and get inspired by a 
+melodic, vocal or other sample to start a beat, this application might be 
+for you!
+
+GrooveDropper is designed to randomly pick samples from _your_ digital 
+sample library, which could be vinyl recordings, melodics, whole songs, 
+whatever you want to randomly pick from. 
 It will pick a wave file at random and randomly plays a section in the
 sample, hence the "needle dropping". 
-
-When you lack inspiration and like to use sources like [samplette.io](https://samplette.io/), and
-are inspired by the randomness of the samples you can pick from, this 
-tool might work for you.
 
 ❤️ This application is a labor of love and I created this application as I 
 could not find a single tool that actually randomizes sample selection, support 
@@ -126,32 +126,9 @@ are welcome.
 > ./run_gui.sh ~/groovedropper.db
 ```
 
-The first run installs `pywebview` automatically via the virtual environment.
+## Building a distributable
 
-### Building a standalone distributable
-
-To package GrooveDropper into a file you can hand to someone without Python installed,
-use the build scripts. Both scripts manage the virtual environment automatically.
-
-**Windows — produces `GrooveDropper-win.zip`:**
-```powershell
-> .\build_win.ps1
-```
-Unzip and run `GrooveDropper.exe`. The database defaults to `%USERPROFILE%\groovedropper.db`.
-
-**Linux — produces `GrooveDropper-x86_64.AppImage`:**
-
-```bash
-> chmod +x build_linux.sh
-> ./build_linux.sh
-> chmod +x GrooveDropper-x86_64.AppImage
-> ./GrooveDropper-x86_64.AppImage
-```
-The host system must have `libwebkit2gtk-4.0` or `libwebkit2gtk-4.1` installed
-(`sudo apt install libwebkit2gtk-4.1-0` on Ubuntu/Debian).
-The database defaults to `~/groovedropper.db`.
-
-Both builds accept `--db-file /path/to/your.db` to override the default location.
+Coming soon™
 
 ## AI disclaimer
 
