@@ -1,7 +1,10 @@
 ## DOING
 
+- bug: old samples are not removed that are no longer found
+  - Maybe after a full scan of the DB, do file exists walk over every item, 
+    delete what is no longer there (prune) - last status of scanning is pruning
+  - Also throw a log error when this happens (now it just not plays)
 - fix: title, add "crate digger" somehow
-- fix: Click full path not shift click, select all?
 - fix: Always show database path somewhere on screen
 - Create groovedropper icon + favicon
 - 0.9.2-beta release
@@ -46,8 +49,15 @@
     - Shift+S saves the whole sample (from location as-is without conversion)
     - Slice management + offset rework (do not use seconds to randomize but slice offset?)
     - Save slice time customizable, 5s by default? -- NEEDED?
+- NOT FILTERING ON LABELS
+  - Press shift (or ctrl)+click on label will 'NOT' it
+  - This means (Vinyl) AND NOT (Guitar OR Piano) means Vinyl is regular 
+    label and Guitar OR Piano are NOT filters so all vinyl is randomized 
+    when it is not labeled Guitar or piano.  
+  - An icon (and color?) will indicate the not
+  - Clicking it again in the NOT state will disable the NOT, same as regular 
+    label
 - WRITE MODE
-  - Ghost  / skull icon, pressed with disclaimer what will happen
   - Enables renaming of samples to archive / delete (*.wav.bak, *.mp3.bak)
   - Slice write, allowing a piece of sample to be reindexed as new slice 
     saved in same folder
