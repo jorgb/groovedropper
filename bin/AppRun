@@ -1,0 +1,8 @@
+#!/bin/sh
+HERE="$(dirname "$(readlink -f "${0}")")"
+
+# Tell Python to look inside the internals folder for modules
+export PYTHONPATH="$HERE/_internals:$PYTHONPATH"
+export LD_LIBRARY_PATH="$HERE/_internals:$LD_LIBRARY_PATH"
+
+exec "$HERE/GrooveDropper" "$@"
