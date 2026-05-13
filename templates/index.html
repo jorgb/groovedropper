@@ -144,7 +144,7 @@
             color: var(--text-color);
             border: 1px solid var(--border-color);
             font-family: var(--font-family);
-            padding: 5px;
+            padding: 5px 24px 5px 5px;
             margin-left: 10px;
             outline: none;
             cursor: pointer;
@@ -492,12 +492,12 @@
         #qp-preset-select {
             flex: 1;
             min-width: 100px;
-            background: var(--bg-color);
+            background-color: var(--bg-color);
             color: var(--text-color);
             border: 1px solid var(--border-color);
             font: inherit;
             font-size: 0.8em;
-            padding: 2px 4px;
+            padding: 2px 24px 2px 4px;
             cursor: pointer;
         }
 
@@ -782,6 +782,18 @@
         /* ------------------------------------------------------------------ */
         /* Shared components                                                   */
         /* ------------------------------------------------------------------ */
+
+        /* WebKitGTK (pywebview on Linux) applies native GTK styling to select
+           elements, overriding CSS variables. Stripping appearance forces it
+           to use our CSS. currentColor SVG restores the missing dropdown arrow. */
+        select {
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='currentColor'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 7px center;
+            background-size: 10px 6px;
+        }
 
         .panel-icon-btn {
             background: none;
