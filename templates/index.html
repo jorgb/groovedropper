@@ -1356,6 +1356,11 @@
             </div>
             <div id="index-status-bar">
                 <div id="scan-status"><i class="fa-solid fa-spinner fa-spin"></i> <span>Initializing...</span></div>
+                <button class="panel-icon-btn"
+                        title="Show / hide keyboard controls"
+                        onclick="document.getElementById('controls-header').click()">
+                    <i class="fa-solid fa-keyboard"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -1416,11 +1421,6 @@
 
                 <!-- Toolbar below waveform: controls-toggle | folder buttons | loop -->
                 <div id="waveform-toolbar">
-                    <button class="panel-icon-btn"
-                            title="Show / hide keyboard controls"
-                            onclick="document.getElementById('controls-header').click()">
-                        <i class="fa-solid fa-keyboard"></i>
-                    </button>
                     <div id="waveform-col-right">
                         <button id="folder-add-btn" class="panel-icon-btn" title="Add scan folder"><i class="fa-solid fa-plus"></i></button>
                         <button id="folder-manage-btn" class="panel-icon-btn" title="Manage scan folders" disabled><i class="fa-solid fa-ellipsis"></i></button>
