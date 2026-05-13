@@ -85,6 +85,24 @@ Object.assign(GrooveDropper, {
         setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
     },
 
+    // Seeks to the absolute beginning of the sample (offset 0) and resumes if playing.
+    seekToStart() {
+        if (!this.state.currentSampleId) return;
+        this.state.originalStartOffset = 0;
+        this.state.currentOffset = 0;
+        this.state.skipEndedEvent = true;
+        this.elements.audio.currentTime = 0;
+        this.updateOffsetDisplay(0);
+        this.updatePlayhead();
+        this.flashPlayhead();
+        if (this.state.isPlaying) {
+            this._stopPlayheadUpdater();
+            this.elements.audio.play();
+            this._startPlayheadUpdater();
+        }
+        setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
+    },
+
     // Asks the API for a new random offset within the current sample and seeks to it.
     async randomizeCurrentOffset(playInstantly) {
         if (!this.state.currentSampleId || this.state.durationSamples <= 0) return;

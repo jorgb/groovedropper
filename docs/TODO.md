@@ -1,7 +1,5 @@
 ## DOING
 
-- fix: Button controls should be collapsed on default (collapse setting set to 
-  false in migration script)
 - bug: when vibe list is selected from, the first available vibe should be 
   loaded, and played immediately if selected
 - test: Linux build with new UI
@@ -40,6 +38,11 @@
   - feat: "U" key to toggle untagged labels only
 - feat: draw sample start offset marker in waveform (upon click, or randomize Shift+R) to indicate where sthe slice save or restart is of the sampe
 - SLICING AND CHOPPING
+  - feat: press arrow keys left and right, one second? SHIFT+ left, right 200ms?
+  - feat: press arrow up and down should halve the time in the offset
+    - e.g. HOME, arrow up will position the play head in the middle
+    - arrow up will place it at 3/4th, etc
+    - arrow down will place it at 1/4th, 1/8th etc
   - feat: Slice mode in waveform editor
     - Shift+Click or ?? will set the END point and draw a small masked overlay
     - HARD!!! Shift+Space will play and loop only between the start and end (or 

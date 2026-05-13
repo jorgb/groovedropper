@@ -633,7 +633,10 @@ const GrooveDropper = {
             const tag = document.activeElement.tagName;
             if (tag === 'SELECT' || tag === 'BUTTON' || tag === 'INPUT') return;
 
-            if (e.code === 'Space') {
+            if (e.code === 'Home') {
+                e.preventDefault();
+                this.seekToStart();
+            } else if (e.code === 'Space') {
                 e.preventDefault();
                 if (e.ctrlKey) this.copyCurrentUrlToClipboard();
                 else if (e.shiftKey) this.restartPlay();
@@ -767,11 +770,16 @@ const GrooveDropper = {
             if (presetId) {
                 await this.loadQuickpickSlots(presetId);
                 await this.saveConfig('quick-pick-preset', String(presetId));
+                const firstSlot = [1,2,3,4,5,6,7,8,9,10].find(n => !!this.state.quickpick.slots[String(n)]);
+                if (firstSlot !== undefined) this.state.quickpick.focusedSlot = firstSlot;
             } else {
                 await this.saveConfig('quick-pick-preset', '');
             }
             this.renderQuickpickBar();
             this.elements.qpPresetSelect.blur();
+            if (this.state.quickpick.focusedSlot !== null) {
+                await this.recallQuickpickSlot(this.state.quickpick.focusedSlot);
+            }
         });
 
         this.elements.qpRenameBtn.addEventListener('click', () => {
