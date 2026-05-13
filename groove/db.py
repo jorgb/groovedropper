@@ -636,6 +636,11 @@ def scan_get_folder_id(cursor, folder_path):
     return row['id'] if row else None
 
 
+def scan_fetch_samples_by_folder_id(cursor, folder_id):
+    cursor.execute('SELECT path FROM samples WHERE folder_id = ?', (folder_id,))
+    return [row['path'] for row in cursor.fetchall()]
+
+
 def scan_get_sample_timestamp(cursor, wav_path):
     cursor.execute('SELECT timestamp FROM samples WHERE path = ?', (wav_path,))
     row = cursor.fetchone()

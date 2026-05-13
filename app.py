@@ -63,6 +63,14 @@ def scan_worker():
                 # Look up folder_id once per folder before walking
                 folder_id = db.scan_get_folder_id(cursor, folder_path)
 
+                # Remove DB entries for files that no longer exist on disk
+                if folder_id is not None:
+                    for sample_path in db.scan_fetch_samples_by_folder_id(cursor, folder_id):
+                        if not os.path.exists(sample_path):
+                            logger.info(f"Removing missing sample from database: {sample_path}")
+                            db.scan_delete_sample_by_path(cursor, sample_path)
+                    conn.commit()
+
                 for root, _, files in os.walk(folder_path):
                     for file in files:
                         if file.lower().endswith('.wav'):
@@ -124,7 +132,7 @@ def scan_worker():
                     if not reported_done:
                         reported_done = True
                         logger.info("Scanning done ...")
-                time.sleep(1)
+                time.sleep(5)
     finally:
         conn.close()
 
