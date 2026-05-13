@@ -9,7 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Base / Default Theme Variables */
+        /* ------------------------------------------------------------------ */
+        /* Theme variables                                                     */
+        /* ------------------------------------------------------------------ */
+
         :root {
             --bg-color: #1a1a1a;
             --text-color: #f0f0f0;
@@ -25,7 +28,6 @@
             --cross-display: none;
         }
 
-        /* Hacker Theme */
         [data-theme="theme-hacker"] {
             --bg-color: #000000;
             --text-color: #00ff00;
@@ -41,7 +43,6 @@
             --cross-display: inline-block;
         }
 
-        /* Protracker Theme */
         @font-face {
             font-family: 'TopazPlus';
             src: local('Courier New');
@@ -62,23 +63,68 @@
             --cross-display: none;
         }
 
+        /* ------------------------------------------------------------------ */
+        /* Page shell                                                          */
+        /* ------------------------------------------------------------------ */
+
         body {
             font-family: var(--font-family);
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
             padding: 20px;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 10px;
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* Theme Switcher */
+        /* All layout rows share the same max-width so edges align */
+        #header-row,
+        #index-row,
+        #content-row,
+        #controls-row {
+            width: 100%;
+            max-width: 1050px;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Row 1 — Header: title centered, theme-switcher right               */
+        /* ------------------------------------------------------------------ */
+
+        #header-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: start;
+            gap: 10px;
+        }
+
+        #header-title {
+            grid-column: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0 0 3px 0;
+        }
+
+        .subtitle {
+            font-size: 0.9em;
+            color: var(--secondary-color);
+            margin: 0;
+        }
+
+        /* Theme switcher — right cell of the header grid */
         #theme-switcher-container {
-            position: absolute;
-            top: 20px;
-            right: 20px;
+            grid-column: 3;
+            justify-self: end;
             display: flex;
             flex-direction: column;
             align-items: flex-end;
@@ -116,129 +162,113 @@
             opacity: 0.8;
         }
 
-        /* First-run overlay */
-        #first-run-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.75);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
+        /* ------------------------------------------------------------------ */
+        /* Row 2 — Index number box (full row width, same box style as        */
+        /*         sample-info; contains counter + scan-status + pitch badge) */
+        /* ------------------------------------------------------------------ */
 
-        #first-run-overlay.visible {
-            display: flex;
-        }
-
-        #first-run-card {
-            background: var(--box-bg);
+        #index-number {
+            width: 100%;
+            box-sizing: border-box;
+            background-color: var(--box-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 40px;
-            max-width: 480px;
-            width: 90%;
-            box-shadow: 0 8px 32px var(--box-shadow);
+            padding: 12px 20px;
+            box-shadow: 0 4px 6px var(--box-shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        #first-run-card h2 {
-            color: var(--accent-color);
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 1.2em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        #first-run-steps {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 28px 0;
-            counter-reset: step;
-        }
-
-        #first-run-steps li {
-            counter-increment: step;
-            padding: 7px 0 7px 28px;
-            position: relative;
-            color: var(--text-color);
-            line-height: 1.4;
-        }
-
-        #first-run-steps li::before {
-            content: counter(step) ".";
-            position: absolute;
-            left: 0;
-            color: var(--accent-color);
+        /* Big counter inside the box */
+        .index-number {
+            font-size: 3em;
             font-weight: bold;
+            color: var(--secondary-color);
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
         }
 
-        #first-run-dismiss {
-            display: block;
-            margin-left: auto;
-            background: var(--accent-color);
-            color: var(--bg-color);
-            border: none;
-            padding: 8px 28px;
-            border-radius: 4px;
-            cursor: pointer;
+        /* Scan-status + pitch-badge strip at the bottom of the box */
+        #index-status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 8px;
+        }
+
+        .index-input {
+            background-color: var(--input-bg);
+            color: var(--secondary-color);
+            border: 1px solid var(--border-color);
             font-family: var(--font-family);
             font-size: 1em;
             font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            width: 120px;
+            text-align: right;
+            padding: 5px 10px;
+            border-radius: 4px;
+            outline: none;
+            transition: background-color 0.3s, border-color 0.3s;
         }
 
-        #first-run-dismiss:hover {
-            opacity: 0.85;
+        .index-input.error {
+            background-color: rgba(255, 0, 0, 0.2);
+            border-color: red;
+            color: #ffcccc;
         }
 
-        h1 {
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 5px;
-        }
-
-        .subtitle {
-            font-size: 0.9em;
-            color: var(--secondary-color);
-            margin-bottom: 20px;
-        }
-
-        /* App layout — three-column grid: spacer | main | labels */
-        #app-layout {
-            display: grid;
-            grid-template-columns: 220px 1026px 222px;
-            gap: 10px;
-            grid-auto-flow: row;
-            justify-items: end;
-        }
-
-        #left-spacer {
-            /* mirrors label panel width to keep main column centered */
-        }
-
-        #main-column {
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        [data-theme="theme-protracker"] .index-number,
+        [data-theme="theme-protracker"] .index-input {
+            color: var(--text-color);
         }
 
         /* ------------------------------------------------------------------ */
-        /* Existing main-column panels                                         */
+        /* Row 3 — Two-column content area                                    */
+        /* ------------------------------------------------------------------ */
+
+        #center-contents {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            width: 100%;
+        }
+
+        /* Left column: sample-info + waveform + toolbar */
+        #detail-play {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Right column: vibe labels — width driven by content */
+        #vibe-labels {
+            flex-shrink: 0;
+            min-width: 160px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Sample info panel (no longer contains index counter)               */
         /* ------------------------------------------------------------------ */
 
         #sample-info {
             background-color: var(--box-bg);
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
-            width: 85%;
+            width: 100%;
             max-width: 1024px;
+            box-sizing: border-box;
             box-shadow: 0 4px 6px var(--box-shadow);
-            margin-bottom: 10px;
-            border: 1px solid var(--border-color);
+            border: 2px solid var(--border-color);
         }
 
         .info-row {
@@ -294,52 +324,146 @@
             min-width: 0;
         }
 
-        .index-number {
-            font-size: 3em;
-            font-weight: bold;
-            color: var(--secondary-color);
-            text-align: center;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
+        /* ------------------------------------------------------------------ */
+        /* Waveform — direct child of #detail-play                            */
+        /* ------------------------------------------------------------------ */
 
-        .index-input {
-            background-color: var(--input-bg);
-            color: var(--secondary-color);
-            border: 1px solid var(--border-color);
-            font-family: var(--font-family);
-            font-size: 1em;
-            font-weight: bold;
-            width: 120px;
-            text-align: right;
-            padding: 5px 10px;
-            border-radius: 4px;
-            outline: none;
-            transition: background-color 0.3s, border-color 0.3s;
-        }
-
-        .index-input.error {
-            background-color: rgba(255, 0, 0, 0.2);
-            border-color: red;
-            color: #ffcccc;
-        }
-
-        [data-theme="theme-protracker"] .index-number,
-        [data-theme="theme-protracker"] .index-input {
-            color: var(--text-color);
-        }
-
-        #waveform-row {
-            display: flex;
-            align-items: center;
+        #waveform-container {
             width: 100%;
-            margin: 4px 0;
+            max-width: 1024px;
+            height: 204px;
+            background-color: var(--waveform-bg);
+            position: relative;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px var(--box-shadow);
+            overflow: hidden;
+            cursor: pointer;
         }
 
-        /* Quick Pick Bar */
+        #waveform-img {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            pointer-events: none;
+            filter: var(--waveform-filter);
+            display: none;
+        }
+
+        #playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--accent-color);
+            left: 0;
+            pointer-events: none;
+            box-shadow: 0 0 10px var(--accent-color);
+            z-index: 4;
+        }
+
+        #playhead.flash {
+            background-color: white;
+            box-shadow: 0 0 20px white, 0 0 40px white;
+            transition: background-color 0.1s, box-shadow 0.1s;
+        }
+
+        #play-status-icon {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-size: 1em;
+            color: var(--text-color);
+            opacity: 0.45;
+            z-index: 6;
+            pointer-events: none;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+        }
+
+        #play-status-icon.playing {
+            color: var(--secondary-color);
+            opacity: 1;
+        }
+
+        #sample-label-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: none;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 5px 8px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        #sample-label-bar.has-labels {
+            display: flex;
+        }
+
+        .sample-label-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px 2px 14px;
+            border-radius: 0 3px 3px 0;
+            color: #000000;
+            font-size: 0.75em;
+            clip-path: polygon(10px 0%, 100% 0%, 100% 100%, 10px 100%, 0% 50%);
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .sample-label-chip::before {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 50%;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Toolbar row below the waveform                                     */
+        /* ------------------------------------------------------------------ */
+
+        #waveform-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* pitch-badge + loop-toggle pushed to the far right of the toolbar */
+        #toolbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Folder buttons — now horizontal */
+        #waveform-col-right {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .waveform-folder-icon {
+            color: var(--text-color);
+            opacity: 0.5;
+            font-size: 0.9em;
+            padding: 2px 4px;
+            visibility: hidden;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Vibe-labels panel contents                                          */
+        /* ------------------------------------------------------------------ */
+
         #qp-header {
             font-size: 0.82em;
             font-weight: bold;
@@ -357,7 +481,6 @@
             background-color: var(--box-bg);
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            margin-bottom: 0px;
         }
 
         .qp-row {
@@ -368,7 +491,7 @@
 
         #qp-preset-select {
             flex: 1;
-            min-width: 0;
+            min-width: 100px;
             background: var(--bg-color);
             color: var(--text-color);
             border: 1px solid var(--border-color);
@@ -403,7 +526,7 @@
         #qp-slots {
             display: flex;
             gap: 3px;
-            flex: 1;
+            flex-wrap: wrap;
         }
 
         .qp-slot {
@@ -466,253 +589,6 @@
             flex-shrink: 0;
         }
 
-        #waveform-col-left,
-        #waveform-col-right {
-            flex: 1;
-            min-width: 0;
-        }
-
-        #waveform-col-right {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            padding-left: 8px;
-        }
-
-        #waveform-container {
-            width: 80%;
-            max-width: 1024px;
-            height: 204px;
-            background-color: var(--waveform-bg);
-            position: relative;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 6px var(--box-shadow);
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        #waveform-img {
-            width: 100%;
-            height: 100%;
-            object-fit: fill;
-            pointer-events: none;
-            filter: var(--waveform-filter);
-            display: none;
-        }
-
-        #playhead {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background-color: var(--accent-color);
-            left: 0;
-            pointer-events: none;
-            box-shadow: 0 0 10px var(--accent-color);
-            z-index: 4;
-        }
-
-        #playhead.flash {
-            background-color: white;
-            box-shadow: 0 0 20px white, 0 0 40px white;
-            transition: background-color 0.1s, box-shadow 0.1s;
-        }
-
-        #play-status-icon {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            font-size: 1em;
-            color: var(--text-color);
-            opacity: 0.45;
-            z-index: 6;
-            pointer-events: none;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
-        }
-
-        #play-status-icon.playing {
-            color: var(--secondary-color);
-            opacity: 1;
-        }
-
-        #scan-status {
-            font-size: 0.9em;
-            color: var(--accent-color);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 1;
-            min-width: 0;
-        }
-
-        .toggle-btn {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            padding: 5px 15px;
-            font-family: var(--font-family);
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: background-color 0.2s, color 0.2s;
-            display: inline-flex;
-            align-items: center;
-            align-self: flex-start;
-        }
-
-        .toggle-btn.active {
-            background-color: var(--box-bg);
-            color: var(--accent-color);
-            border-color: var(--accent-color);
-        }
-
-        .loop-cross {
-            display: var(--cross-display);
-            margin-right: 8px;
-            font-weight: bold;
-            visibility: hidden;
-        }
-
-        .toggle-btn.active .loop-cross {
-            visibility: visible;
-        }
-
-        #sample-label-bar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            display: none;
-            flex-wrap: wrap;
-            gap: 4px;
-            padding: 5px 8px;
-            z-index: 5;
-            pointer-events: none;
-        }
-
-        #sample-label-bar.has-labels {
-            display: flex;
-        }
-
-        .sample-label-chip {
-            display: inline-flex;
-            align-items: center;
-            padding: 2px 8px 2px 14px;
-            border-radius: 0 3px 3px 0;
-            color: #000000;
-            font-size: 0.75em;
-            clip-path: polygon(10px 0%, 100% 0%, 100% 100%, 10px 100%, 0% 50%);
-            position: relative;
-            white-space: nowrap;
-        }
-
-        .sample-label-chip::before {
-            content: '';
-            position: absolute;
-            left: 6px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 4px;
-            background: rgba(255,255,255,0.7);
-            border-radius: 50%;
-        }
-
-        #controls-info {
-            background-color: var(--box-bg);
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 10px;
-            width: 80%;
-            max-width: 1024px;
-            border: 1px solid var(--border-color);
-            border-left: 4px solid var(--accent-color);
-        }
-
-        #controls-info h3 {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 0 0 10px 0;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        #controls-info h3:hover {
-            opacity: 0.75;
-        }
-
-        #controls-info.folded h3 {
-            margin-bottom: 0;
-        }
-
-        #controls-info.folded table {
-            display: none;
-        }
-
-        #controls-info table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        #controls-info td {
-            padding: 2px 0;
-            vertical-align: top;
-            line-height: 1.2;
-        }
-
-        #controls-info td:first-child {
-            padding-right: 5px;
-            white-space: nowrap;
-        }
-
-        .control-key {
-            background-color: var(--bg-color);
-            padding: 1px 5px;
-            border-radius: 3px;
-            font-weight: bold;
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            margin-right: 10px;
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 18px;
-            font-size: 0.9em;
-        }
-
-        .status-playing {
-            color: var(--secondary-color);
-            font-weight: bold;
-        }
-
-        [data-theme="theme-protracker"] .status-playing {
-            color: var(--text-color);
-        }
-
-        .status-stopped {
-            color: var(--text-color);
-            opacity: 0.7;
-        }
-
-
-        /* ------------------------------------------------------------------ */
-        /* Right panel                                                         */
-        /* ------------------------------------------------------------------ */
-
-        #label-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            justify-self: start;
-        }
-
-        /* Preset box */
         #preset-box {
             background-color: var(--box-bg);
             border: 1px solid var(--border-color);
@@ -774,7 +650,6 @@
             color: var(--accent-color);
         }
 
-        /* Label list container */
         #label-list-container {
             background-color: var(--box-bg);
             border: 1px solid var(--border-color);
@@ -836,7 +711,78 @@
             max-height: 420px;
         }
 
-        /* Panel icon buttons */
+        /* ------------------------------------------------------------------ */
+        /* Row 4 — Controls (starts folded; toggle button below waveform      */
+        /*         opens/closes it)                                           */
+        /* ------------------------------------------------------------------ */
+
+        #controls-info {
+            background-color: var(--box-bg);
+            padding: 15px;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-color);
+        }
+
+        #controls-info h3 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 10px 0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        #controls-info h3:hover {
+            opacity: 0.75;
+        }
+
+        #controls-info.folded h3 {
+            margin-bottom: 0;
+        }
+
+        #controls-info.folded table {
+            display: none;
+        }
+
+        #controls-info table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        #controls-info td {
+            padding: 2px 0;
+            vertical-align: top;
+            line-height: 1.2;
+        }
+
+        #controls-info td:first-child {
+            padding-right: 5px;
+            white-space: nowrap;
+        }
+
+        .control-key {
+            background-color: var(--bg-color);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            margin-right: 10px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 18px;
+            font-size: 0.9em;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Shared components                                                   */
+        /* ------------------------------------------------------------------ */
+
         .panel-icon-btn {
             background: none;
             border: 1px solid var(--border-color);
@@ -865,7 +811,113 @@
             border-color: var(--border-color);
         }
 
-        /* Label tag row (in list) */
+        .toggle-btn {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 5px 15px;
+            font-family: var(--font-family);
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .toggle-btn.active {
+            background-color: var(--box-bg);
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .loop-cross {
+            display: var(--cross-display);
+            margin-right: 8px;
+            font-weight: bold;
+            visibility: hidden;
+        }
+
+        .toggle-btn.active .loop-cross {
+            visibility: visible;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Scan status & pitch badge                                           */
+        /* ------------------------------------------------------------------ */
+
+        #scan-status {
+            font-size: 0.9em;
+            color: var(--accent-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .status-playing {
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        [data-theme="theme-protracker"] .status-playing {
+            color: var(--text-color);
+        }
+
+        .status-stopped {
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+        #pitch-badge {
+            font-size: 0.9rem;
+            font-family: monospace;
+            color: var(--text-color);
+            display: flex;
+            gap: 9px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        #pitch-badge.pitch-active {
+            color: var(--accent-color);
+        }
+
+        #pitch-semitone-drag,
+        #pitch-cents-drag {
+            pointer-events: all;
+            cursor: ns-resize;
+            user-select: none;
+        }
+
+        .pitch-cents {
+            opacity: 0.7;
+        }
+
+        #pitch-reset-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 0 2px;
+            line-height: 1;
+            opacity: 0.6;
+            font-family: monospace;
+        }
+
+        #pitch-reset-btn:hover {
+            opacity: 1;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Label tag rows                                                      */
+        /* ------------------------------------------------------------------ */
+
         .label-tag-row {
             display: flex;
             align-items: center;
@@ -885,7 +937,6 @@
             cursor: default;
         }
 
-        /* Bookmark tag shape */
         .label-tag {
             display: flex;
             align-items: center;
@@ -971,7 +1022,6 @@
             outline: none;
         }
 
-        /* UNTAGGED pseudo-label row */
         #untagged-label-row {
             display: flex;
             align-items: center;
@@ -984,7 +1034,10 @@
             display: none;
         }
 
-        /* Toast Notification */
+        /* ------------------------------------------------------------------ */
+        /* Toast notification                                                  */
+        /* ------------------------------------------------------------------ */
+
         #toast {
             visibility: hidden;
             min-width: 250px;
@@ -1016,33 +1069,96 @@
 
         @keyframes fadein {
             from { bottom: 0; opacity: 0; }
-            to { bottom: 30px; opacity: 1; }
+            to   { bottom: 30px; opacity: 1; }
         }
 
         @keyframes fadeout {
             from { bottom: 30px; opacity: 1; }
-            to { bottom: 0; opacity: 0; }
+            to   { bottom: 0; opacity: 0; }
         }
 
         /* ------------------------------------------------------------------ */
-        /* Folder buttons (waveform-col-right)                                */
+        /* First-run overlay                                                   */
         /* ------------------------------------------------------------------ */
 
-        #waveform-col-right {
-            gap: 4px;
-            padding-top: 4px;
-            align-self: flex-start;
+        #first-run-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
         }
 
-        .waveform-folder-icon {
+        #first-run-overlay.visible {
+            display: flex;
+        }
+
+        #first-run-card {
+            background: var(--box-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 40px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 8px 32px var(--box-shadow);
+        }
+
+        #first-run-card h2 {
+            color: var(--accent-color);
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #first-run-steps {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 28px 0;
+            counter-reset: step;
+        }
+
+        #first-run-steps li {
+            counter-increment: step;
+            padding: 7px 0 7px 28px;
+            position: relative;
             color: var(--text-color);
-            opacity: 0.5;
-            font-size: 0.9em;
-            padding: 2px 4px;
+            line-height: 1.4;
+        }
+
+        #first-run-steps li::before {
+            content: counter(step) ".";
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        #first-run-dismiss {
+            display: block;
+            margin-left: auto;
+            background: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 8px 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: var(--font-family);
+            font-size: 1em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #first-run-dismiss:hover {
+            opacity: 0.85;
         }
 
         /* ------------------------------------------------------------------ */
-        /* Folder add dialog                                                   */
+        /* Folder dialog                                                       */
         /* ------------------------------------------------------------------ */
 
         .dialog-overlay {
@@ -1184,231 +1300,221 @@
         }
 
         /* ------------------------------------------------------------------ */
-        /* Pitch badge                                                         */
+        /* Responsive                                                          */
         /* ------------------------------------------------------------------ */
 
-        #pitch-badge {
-            font-size: 0.9rem;
-            font-family: monospace;
-            color: var(--text-color);
-            display: flex;
-            gap: 9px;
-            align-items: center;
-            flex-shrink: 0;
+        /* Tablet / phone landscape — stack the two content columns */
+        @media (max-width: 700px) {
+            body { padding: 10px; gap: 8px; }
+
+            #center-contents { flex-direction: column; }
+            #vibe-labels { width: 100%; }
         }
 
-        #pitch-badge.pitch-active {
-            color: var(--accent-color);
-        }
-
-        #pitch-semitone-drag,
-        #pitch-cents-drag {
-            pointer-events: all;
-            cursor: ns-resize;
-            user-select: none;
-        }
-
-        .pitch-cents {
-            opacity: 0.7;
-        }
-
-        #pitch-reset-btn {
-            background: none;
-            border: none;
-            color: inherit;
-            font-size: 0.85rem;
-            cursor: pointer;
-            padding: 0 2px;
-            line-height: 1;
-            opacity: 0.6;
-            font-family: monospace;
-        }
-
-        #pitch-reset-btn:hover {
-            opacity: 1;
-        }
-
-        /* Responsive: stack columns vertically on narrow viewports */
-        @media (max-width: 1380px) {
-            #app-layout {
-                grid-template-columns: 220px 1fr 220px;
-                width: calc(100% - 40px);
-            }
-        }
-
-        @media (max-width: 900px) {
-            #app-layout {
-                grid-template-columns: 1fr;
-                width: 100%;
-            }
-
-            #left-spacer {
-                display: none;
-            }
-
-            #label-panel {
-                width: 80%;
-                margin: 0 auto;
-            }
+        /* Phone portrait — stack header title above theme switcher */
+        @media (max-width: 480px) {
+            #header-row { display: flex; flex-direction: column; align-items: stretch; }
+            #header-title { order: 1; }
+            #theme-switcher-container { order: 2; justify-self: unset; align-self: flex-end; }
+            .dialog-card { min-width: unset; }
         }
     </style>
 </head>
 <body>
-    <div id="theme-switcher-container">
-        <div id="theme-switcher-row">
-            <span id="theme-icon"><i class="fa-solid fa-palette"></i></span>
-            <select id="theme-select">
-                <option value="theme-default">Default</option>
-                <option value="theme-hacker">Hacker</option>
-                <option value="theme-protracker">ProTracker</option>
-            </select>
+
+    <!-- -------------------------------------------------------------------- -->
+    <!-- Row 1: title (centered) + theme switcher (right)                     -->
+    <!-- -------------------------------------------------------------------- -->
+    <div id="header-row">
+        <div id="header-title">
+            <h1>GrooveDropper</h1>
+            <div class="subtitle">Needle Drop Sampling Assistant</div>
         </div>
-        <span id="app-version"></span>
+        <div id="theme-switcher-container">
+            <div id="theme-switcher-row">
+                <span id="theme-icon"><i class="fa-solid fa-palette"></i></span>
+                <select id="theme-select">
+                    <option value="theme-default">Default</option>
+                    <option value="theme-hacker">Hacker</option>
+                    <option value="theme-protracker">ProTracker</option>
+                </select>
+            </div>
+            <span id="app-version"></span>
+        </div>
     </div>
 
-    <h1>GrooveDropper</h1>
-    <div class="subtitle">Needle Drop Sampling Assistant</div>
-
-    <div id="app-layout">
-        <div id="left-spacer"></div>
-        <div id="main-column">
-            <div id="sample-info">
-                <div class="index-number">
-                    <input type="text" id="current-index" class="index-input" value="0">
-                    <span>/</span>
-                    <span id="total-samples">0</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-row-label-group">
-                        <i class="fa-solid fa-file info-copy-icon" id="copy-icon-name" title="Copy filename"></i>
-                        <span class="info-label">Name:</span>
-                    </span>
-                    <span id="sample-name">Waiting for samples to be indexed</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-row-label-group">
-                        <i class="fa-solid fa-folder info-copy-icon" id="copy-icon-dir" title="Copy directory path"></i>
-                        <span class="info-label">Directory:</span>
-                    </span>
-                    <span id="sample-dir">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-row-label-group">
-                        <i class="fa-solid fa-arrows-left-right-to-line info-copy-icon" id="copy-icon-size" title="Copy file size"></i>
-                        <span class="info-label">Size:</span>
-                    </span>
-                    <span id="sample-size">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-row-label-group">
-                        <i class="fa-solid fa-clock info-copy-icon" id="copy-icon-duration" title="Copy duration"></i>
-                        <span class="info-label">Duration:</span>
-                    </span>
-                    <span id="sample-duration">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-row-label-group">
-                        <i class="fa-solid fa-i-cursor info-copy-icon" id="copy-icon-offset" title="Copy offset"></i>
-                        <span class="info-label" id="offset-label">Offset:</span>
-                    </span>
-                    <input type="text" id="sample-offset" class="index-input" value="00000000">
-                </div>
-                <div class="info-row" id="scan-status-row">
-                    <div id="scan-status"><i class="fa-solid fa-spinner fa-spin"></i> <span>Initializing...</span></div>
-                    <span id="pitch-badge">
-                        <button id="pitch-reset-btn" title="Reset pitch"><i class="fa-solid fa-music"></i></button>
-                        <span id="pitch-semitone-drag">+0</span>
-                        <span id="pitch-cents-drag" class="pitch-cents">0c</span>
-                    </span>
-                </div>
+    <!-- -------------------------------------------------------------------- -->
+    <!-- Row 2: index number box (full row width)                              -->
+    <!--        contains: big counter + scan-status + pitch-badge strip       -->
+    <!-- -------------------------------------------------------------------- -->
+    <div id="index-row">
+        <div id="index-number">
+            <div class="index-number">
+                <input type="text" id="current-index" class="index-input" value="0">
+                <span>/</span>
+                <span id="total-samples">0</span>
             </div>
+            <div id="index-status-bar">
+                <div id="scan-status"><i class="fa-solid fa-spinner fa-spin"></i> <span>Initializing...</span></div>
+            </div>
+        </div>
+    </div>
 
-            <div id="waveform-row">
-                <div id="waveform-col-left"></div>
+    <!-- -------------------------------------------------------------------- -->
+    <!-- Row 3: two-column content                                             -->
+    <!-- -------------------------------------------------------------------- -->
+    <div id="content-row">
+        <div id="center-contents">
+
+            <!-- Left column: sample details + waveform + toolbar -->
+            <div id="detail-play">
+
+                <div id="sample-info">
+                    <div class="info-row">
+                        <span class="info-row-label-group">
+                            <i class="fa-solid fa-file info-copy-icon" id="copy-icon-name" title="Copy filename"></i>
+                            <span class="info-label">Name:</span>
+                        </span>
+                        <span id="sample-name">Waiting for samples to be indexed</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-row-label-group">
+                            <i class="fa-solid fa-folder info-copy-icon" id="copy-icon-dir" title="Copy directory path"></i>
+                            <span class="info-label">Directory:</span>
+                        </span>
+                        <span id="sample-dir">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-row-label-group">
+                            <i class="fa-solid fa-arrows-left-right-to-line info-copy-icon" id="copy-icon-size" title="Copy file size"></i>
+                            <span class="info-label">Size:</span>
+                        </span>
+                        <span id="sample-size">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-row-label-group">
+                            <i class="fa-solid fa-clock info-copy-icon" id="copy-icon-duration" title="Copy duration"></i>
+                            <span class="info-label">Duration:</span>
+                        </span>
+                        <span id="sample-duration">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-row-label-group">
+                            <i class="fa-solid fa-i-cursor info-copy-icon" id="copy-icon-offset" title="Copy offset"></i>
+                            <span class="info-label" id="offset-label">Offset:</span>
+                        </span>
+                        <input type="text" id="sample-offset" class="index-input" value="00000000">
+                    </div>
+                </div>
+
                 <div id="waveform-container">
                     <img id="waveform-img" src="" alt="Waveform">
                     <div id="play-status-icon"><i class="fa-solid fa-stop"></i></div>
                     <div id="sample-label-bar"></div>
                     <div id="playhead"></div>
                 </div>
-                <div id="waveform-col-right">
-                    <span class="waveform-folder-icon"><i class="fa-solid fa-folder"></i></span>
-                    <button id="folder-add-btn" class="panel-icon-btn" title="Add scan folder"><i class="fa-solid fa-plus"></i></button>
-                    <button id="folder-manage-btn" class="panel-icon-btn" title="Manage scan folders" disabled><i class="fa-solid fa-ellipsis"></i></button>
-                    <button id="refresh-btn" class="panel-icon-btn" title="Refresh sample index"><i class="fa-solid fa-arrows-rotate"></i></button>
+
+                <!-- Toolbar below waveform: controls-toggle | folder buttons | loop -->
+                <div id="waveform-toolbar">
+                    <button class="panel-icon-btn"
+                            title="Show / hide keyboard controls"
+                            onclick="document.getElementById('controls-header').click()">
+                        <i class="fa-solid fa-keyboard"></i>
+                    </button>
+                    <div id="waveform-col-right">
+                        <button id="folder-add-btn" class="panel-icon-btn" title="Add scan folder"><i class="fa-solid fa-plus"></i></button>
+                        <button id="folder-manage-btn" class="panel-icon-btn" title="Manage scan folders" disabled><i class="fa-solid fa-ellipsis"></i></button>
+                        <!-- <span class="waveform-folder-icon"><i class="fa-solid fa-folder"></i></span> -->
+                        <button id="refresh-btn" class="panel-icon-btn" title="Refresh sample index"><i class="fa-solid fa-arrows-rotate"></i></button>
+                    </div>
+                    <div id="toolbar-right">
+                        <span id="pitch-badge">
+                            <button id="pitch-reset-btn" title="Reset pitch"><i class="fa-solid fa-music"></i></button>
+                            <span id="pitch-semitone-drag">+0</span>
+                            <span id="pitch-cents-drag" class="pitch-cents">0c</span>
+                        </span>
+                        <button id="loop-toggle" class="toggle-btn">
+                            <span class="loop-cross">[X]</span>Loop
+                        </button>
+                    </div>
                 </div>
+
             </div>
 
-            <audio id="audio-player" preload="auto"></audio>
+            <!-- Right column: vibe labels -->
+            <div id="vibe-labels">
 
-            <div id="controls-info">
-                <h3 id="controls-header"><i id="controls-fold-icon" class="fa-solid fa-chevron-down"></i>Controls</h3>
-                <table>
-                    <tr><td><span class="control-key">SPACE</span></td><td>Play / Pause - Resumes from stopped location</td></tr>
-                    <tr><td><span class="control-key">SHIFT + SPACE</span></td><td>Reset playhead - Restarts the sample from the originally randomized offset</td></tr>
-                    <tr><td><span class="control-key">CTRL + SPACE</span></td><td>Copy Link - Copy a direct URL to the current sample and slice to your clipboard</td></tr>
-                    <tr><td><span class="control-key">CLICK</span></td><td>Scrub through the waveform by clicking</td></tr>
-                    <tr><td><span class="control-key">R</span></td><td>Random Sample - Pick random sample and play immediately</td></tr>
-                    <tr><td><span class="control-key">SHIFT + R</span></td><td>Randomize In Sample - Pick new random offset in current sample</td></tr>
-                    <tr><td><span class="control-key">P</span></td><td>Previous Sample - Go to previous sample in history</td></tr>
-                    <tr><td><span class="control-key">, / .</span></td><td>Pitch Down / Up — transpose by 1 semitone; hold SHIFT for 10-cent fine steps</td></tr>
-                    <tr><td><span class="control-key">L</span></td><td>Reset Pitch — Regular playback, return to zero (0 semitones, 0 cents)</td></tr>
-                    <tr><td><span class="control-key">V</span></td><td>Vibe Pick — Store current sample, offset and pitch to the next free quick pick slot</td></tr>
-                </table>
-            </div>
-        </div>
+                <div id="quickpick-bar">
+                    <div id="qp-header">Vibe Picks</div>
+                    <div class="qp-row">
+                        <button id="qp-add-btn" class="panel-icon-btn qp-btn" title="New quick pick preset"><i class="fa-solid fa-plus"></i></button>
+                        <button id="qp-clone-btn" class="panel-icon-btn qp-btn" title="Clone this quick pick preset" disabled><i class="fa-solid fa-clone"></i></button>
+                        <select id="qp-preset-select"><option value="">— select preset —</option></select>
+                        <button id="qp-rename-btn" class="panel-icon-btn qp-btn" title="Rename preset" disabled><i class="fa-solid fa-pen-to-square"></i></button>
+                    </div>
+                    <div class="qp-row">
+                        <div id="qp-slots"></div>
+                        <button id="qp-delete-btn" class="panel-icon-btn qp-btn" title="Delete this quick pick preset" disabled><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <div class="qp-row">
+                        <label id="qp-play-instantly-label" title="Play immediately when recalling a slot">
+                            <input type="checkbox" id="qp-play-instantly">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span>Play Instantly</span>
+                        </label>
+                    </div>
+                </div>
 
-        <div id="label-panel">
+                <div id="preset-box">
+                    <div id="preset-header">
+                        <input type="text" id="preset-name-input" placeholder="Preset name" readonly>
+                        <button id="preset-add-btn" class="panel-icon-btn" title="Add preset"><i class="fa-solid fa-plus"></i></button>
+                        <button id="preset-delete-btn" class="panel-icon-btn" title="Delete preset"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <div id="preset-list"></div>
+                </div>
 
-            <div id="quickpick-bar">
-                <div id="qp-header">Vibe Picks</div>
-                <div class="qp-row">
-                    <button id="qp-add-btn" class="panel-icon-btn qp-btn" title="New quick pick preset"><i class="fa-solid fa-plus"></i></button>
-                    <button id="qp-clone-btn" class="panel-icon-btn qp-btn" title="Clone this quick pick preset" disabled><i class="fa-solid fa-clone"></i></button>
-                    <select id="qp-preset-select"><option value="">— select preset —</option></select>
-                    <button id="qp-rename-btn" class="panel-icon-btn qp-btn" title="Rename preset" disabled><i class="fa-solid fa-pen-to-square"></i></button>
+                <div id="label-list-container">
+                    <div id="label-list-header">
+                        <span>Labels</span>
+                        <button id="label-add-btn" class="panel-icon-btn" title="Add label"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <div id="label-add-form">
+                        <input type="text" id="label-name-input" placeholder="Label name">
+                        <button id="label-save-btn" class="panel-icon-btn" title="Save"><i class="fa-solid fa-check"></i></button>
+                        <button id="label-cancel-btn" class="panel-icon-btn" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div id="untagged-label-row"></div>
+                    <ul id="label-list"></ul>
                 </div>
-                <div class="qp-row">
-                    <div id="qp-slots"></div>
-                    <button id="qp-delete-btn" class="panel-icon-btn qp-btn" title="Delete this quick pick preset" disabled><i class="fa-solid fa-trash"></i></button>
-                </div>
-                <div class="qp-row">
-                    <label id="qp-play-instantly-label" title="Play immediately when recalling a slot">
-                        <input type="checkbox" id="qp-play-instantly">
-                        <i class="fa-solid fa-bolt"></i>
-                        <span>Play Instantly</span>
-                    </label>
-                </div>
-            </div>
 
-            <div id="preset-box">
-                <div id="preset-header">
-                    <input type="text" id="preset-name-input" placeholder="Preset name" readonly>
-                    <button id="preset-add-btn" class="panel-icon-btn" title="Add preset"><i class="fa-solid fa-plus"></i></button>
-                    <button id="preset-delete-btn" class="panel-icon-btn" title="Delete preset"><i class="fa-solid fa-trash"></i></button>
-                </div>
-                <div id="preset-list"></div>
             </div>
 
-            <div id="label-list-container">
-                <div id="label-list-header">
-                    <span>Labels</span>
-                    <button id="label-add-btn" class="panel-icon-btn" title="Add label"><i class="fa-solid fa-plus"></i></button>
-                </div>
-                <div id="label-add-form">
-                    <input type="text" id="label-name-input" placeholder="Label name">
-                    <button id="label-save-btn" class="panel-icon-btn" title="Save"><i class="fa-solid fa-check"></i></button>
-                    <button id="label-cancel-btn" class="panel-icon-btn" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div id="untagged-label-row"></div>
-                <ul id="label-list"></ul>
-            </div>
-            <button id="loop-toggle" class="toggle-btn">
-                <span class="loop-cross">[X]</span>Loop
-            </button>
         </div>
     </div>
 
+    <!-- -------------------------------------------------------------------- -->
+    <!-- Row 4: keyboard controls reference (starts folded)                   -->
+    <!-- -------------------------------------------------------------------- -->
+    <div id="controls-row">
+        <div id="controls-info" class="folded">
+            <h3 id="controls-header"><i id="controls-fold-icon" class="fa-solid fa-chevron-right"></i>Controls</h3>
+            <table>
+                <tr><td><span class="control-key">SPACE</span></td><td>Play / Pause - Resumes from stopped location</td></tr>
+                <tr><td><span class="control-key">SHIFT + SPACE</span></td><td>Reset playhead - Restarts the sample from the originally randomized offset</td></tr>
+                <tr><td><span class="control-key">CTRL + SPACE</span></td><td>Copy Link - Copy a direct URL to the current sample and slice to your clipboard</td></tr>
+                <tr><td><span class="control-key">CLICK</span></td><td>Scrub through the waveform by clicking</td></tr>
+                <tr><td><span class="control-key">R</span></td><td>Random Sample - Pick random sample and play immediately</td></tr>
+                <tr><td><span class="control-key">SHIFT + R</span></td><td>Randomize In Sample - Pick new random offset in current sample</td></tr>
+                <tr><td><span class="control-key">P</span></td><td>Previous Sample - Go to previous sample in history</td></tr>
+                <tr><td><span class="control-key">, / .</span></td><td>Pitch Down / Up — transpose by 1 semitone; hold SHIFT for 10-cent fine steps</td></tr>
+                <tr><td><span class="control-key">L</span></td><td>Reset Pitch — Regular playback, return to zero (0 semitones, 0 cents)</td></tr>
+                <tr><td><span class="control-key">V</span></td><td>Vibe Pick — Store current sample, offset and pitch to the next free quick pick slot</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <audio id="audio-player" preload="auto"></audio>
     <div id="toast"></div>
 
     <!-- Folder add dialog -->
@@ -1434,7 +1540,6 @@
             </div>
         </div>
     </div>
-
 
     <div id="first-run-overlay">
         <div id="first-run-card">
