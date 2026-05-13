@@ -154,8 +154,9 @@ def start_background_scan():
 
 
 def get_random_offset(duration_samples, samplerate):
-    five_secs = 5 * samplerate
-    max_start = max(0, duration_samples - five_secs) if duration_samples >= five_secs else duration_samples
+    # 200ms seconds play time margin for randomization
+    play_time = 0.2 * samplerate
+    max_start = max(0, duration_samples - play_time) if duration_samples >= play_time else duration_samples
     return random.randint(0, int(max_start))
 
 
