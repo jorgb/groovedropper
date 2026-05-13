@@ -4,7 +4,11 @@
   - Maybe after a full scan of the DB, do file exists walk over every item, 
     delete what is no longer there (prune) - last status of scanning is pruning
   - Also throw a log error when this happens (now it just not plays)
-- fix: title, add "crate digger" somehow
+- fix: Button controls should be collapsed on default (collapse setting set to 
+  false in migration script)
+- bug: when vibe list is selected from, the first available vibe should be 
+  loaded, and played immediately if selected
+- test: Linux build with new UI
 - fix: Always show database path somewhere on screen
 - Create groovedropper icon + favicon
 - 0.9.2-beta release
