@@ -19,6 +19,11 @@ could not find a single tool that actually randomizes sample selection, support
 some tagging and allow me to dig through thousands of sample chops I collected 
 over the years.
 
+## Known issues
+
+- Using `run_gui.sh` under Linux (using pywebview) will not pitch down past 
+  -3 semitones. This works running in a native browser (use `run.sh`)
+
 ## FAQ
 
 - Is GrooveDropper free? — Yes, it is created in my spare time, and I will 
