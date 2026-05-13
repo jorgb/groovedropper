@@ -1,9 +1,5 @@
 ## DOING
 
-- bug: old samples are not removed that are no longer found
-  - Maybe after a full scan of the DB, do file exists walk over every item, 
-    delete what is no longer there (prune) - last status of scanning is pruning
-  - Also throw a log error when this happens (now it just not plays)
 - fix: Button controls should be collapsed on default (collapse setting set to 
   false in migration script)
 - bug: when vibe list is selected from, the first available vibe should be 
@@ -112,6 +108,7 @@
 - Starred items, because some are just cool but not used right now
   - Add one to five stars or just one star for "favorite for later?"
 - Mobile UI front-end and running on another URL but 127.0.0.1?
+  - Make mobile responsive, almost there!
 - Shift+Click mark end of slice, visualize and playback that part only save will save
 	- Tag the part of the slice as a certain type (or the whole sample) 
 	- Randomize in type, this requires a DB and sample references that do not break (the MD5?)

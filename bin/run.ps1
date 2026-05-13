@@ -1,6 +1,6 @@
 param([string]$DbFile)
 if (-not $DbFile) {
-    Write-Error "Database path required. Usage: .\run_gui.ps1 `"C:\path\to\groovedropper.db`""
+    Write-Error "Database path required. Usage: .\bin\run.ps1 `"C:\path\to\groovedropper.db`""
     exit 1
 }
 
@@ -12,7 +12,8 @@ if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$BinDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir = Split-Path -Parent $BinDir
 $Venv = Join-Path $ScriptDir '.venv'
 
 if (-not (Test-Path $Venv)) {
@@ -20,4 +21,4 @@ if (-not (Test-Path $Venv)) {
     & "$Venv\Scripts\pip" install -r "$ScriptDir\requirements.txt"
 }
 
-& "$Venv\Scripts\python" "$ScriptDir\app_gui.py" --db-file $DbFile
+& "$Venv\Scripts\python" "$ScriptDir\app.py" --db-file $DbFile

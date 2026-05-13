@@ -3,7 +3,7 @@
 # Requires: python3, wget, libwebkit2gtk-4.0 (or 4.1) on the build machine
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 VENV="$SCRIPT_DIR/.venv"
 APP_NAME="GrooveDropper"
 ARCH="$(uname -m)"

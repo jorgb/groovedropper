@@ -1,7 +1,7 @@
 @echo off
 setlocal
 if "%~1"=="" (
-    echo Error: database path required. Usage: run_gui.bat "C:\path\to\groovedropper.db"
+    echo Error: database path required. Usage: bin\run.bat "C:\path\to\groovedropper.db"
     exit /b 1
 )
 
@@ -14,12 +14,12 @@ if errorlevel 1 (
     exit /b 1
 )
 
-set SCRIPT_DIR=%~dp0
-set VENV=%SCRIPT_DIR%.venv
+set SCRIPT_DIR=%~dp0..
+set VENV=%SCRIPT_DIR%\.venv
 
 if not exist "%VENV%" (
     python -m venv "%VENV%"
-    "%VENV%\Scripts\pip" install -r "%SCRIPT_DIR%requirements.txt"
+    "%VENV%\Scripts\pip" install -r "%SCRIPT_DIR%\requirements.txt"
 )
 
-"%VENV%\Scripts\python" "%SCRIPT_DIR%app_gui.py" --db-file "%~1"
+"%VENV%\Scripts\python" "%SCRIPT_DIR%\app.py" --db-file "%~1"

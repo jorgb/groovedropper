@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -e
 if [ -z "$1" ]; then
-    echo "Error: database path required. Usage: ./run_gui.sh /path/to/groovedropper.db" >&2
+    echo "Error: database path required. Usage: ./bin/run_gui.sh /path/to/groovedropper.db" >&2
     exit 1
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 VENV="$SCRIPT_DIR/.venv"
 
 # On Linux, pywebview uses GTK via the system 'gi' package which can't be pip-installed.

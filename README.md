@@ -75,14 +75,14 @@ Install Python if you haven't already:
 Then run from the project directory:
 
 ```bat
-> run.bat --db-file c:\users\{yourname}\groovedropper.db
+> bin\run.bat "C:\users\{yourname}\groovedropper.db"
 ```
 
 The batch file creates a virtual environment and installs all required packages automatically. 
 There is also a PowerShell variant:
 
 ```powershell
-> .\run.ps1 "C:\users\{yourname}\groovedropper.db"
+> .\bin\run.ps1 "C:\users\{yourname}\groovedropper.db"
 ```
 
 ### Linux / MacOS
@@ -92,8 +92,8 @@ python3` on Ubuntu/Debian), then:
 
 ```bash
 # install your pip, python3-venv as well
-> chmod +x run.sh
-> ./run.sh ~/groovedropper.db
+> chmod +x bin/run.sh
+> ./bin/run.sh ~/groovedropper.db
 ```
 
 ### Command line arguments
@@ -118,7 +118,7 @@ runtime is required — WebView2 ships with Windows 10/11.
 
 ### Windows
 ```bat
-> run_gui.bat "C:\users\{yourname}\groovedropper.db"
+> bin\run_gui.bat "C:\users\{yourname}\groovedropper.db"
 ```
 
 ### Linux / MacOS
@@ -127,8 +127,8 @@ runtime is required — WebView2 ships with Windows 10/11.
 are welcome.
 
 ```bash
-> chmod +x run_gui.sh
-> ./run_gui.sh ~/groovedropper.db
+> chmod +x bin/run_gui.sh
+> ./bin/run_gui.sh ~/groovedropper.db
 ```
 
 ## Building a distributable

@@ -4,7 +4,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$BinDir    = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir = Split-Path -Parent $BinDir
 $Venv      = Join-Path $ScriptDir '.venv'
 $AppName   = 'GrooveDropper'
 $OutDir    = Join-Path $ScriptDir 'dist'
