@@ -43,6 +43,23 @@ Object.assign(GrooveDropper, {
         }
     },
 
+    // Starts audio from stopped state: plays, sets isPlaying, updates status, starts rAF.
+    _startPlaying() {
+        this.elements.audio.play();
+        this.state.isPlaying = true;
+        this.updateStatusText('PLAYING');
+        this._startPlayheadUpdater();
+    },
+
+    // Restarts the rAF updater and resumes audio if currently playing (used after a seek).
+    _resumeIfPlaying() {
+        if (this.state.isPlaying) {
+            this._stopPlayheadUpdater();
+            this.elements.audio.play();
+            this._startPlayheadUpdater();
+        }
+    },
+
     // Toggles playback: pauses and records the current offset, or resumes from it.
     togglePlay() {
         if (!this.state.currentSampleId) return;
@@ -57,10 +74,7 @@ Object.assign(GrooveDropper, {
         } else {
             this.state.skipEndedEvent = true;
             this.elements.audio.currentTime = this.state.currentOffset / this.state.sampleRate;
-            this.elements.audio.play();
-            this.state.isPlaying = true;
-            this.updateStatusText('PLAYING');
-            this._startPlayheadUpdater();
+            this._startPlaying();
             setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
         }
     },
@@ -77,11 +91,7 @@ Object.assign(GrooveDropper, {
         this.updatePlayhead();
         this.flashPlayhead();
 
-        if (this.state.isPlaying) {
-            this._stopPlayheadUpdater();
-            this.elements.audio.play();
-            this._startPlayheadUpdater();
-        }
+        this._resumeIfPlaying();
         setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
     },
 
@@ -95,11 +105,7 @@ Object.assign(GrooveDropper, {
         this.updateOffsetDisplay(0);
         this.updatePlayhead();
         this.flashPlayhead();
-        if (this.state.isPlaying) {
-            this._stopPlayheadUpdater();
-            this.elements.audio.play();
-            this._startPlayheadUpdater();
-        }
+        this._resumeIfPlaying();
         setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
     },
 
@@ -126,10 +132,7 @@ Object.assign(GrooveDropper, {
             this.flashPlayhead();
 
             if (playInstantly && !this.state.isPlaying) {
-                this.elements.audio.play();
-                this.state.isPlaying = true;
-                this.updateStatusText('PLAYING');
-                this._startPlayheadUpdater();
+                this._startPlaying();
             } else if (this.state.isPlaying) {
                 this.elements.audio.play();
             }
@@ -160,11 +163,10 @@ Object.assign(GrooveDropper, {
         this.flashPlayhead();
 
         if (shouldPlay) {
-            this.elements.audio.play();
-            if (!this.state.isPlaying) {
-                this.state.isPlaying = true;
-                this.updateStatusText('PLAYING');
-                this._startPlayheadUpdater();
+            if (this.state.isPlaying) {
+                this.elements.audio.play();
+            } else {
+                this._startPlaying();
             }
         }
         setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
