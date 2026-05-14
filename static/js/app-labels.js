@@ -233,6 +233,7 @@ Object.assign(GrooveDropper, {
             this.state.activePresetLabelIds = preset.labels.slice();
             this.state.activeFilterMode = preset.filter_mode || 'OR';
         } else {
+            // Revert to the ALL-preset default: no label filter, no transient selections.
             this.state.activePresetLabelIds = [];
             this.state.activeFilterMode = 'OR';
             this.state.allPresetSelectedLabelIds = [];
@@ -259,6 +260,8 @@ Object.assign(GrooveDropper, {
             // Activate the new preset
             const found = this.state.allPresets.find(p => p.id === preset.id);
             if (found) {
+                // Activate the freshly created preset immediately so the UI reflects it without
+                // requiring the user to click it in the list.
                 this.state.activePresetId = found.id;
                 this.state.activePresetLabelIds = found.labels.slice();
                 this.state.activeFilterMode = found.filter_mode || 'OR';
@@ -295,10 +298,14 @@ Object.assign(GrooveDropper, {
         if (!this.state.activePresetId) return;
         try {
             const res = await fetch(`/api/presets/${this.state.activePresetId}`, { method: 'DELETE' });
-            if (!res.ok) return;
+            if (!res.ok)
+                return;
+
+            // Fall back to the ALL preset (no active preset, no label filter).
             this.state.activePresetId = null;
             this.state.activePresetLabelIds = [];
             this.state.activeFilterMode = 'OR';
+
             await this.loadPresets();
             this.renderLabelPanel();
         } catch (e) {

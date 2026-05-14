@@ -79,6 +79,15 @@ Object.assign(GrooveDropper, {
         }
     },
 
+    // Prepares a seek: records the new canonical offset and suppresses the 'ended' event
+    // that the seek itself may fire. Both originalStartOffset and currentOffset must always
+    // move together so history and playback both reference the same position.
+    _beginSeekTo(offset) {
+        this.state.originalStartOffset = offset;
+        this.state.currentOffset = offset;
+        this.state.skipEndedEvent = true;
+    },
+
     // Seeks back to the original start offset and resumes the rAF loop if audio was playing.
     restartPlay() {
         if (!this.state.currentSampleId) return;
@@ -97,10 +106,11 @@ Object.assign(GrooveDropper, {
 
     // Seeks to the absolute beginning of the sample (offset 0) and resumes if playing.
     seekToStart() {
-        if (!this.state.currentSampleId) return;
-        this.state.originalStartOffset = 0;
-        this.state.currentOffset = 0;
-        this.state.skipEndedEvent = true;
+        if (!this.state.currentSampleId)
+            return;
+
+        this._beginSeekTo(0);
+
         this.elements.audio.currentTime = 0;
         this.updateOffsetDisplay(0);
         this.updatePlayhead();
@@ -123,9 +133,9 @@ Object.assign(GrooveDropper, {
             if (!res.ok) { console.error("Failed to randomize offset"); return; }
 
             const data = await res.json();
-            this.state.originalStartOffset = data.start_offset;
-            this.state.currentOffset = data.start_offset;
-            this.state.skipEndedEvent = true;
+
+            this._beginSeekTo(data.start_offset);
+
             this.elements.audio.currentTime = data.start_offset / this.state.sampleRate;
             this.updateOffsetDisplay(data.start_offset);
             this.updatePlayhead();

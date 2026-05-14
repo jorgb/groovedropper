@@ -77,6 +77,14 @@ Object.assign(GrooveDropper, {
         }
     },
 
+    // Switches the active quick-pick preset: clears the slot map and focused slot so the
+    // old preset's data can't bleed through while the new preset's slots load.
+    _resetQuickpickState(presetId) {
+        this.state.quickpick.activePresetId = presetId;
+        this.state.quickpick.slots = {};
+        this.state.quickpick.focusedSlot = null;
+    },
+
     // Marks the given slot as focused in state and re-renders the slot buttons.
     _setFocusedQpSlot(slotNumber) {
         this.state.quickpick.focusedSlot = slotNumber;
@@ -153,6 +161,7 @@ Object.assign(GrooveDropper, {
                 return;
 
             const data = await res.json();
+            // Register clone as active; slots stay populated (loadQuickpickSlots overwrites them next).
             this.state.quickpick.presets.push({ id: data.id, name: data.name });
             this.state.quickpick.activePresetId = data.id;
             this.state.quickpick.focusedSlot = null;
@@ -177,9 +186,7 @@ Object.assign(GrooveDropper, {
             if (!res.ok) return;
             const preset = await res.json();
             this.state.quickpick.presets.push(preset);
-            this.state.quickpick.activePresetId = preset.id;
-            this.state.quickpick.slots = {};
-            this.state.quickpick.focusedSlot = null;
+            this._resetQuickpickState(preset.id);
             this.renderQuickpickBar();
             await this.saveConfig('quick-pick-preset', String(preset.id));
             this.showToast(`Quick pick preset '"${preset.name}"' created`);
@@ -262,9 +269,7 @@ Object.assign(GrooveDropper, {
             const res = await fetch(`/api/quickpick/presets/${presetId}`, { method: 'DELETE' });
             if (!res.ok) return;
             this.state.quickpick.presets = this.state.quickpick.presets.filter(p => p.id !== presetId);
-            this.state.quickpick.activePresetId = null;
-            this.state.quickpick.slots = {};
-            this.state.quickpick.focusedSlot = null;
+            this._resetQuickpickState(null);
             this.renderQuickpickBar();
             await this.saveConfig('quick-pick-preset', '');
         } catch (e) { console.error(e); }
@@ -318,6 +323,8 @@ Object.assign(GrooveDropper, {
         try {
             if (this.state.currentDigest === slot.digest) {
                 // Same sample — just seek (and play if needed)
+                // All four fields move together: offset pair anchors the loop point; pitch pair
+                // must match so _applyPitch and _renderPitchOverlay reflect the slot's tuning.
                 this.state.originalStartOffset = slot.start_offset;
                 this.state.currentOffset = slot.start_offset;
                 this.state.pitchSemitones = slot.pitch_semitones;

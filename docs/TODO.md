@@ -1,7 +1,5 @@
 ## DOING
 
-- bug: when vibe list is selected from, the first available vibe should be 
-  loaded, and played immediately if selected
 - test: Linux build with new UI
 - fix: Always show database path somewhere on screen
 - Create groovedropper icon + favicon
@@ -36,6 +34,12 @@
     - Export length (in seconds)
   - Keys for unused buttons?
   - feat: "U" key to toggle untagged labels only
+- Play time == slice export, for short notes to author or little stabs to 
+  try, it might be nice to just play 200ms or 500ms of a note, so entering 
+  10 will be 10 seconds, 0.2 is 200ms, etc also for the slice time? 
+  - The playback should stop after the period exceeded
+  - Maybe a checkbox where "disabled" means no end time
+  - When drawing a marker, slice window this should also update.
 - feat: draw sample start offset marker in waveform (upon click, or randomize Shift+R) to indicate where sthe slice save or restart is of the sampe
 - SLICING AND CHOPPING
   - feat: press arrow keys left and right, one second? SHIFT+ left, right 200ms?
@@ -73,6 +77,12 @@
       never delete, after confirmation dialog
     - Slice write name is "original-name-{begin-offset}-{end-offset}.wav"
 - fix: scan worker kan crashen, er moet een /stat endpoint komen dat de UI permanent een refresh application message kan sturen
+- AD atack, decay
+  - For authoring notes, upon the time to release or the playtime, set in the 
+    decay, this requires backend logic as the decay needs to set in after 
+    the playtime has exceeded 
+- MIDI
+  - Enable midi receiving in browser through Web MIDI API
 - UI 
   - CRT bloom in de hacker theme
   - Tidy up UI and controls to be intuitive, clear and concise

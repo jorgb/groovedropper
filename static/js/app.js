@@ -432,6 +432,8 @@ const GrooveDropper = {
     updateUI(data, playInstantly = false) {
         this.elements.indexInput.classList.remove('error');
 
+        // Hydrate every piece of state that identifies the current sample; kept together so
+        // nothing is accidentally left stale when a new sample replaces the previous one.
         this.state.currentSampleId = data.id;
         this.state.currentDigest = data.digest;
         this.state.totalDuration = data.duration;
@@ -764,9 +766,9 @@ const GrooveDropper = {
         this.elements.qpPresetSelect.addEventListener('change', async () => {
             const val = this.elements.qpPresetSelect.value;
             const presetId = val ? parseInt(val) : null;
-            this.state.quickpick.activePresetId = presetId;
-            this.state.quickpick.slots = {};
-            this.state.quickpick.focusedSlot = null;
+
+            this._resetQuickpickState(presetId);
+
             if (presetId) {
                 await this.loadQuickpickSlots(presetId);
                 await this.saveConfig('quick-pick-preset', String(presetId));
