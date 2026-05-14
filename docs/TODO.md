@@ -13,6 +13,9 @@
 - investigate: Key detection algorithm on current offset?
   - Investigate key at offset, draw key in text box on export, add the key 
     if set?
+- DRAG AND DROP (HTML5 Drag and Drop API)
+  - Drag a target to an app (like SP404 app) and the sample is transferred
+  - All of the sample, or the slice
 - Manual offset, button next to the offset box (find next transient)
 - fix: Gap between label row and main column, I do not know why it is there!
 - feat: Random vibe generator - random name generator
