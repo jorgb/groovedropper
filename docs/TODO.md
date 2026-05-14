@@ -23,7 +23,6 @@
     long list (like polyend tracker, digitakt 2)
   - Later? Song name randomizer (same code, back end) for inspiration
 - LINUX
-  - fix: run_gui.sh (pywebview issues)
   - test: installer on linux (AppImage is built, but does not run, maybe let 
     it run the bash script instead?)
 - VIBE EXPORT
@@ -37,6 +36,16 @@
     - Export length (in seconds)
   - Keys for unused buttons?
   - feat: "U" key to toggle untagged labels only
+- Transient detection (forward)
+  - Let Claude design the transient detection algorithm, with zero crossing 
+    (if possible) 
+  - Press fa-wave-square icon and the back-end will find the next transient
+  - The offset it sent back to the UI plus information that transient is 
+    detected on that offset
+  - The button should be below the waveform editor
+  - The playhead is updated
+  - Pressing the button again will forward to the next transient
+  - When playing, the sample should continue to play 
 - Play time == slice export, for short notes to author or little stabs to 
   try, it might be nice to just play 200ms or 500ms of a note, so entering 
   10 will be 10 seconds, 0.2 is 200ms, etc also for the slice time? 
