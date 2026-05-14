@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 import time
 import argparse
+import socket
 import sqlite3
 import io
 import random
@@ -756,12 +757,12 @@ def remove_folder_label(folder_id, label_id):
 # Server startup
 # ---------------------------------------------------------------------------
 
-def run_app(port=5000, open_browser=True):
-    url = f"http://127.0.0.1:{port}"
+def run_app(port=5000, open_browser=True, host='127.0.0.1'):
+    url = f"http://{host}:{port}"
     logger.info(f"Starting server. You can access the app at: {url}")
     if open_browser:
         Thread(target=lambda: (time.sleep(1), webbrowser.open(url))).start()
-    app.run(host='127.0.0.1', port=port, debug=False)
+    app.run(host=host, port=port, debug=False)
 
 
 if __name__ == '__main__':
@@ -769,6 +770,8 @@ if __name__ == '__main__':
     parser.add_argument('--db-file', required=True)
     parser.add_argument('--port', required=False, type=int, default=5000)
     parser.add_argument('--no-browser', action='store_true')
+    parser.add_argument('--serve', action='store_true',
+                        help="Bind to all interfaces (0.0.0.0) for LAN access; no browser is launched")
 
     args = parser.parse_args()
 
@@ -786,4 +789,11 @@ if __name__ == '__main__':
         )
         sys.exit(1)
     start_background_scan()
-    run_app(args.port, not args.no_browser)
+    if args.serve:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            network_ip = s.getsockname()[0]
+        logger.info(f"Network mode — browse to: http://{network_ip}:{args.port}")
+        run_app(args.port, open_browser=False, host='0.0.0.0')
+    else:
+        run_app(args.port, not args.no_browser)

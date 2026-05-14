@@ -1,6 +1,5 @@
-param([string]$DbFile)
-if (-not $DbFile) {
-    Write-Error "Database path required. Usage: .\bin\run.ps1 `"C:\path\to\groovedropper.db`""
+if ($args.Count -eq 0) {
+    Write-Error "Usage: .\bin\run.ps1 --db-file `"C:\path\to\groovedropper.db`" [--port PORT] [--serve]"
     exit 1
 }
 
@@ -21,4 +20,4 @@ if (-not (Test-Path $Venv)) {
     & "$Venv\Scripts\pip" install -r "$ScriptDir\requirements.txt"
 }
 
-& "$Venv\Scripts\python" "$ScriptDir\app.py" --db-file $DbFile
+& "$Venv\Scripts\python" "$ScriptDir\app.py" @args
