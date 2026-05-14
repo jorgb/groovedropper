@@ -1,5 +1,7 @@
 ## DOING
 
+- rethink quick pick buttons, maybe click to play, shift-click to erase? 
+  (mobile friendly)
 - doc: create screengrab see branch: 20260514-screengrab
   - make new screengrab with script - WITHOUT MOUSE
   - screengrabs in manual as well?
@@ -14,6 +16,10 @@
 - investigate: Key detection algorithm on current offset?
   - Investigate key at offset, draw key in text box on export, add the key 
     if set?
+- MOBILE FRIENDLY 20260514-server-mobile
+  - Play start / stop button, randomize button (in index banner?), bigger 
+    buttons, previous button, randomize in song
+  - Double tap anywhere on empty space to randomize the next song?
 - DRAG AND DROP (HTML5 Drag and Drop API)
   - Drag a target to an app (like SP404 app) and the sample is transferred
   - All of the sample, or the slice
