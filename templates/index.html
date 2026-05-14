@@ -178,6 +178,17 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            position: relative;
+        }
+
+        #index-logo {
+            position: absolute;
+            left: 20px;
+            top: 32%;
+            transform: translateY(-50%);
+            height: 72px;
+            width: auto;
+            opacity: 0.85;
         }
 
         /* Big counter inside the box */
@@ -1361,6 +1372,7 @@
     <!-- -------------------------------------------------------------------- -->
     <div id="index-row">
         <div id="index-number">
+            <img id="index-logo" src="/static/img/icon.png" alt="">
             <div class="index-number">
                 <input type="text" id="current-index" class="index-input" value="0">
                 <span>/</span>
