@@ -1,13 +1,12 @@
 ## DOING
 
-- test: Linux build with new UI
-- fix: Always show database path somewhere on screen
-- upload screengrab see branch: 20260514-screengrab
+- doc: create screengrab see branch: 20260514-screengrab
   - make new screengrab with script - WITHOUT MOUSE
   - screengrabs in manual as well?
 - 0.9.2-beta release
   - Ask community to test
   - Publish on Reddit
+- test: Linux build with new UI
 
 ## LATER
 
