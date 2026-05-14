@@ -74,19 +74,8 @@ Categories=Audio;Music;
 Terminal=false
 DESKTOP
 
-# Icon — use banner image; appimagetool accepts non-square PNGs
-ICON_SRC="$SCRIPT_DIR/docs/images/groovedropper-banner.png"
-if [ -f "$ICON_SRC" ]; then
-    cp "$ICON_SRC" "$SCRIPT_DIR/AppDir/groovedropper.png"
-else
-    # Minimal fallback icon via Pillow (already installed as a dependency)
-    "$VENV/bin/python3" - << 'PYICON'
-from PIL import Image, ImageDraw
-img = Image.new('RGBA', (256, 256), (30, 30, 40, 255))
-ImageDraw.Draw(img).ellipse([48, 48, 208, 208], fill=(80, 60, 140, 255))
-img.save('AppDir/groovedropper.png')
-PYICON
-fi
+# Icon
+cp "$SCRIPT_DIR/media/icon-256.png" "$SCRIPT_DIR/AppDir/groovedropper.png"
 
 # ── appimagetool ──────────────────────────────────────────────────────────────
 echo "[4/4] Building AppImage..."

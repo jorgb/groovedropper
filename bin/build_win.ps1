@@ -42,6 +42,7 @@ Write-Host "`n[2/3] Running PyInstaller..." -ForegroundColor Yellow
     --name $AppName `
     --onedir `
     --windowed `
+    "--icon=$ScriptDir\media\icon-256.png" `
     "--add-data=templates;templates" `
     "--add-data=static;static" `
     "--add-data=VERSION;." `

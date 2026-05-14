@@ -9,11 +9,10 @@ datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('engineio')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
-project_root = os.path.abspath(os.path.dirname(sys.argv[0]))
 
 a = Analysis(
-    ['app_gui.py'],
-    pathex=[project_root],
+    ['C:\\Users\\jorgd\\Personal\\src\\GrooveDropper\\app_gui.py'],
+    pathex=[],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
@@ -42,6 +41,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['C:\\Users\\jorgd\\Personal\\src\\GrooveDropper\\media\\icon-256.png'],
 )
 coll = COLLECT(
     exe,
