@@ -6,11 +6,14 @@ binaries = []
 hiddenimports = ['groove.db', 'groove.wav', 'groove.queue']
 tmp_ret = collect_all('webview')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('engineio')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
+project_root = os.path.abspath(os.path.dirname(sys.argv[0]))
 
 a = Analysis(
-    ['/home/jorgen/src/groovedropper/app_gui.py'],
-    pathex=[],
+    ['app_gui.py'],
+    pathex=[project_root],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
@@ -33,7 +36,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
