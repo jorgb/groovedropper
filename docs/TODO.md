@@ -1,6 +1,7 @@
 ## DOING
 
 - 0.9.2-beta release
+  - Explain in README how to extract to run (online)
   - Test out of box experience (manual link in HTML needs fixing!)
   - Test linux run.sh
   - Can the readme.html BG be patched to dark? 
