@@ -14,7 +14,7 @@ whatever you want to randomly pick from.
 It will pick a wave file at random and randomly plays a section in the
 sample, hence the "needle dropping". 
 
-![video](media/groovedropper-demo.mp4)
+![groovedropper demo](media/groovedropper.gif)
 
 ❤️ This application is a labor of love and I created this application as I 
 could not find a single tool that actually randomizes sample selection, support 
