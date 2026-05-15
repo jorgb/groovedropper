@@ -1,11 +1,9 @@
 ## DOING
 
-- rethink quick pick buttons, maybe click to play, shift-click to erase? 
-  (mobile friendly)
-- doc: create screengrab see branch: 20260514-screengrab
-  - make new screengrab with script - WITHOUT MOUSE
-  - screengrabs in manual as well?
 - 0.9.2-beta release
+  - Test out of box experience (manual link in HTML needs fixing!)
+  - Test linux run.sh
+  - Can the readme.html BG be patched to dark? 
   - Ask community to test
   - Publish on Reddit
 - test: Linux build with new UI
@@ -23,6 +21,8 @@
 - DRAG AND DROP (HTML5 Drag and Drop API)
   - Drag a target to an app (like SP404 app) and the sample is transferred
   - All of the sample, or the slice
+- rethink quick pick buttons, maybe click to play, shift-click to erase? 
+  (mobile friendly)
 - Manual offset, button next to the offset box (find next transient)
 - fix: Gap between label row and main column, I do not know why it is there!
 - feat: Random vibe generator - random name generator
