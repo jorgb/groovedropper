@@ -86,7 +86,7 @@ $BinIncludes = @(
     'run.bat', 'run.ps1',
     'run_gui.bat', 'run_gui.ps1',
     'run.sh', 'run_gui.sh',
-    'AppRun', 'GrooveDropper.desktop', 'groovedropper_icon.png'
+    'GrooveDropper.desktop', 'groovedropper_icon.png'
 )
 foreach ($f in $BinIncludes) {
     $Src = Join-Path $BinDir $f

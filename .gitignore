@@ -78,6 +78,6 @@ Thumbs.db
 # Build outputs
 AppDir/
 *.AppImage
-*-win.zip
+*.zip
 .appimagetool
 

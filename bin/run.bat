@@ -20,6 +20,8 @@ set VENV=%SCRIPT_DIR%\.venv
 if not exist "%VENV%" (
     python -m venv "%VENV%"
 )
+
+echo Setting up .venv (first run can take a while)
 "%VENV%\Scripts\pip" install -r "%SCRIPT_DIR%\requirements.txt" --quiet
 
 "%VENV%\Scripts\python" "%SCRIPT_DIR%\app.py" %*
