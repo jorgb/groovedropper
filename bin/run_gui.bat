@@ -19,7 +19,7 @@ set VENV=%SCRIPT_DIR%\.venv
 
 if not exist "%VENV%" (
     python -m venv "%VENV%"
-    "%VENV%\Scripts\pip" install -r "%SCRIPT_DIR%\requirements.txt"
 )
+"%VENV%\Scripts\pip" install -r "%SCRIPT_DIR%\requirements.txt" --quiet
 
 "%VENV%\Scripts\python" "%SCRIPT_DIR%\app_gui.py" --db-file "%~1"

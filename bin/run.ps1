@@ -17,7 +17,7 @@ $Venv = Join-Path $ScriptDir '.venv'
 
 if (-not (Test-Path $Venv)) {
     python -m venv $Venv
-    & "$Venv\Scripts\pip" install -r "$ScriptDir\requirements.txt"
 }
+& "$Venv\Scripts\pip" install -r "$ScriptDir\requirements.txt" --quiet
 
 & "$Venv\Scripts\python" "$ScriptDir\app.py" @args

@@ -16,7 +16,7 @@ if [ ! -d "$VENV" ]; then
         exit 1
     fi
     python3 -m venv "$VENV"
-    "$VENV/bin/pip" install -r "$SCRIPT_DIR/requirements.txt"
 fi
+"$VENV/bin/pip" install -r "$SCRIPT_DIR/requirements.txt" --quiet
 
 "$VENV/bin/python" "$SCRIPT_DIR/app.py" --db-file "$1"

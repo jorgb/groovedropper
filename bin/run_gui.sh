@@ -34,7 +34,7 @@ if [ ! -d "$VENV" ]; then
     fi
     # shellcheck disable=SC2086
     python3 -m venv $VENV_EXTRA_ARGS "$VENV"
-    "$VENV/bin/pip" install -r "$SCRIPT_DIR/requirements.txt"
 fi
+"$VENV/bin/pip" install -r "$SCRIPT_DIR/requirements.txt" --quiet
 
 "$VENV/bin/python" "$SCRIPT_DIR/app_gui.py" --db-file "$1"
