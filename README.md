@@ -16,6 +16,9 @@ sample, hence the "needle dropping".
 
 ![groovedropper demo](media/groovedropper.gif)
 
+See unabridged demo video [here](https://youtu.be/SnHjtAPXJNc), and check 
+[the manual](docs/MANUAL.md) for a more in depth guide. 
+
 ❤️ This application is a labor of love and I created this application as I 
 could not find a single tool that actually randomizes sample selection, support 
 some tagging and allow me to dig through thousands of sample chops I collected 
@@ -57,8 +60,6 @@ over the years.
   matches a future song 
 - The randomly selected sample drop location can be exported out as a 
   sample slice and downloaded to import into your sampler or DAW.
-
-Check [the manual](docs/USER-MANUAL.md) for a more in depth guide. 
 
 ## Usage
 

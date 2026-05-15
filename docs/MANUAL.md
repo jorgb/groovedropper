@@ -25,11 +25,12 @@ a searchable index and stream audio for playback.
 When you launch GrooveDropper for the first time the library database is empty. 
 The first step is to point it at a folder of WAV files.  
 
-Click the **folder `+` button** in the top-right of the waveform area to 
-open the *Add Scan Folder* dialog. Enter the path to your samples folder, 
+Click the **folder `+` button** in under the waveform view to open the *Add 
+Scan Folder* dialog. Enter the path to your samples folder, 
 and click on an optional label (e.g. "Breaks", "Melodics", "Chops"), and click 
 **Scan**. GrooveDropper walks the folder recursively, indexes every `.wav` 
-file it finds, and generates waveform thumbnails in the background.
+file it finds, and generates waveform thumbnails in the background, and 
+calculates a unique digest to make sure no doubles are added.
 
 ⚠️ You can only select folders to be scanned this way as dragging and 
 dropping a folder does not work in a web browser. If you want to have other 
@@ -48,7 +49,10 @@ finishes the waveform will be available upon the next randomization.
 - When you move samples around, they will retain their tag information as 
   long as the sample data is unaltered 
 - When new samples are added to a monitored folder, they will be added upon 
-  restart
+  restart, or when you press the refresh button under the waveform view
+- It doesn't matter that folders overlap as every WAV that is added is 
+  checked and if the same wav file (per digest) is found, it will not add 
+  the same files again.
 
 ---
 
@@ -85,7 +89,7 @@ finishes the waveform will be available upon the next randomization.
 
 ## Digging for Samples
 
-This is the main interface window. The playhead will show an approximation 
+This is the main interface window. The play head will show an approximation 
 of where the sample is playing from, but since it is a small image, there it 
 is imprecise for large samples.
 
@@ -114,9 +118,8 @@ to snap the playhead back to the position where the needle originally landed,
 and resume from there.
 
 The sample can be started and stopped, but it will always remember the 
-picked (or clicked) offset, you can reset it to this offet even when it is 
-stopped with 
-**`Shift + Space`**
+picked (or clicked) offset, you can reset it to this offset even when it is 
+stopped with **`Shift + Space`**
 
 ### Scrub with the mouse
 
@@ -132,7 +135,6 @@ Press **`P`** to step back through history.
 
 ⚠️ Pressing **`R`** will void all history that comes after the last selected 
 sample.
-
 
 ---
 
@@ -187,7 +189,7 @@ manually.
 ### Saving a slice
 
 Press **`S`** to export a 10-second WAV clip starting from the randomized 
-start offset (this is not the current offset where the playhead stopped). The 
+start offset (this is not the current offset where the play head stopped). The 
 file downloads straight to your browser's download folder, ready to drag 
 into your sample or a DAW.
 
@@ -253,10 +255,9 @@ logic might be added but for now just include what you need is best.
 
 ### The UNTAGGED filter
 
-Directly below the **Labels** header sits a special **UNTAGGED** entry. It
-has no fill — just an outlined border — and it cannot be edited or assigned
-to samples. Its count badge shows how many samples in your library currently
-carry **no labels at all**.
+Directly below the **Labels** header sits a special **UNTAGGED** entry. It 
+cannot be edited or assigned to samples. Its count badge shows how many 
+samples in your library currently carry **no labels at all**.
 
 Click **UNTAGGED** to activate it as a toggle:
 
@@ -347,16 +348,19 @@ but I will try my best to not mess with your data 🙂
 
 ## Troubleshooting
 
+- **My new database location does not load** 
+  - Make sure that no other version is running in the background, it might 
+    interfere with the URL already being in use.
 - **The first time my Python installation failed**
   - Fix the problem that is reported, but make sure you remove `.venv` in 
     your folder to restart the installation
 - **The scan finishes but no samples appear.**
-  - Check that the folder contains `.wav` files — GrooveDropper only indexes 
-    WAV format.
+  - Check that the folder contains `.wav` files, GrooveDropper only indexes 
+    WAV format (for now)
 - **A file I moved is showing as missing.**
-  - Re-add the folder at its new location and trigger a refresh. Because labels
-  are stored by an MD5 file hash, any tags you applied will be picked up 
-  automatically once the file is reindexed.
+  - Re-add the folder at its new location and trigger a refresh. Because 
+    labels are stored by an MD5 file hash, any tags you applied will be 
+    picked up automatically once the file is reindexed.
 - **Playback cuts out or sounds glitchy.**
   - This is usually a browser audio issue. Reload the page; if the problem 
     persists try a different browser.
