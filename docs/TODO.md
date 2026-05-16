@@ -1,6 +1,6 @@
 ## DOING
 
-- refactor: MP3 playback 20260511-mp3-support
+- Cut and delete implementation
 - 0.9.2-beta release
   - Explain in README how to extract to run (online)
   - Test out of box experience (manual link in HTML needs fixing!)
@@ -12,18 +12,23 @@
 
 ## LATER
 
-- CUT MODE (C)
-  - When C is pressed, a dialog appears with:
-    - The waveform displayed, marker where the cut is made
-    - User can select keep left / right (default), discard both sides, 
-      delete all (trash?)
-    - Inform that original sample is backed up (renamed to *.bak), inform 
-      mutability!
-    - One or two samples are created, original sample renamed
-    - HTTP post that does this synchronously (wait dialog), rename at end!
-    - When sample is selected, a new one is randomized
-    - Indexing is restarted to pick up the mutation
-    - Slice write name is "original-name-{begin-offset}-{end-offset}.wav"
+- CUT AND DELETE MODE (C / D)
+  - Always use a confirmation dialog, and use toast for confirmation
+  - Simple cut mode which splits the sample at the last confirmed starting 
+    point
+  - First time pressing C, a dialog appears what happens, original file is 
+    renamed to .bak, sample is split at replay marker (yes / no)
+  - The copy action and rename action is done
+  - The folder the sample belongs to, is rescheduled in the queue (if not 
+    present) 
+  - Next sample is selected from current filter
+  - HTTP post that does this synchronously (wait dialog), rename at end!
+  - Slice write name is "original-name-{begin-offset}-{end-offset}.wav"
+  - DELETE mode is also showing a confirmation dialog explaining the sample 
+    is renamed to .bak
+    - After deletion the folder is also scheduled to the queue again to pick 
+      up the mutation
+    - Next random sample is picked
 - LINUX
   - fix: AppImage installer on linux does not work?
   - skip all together or use a different packager?
