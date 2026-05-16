@@ -47,6 +47,9 @@ app = Flask(__name__,
 
 ALLOWED_CONFIG_KEYS = frozenset({'theme', 'loop', 'controls-folded', 'offset-preview', 'quick-pick-preset', 'quick-play-instantly'})
 
+AUDIO_EXTENSIONS = ('.wav', '.mp3')
+MIME_BY_EXT = {'.wav': 'audio/wav', '.mp3': 'audio/mpeg'}
+
 
 def scan_worker():
     logger.info("Starting background scan worker...")
@@ -74,7 +77,7 @@ def scan_worker():
 
                 for root, _, files in os.walk(folder_path):
                     for file in files:
-                        if file.lower().endswith('.wav'):
+                        if file.lower().endswith(AUDIO_EXTENSIONS):
                             wav_path = os.path.join(root, file)
                             scan_queue.push_sample(wav_path, folder_id)
 
@@ -100,9 +103,15 @@ def scan_worker():
                             continue
 
                         reported_done = False
-                        info = sf.info(wav_path)
-                        samplerate = info.samplerate
-                        duration_samples = info.frames
+                        if wav_path.lower().endswith('.mp3'):
+                            import miniaudio
+                            mi = miniaudio.get_file_info(wav_path)
+                            samplerate = mi.sample_rate
+                            duration_samples = mi.num_frames
+                        else:
+                            sf_info = sf.info(wav_path)
+                            samplerate = sf_info.samplerate
+                            duration_samples = sf_info.frames
                         duration = duration_samples / samplerate if samplerate > 0 else 0
 
                         waveform = wav.generate_waveform(wav_path)
@@ -336,7 +345,9 @@ def audio(sample_id):
         row = db.fetch_sample_path(conn, sample_id)
 
     if row and row['path'] and os.path.exists(row['path']):
-        return send_file(row['path'], conditional=True, mimetype='audio/wav')
+        ext = os.path.splitext(row['path'])[1].lower()
+        mimetype = MIME_BY_EXT.get(ext, 'audio/wav')
+        return send_file(row['path'], conditional=True, mimetype=mimetype)
     return "Not found", 404
 
 
