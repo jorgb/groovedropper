@@ -77,13 +77,14 @@ def make_audio_slice(path, start_offset, samplerate, duration_secs=10):
         decoded = miniaudio.decode_file(
             path,
             output_format=miniaudio.SampleFormat.FLOAT32,
-            nchannels=None,
             sample_rate=samplerate,
-            start_frame=start_offset,
-            frames_to_read=int(duration_secs * samplerate),
         )
+        nch = decoded.nchannels
         samples = np.frombuffer(decoded.samples, dtype=np.float32)
-        data = samples.reshape(-1, decoded.nchannels) if decoded.nchannels > 1 else samples
+        start_sample = start_offset * nch
+        end_sample = start_sample + int(duration_secs * samplerate) * nch
+        sliced = samples[start_sample:end_sample]
+        data = sliced.reshape(-1, nch) if nch > 1 else sliced
         buf = io.BytesIO()
         sf.write(buf, data, decoded.sample_rate, subtype='PCM_16', format='WAV')
         buf.seek(0)
