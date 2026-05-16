@@ -113,11 +113,11 @@ def scan_worker():
                             duration_samples = sf_info.frames
                         duration = duration_samples / samplerate if samplerate > 0 else 0
 
-                        waveform = audio.generate_waveform(wav_path)
+                        waveform_img = audio.generate_waveform(wav_path)
 
                         db.scan_insert_sample(
                             cursor, wav_path, os.path.basename(wav_path), os.path.dirname(wav_path),
-                            size, digest, mtime, duration, samplerate, duration_samples, waveform, fid
+                            size, digest, mtime, duration, samplerate, duration_samples, waveform_img, fid
                         )
 
                         # Apply auto-labels for this folder
