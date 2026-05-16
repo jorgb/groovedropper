@@ -326,7 +326,7 @@ def waveform(sample_id):
 
     if row and row['waveform']:
         return send_file(io.BytesIO(row['waveform']), mimetype='image/png')
-    return "Not found", 404
+    return send_file(_resource('static/img/waveform_placeholder.png'), mimetype='image/png')
 
 
 @app.route('/audio/<int:sample_id>')
