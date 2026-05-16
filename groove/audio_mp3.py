@@ -32,6 +32,11 @@ def generate_waveform(path, width=1024, height=204):
     return render_waveform_png(mins, maxs, width, height)
 
 
+def get_audio_info(path):
+    mi = miniaudio.get_file_info(path)
+    return mi.sample_rate, mi.num_frames
+
+
 def make_audio_slice(path, start_offset, samplerate, duration_secs=10):
     decoded = miniaudio.decode_file(
         path,

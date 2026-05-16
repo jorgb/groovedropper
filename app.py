@@ -14,8 +14,6 @@ from threading import Thread
 from queue import Empty
 
 from flask import Flask, render_template, request, send_file, jsonify
-import soundfile as sf
-
 from groove import db, audio
 from groove.db import DatabaseTooNewError
 from groove.queue import scan_queue
@@ -99,18 +97,11 @@ def scan_worker():
 
                         # Digest duplicate check: same content already indexed at another path
                         if db.scan_check_digest_exists(cursor, digest):
+                            logger.info(f"Duplicate wave file found, skipped: {wav_path}")
                             continue
 
                         reported_done = False
-                        if wav_path.lower().endswith('.mp3'):
-                            import miniaudio
-                            mi = miniaudio.get_file_info(wav_path)
-                            samplerate = mi.sample_rate
-                            duration_samples = mi.num_frames
-                        else:
-                            sf_info = sf.info(wav_path)
-                            samplerate = sf_info.samplerate
-                            duration_samples = sf_info.frames
+                        samplerate, duration_samples = audio.get_audio_info(wav_path)
                         duration = duration_samples / samplerate if samplerate > 0 else 0
 
                         waveform_img = audio.generate_waveform(wav_path)

@@ -29,6 +29,11 @@ def generate_waveform(path, width=1024, height=204):
     return render_waveform_png(mins, maxs, width, height)
 
 
+def get_audio_info(path):
+    info = sf.info(path)
+    return info.samplerate, info.frames
+
+
 def make_audio_slice(path, start_offset, samplerate, duration_secs=10):
     info = sf.info(path)
     data, sr = sf.read(path, start=start_offset, frames=int(duration_secs * samplerate))
