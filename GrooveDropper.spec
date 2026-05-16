@@ -3,7 +3,7 @@ from PyInstaller.utils.hooks import collect_all
 
 datas = [('templates', 'templates'), ('static', 'static'), ('VERSION', '.')]
 binaries = []
-hiddenimports = ['groove.db', 'groove.audio', 'groove.queue']
+hiddenimports = ['groove.db', 'groove.audio', 'groove.audio_wav', 'groove.audio_mp3', 'groove.audio_common', 'groove.queue']
 tmp_ret = collect_all('webview')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('engineio')

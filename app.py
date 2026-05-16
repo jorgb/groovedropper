@@ -48,8 +48,6 @@ app = Flask(__name__,
 
 ALLOWED_CONFIG_KEYS = frozenset({'theme', 'loop', 'controls-folded', 'offset-preview', 'quick-pick-preset', 'quick-play-instantly'})
 
-AUDIO_EXTENSIONS = ('.wav', '.mp3')
-MIME_BY_EXT = {'.wav': 'audio/wav', '.mp3': 'audio/mpeg'}
 
 
 def scan_worker():
@@ -78,7 +76,7 @@ def scan_worker():
 
                 for root, _, files in os.walk(folder_path):
                     for file in files:
-                        if file.lower().endswith(AUDIO_EXTENSIONS):
+                        if file.lower().endswith(audio.SUPPORTED_EXTENSIONS):
                             wav_path = os.path.join(root, file)
                             scan_queue.push_sample(wav_path, folder_id)
 
@@ -347,7 +345,7 @@ def serve_audio(sample_id):
 
     if row and row['path'] and os.path.exists(row['path']):
         ext = os.path.splitext(row['path'])[1].lower()
-        mimetype = MIME_BY_EXT.get(ext, 'audio/wav')
+        mimetype = audio.MIME_BY_EXT.get(ext, 'audio/wav')
         return send_file(row['path'], conditional=True, mimetype=mimetype)
     return "Not found", 404
 
