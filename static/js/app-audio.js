@@ -90,12 +90,15 @@ Object.assign(GrooveDropper, {
 
     // Seeks back to the original start offset and resumes the rAF loop if audio was playing.
     restartPlay() {
-        if (!this.state.currentSampleId) return;
+        if (!this.state.currentSampleId)
+            return;
+
         this.elements.indexInput.classList.remove('error');
 
         this.state.currentOffset = this.state.originalStartOffset;
         this.state.skipEndedEvent = true;
         this.elements.audio.currentTime = this.state.currentOffset / this.state.sampleRate;
+
         this.updateOffsetDisplay(this.state.currentOffset);
         this.updatePlayhead();
         this.flashPlayhead();
