@@ -1,11 +1,6 @@
 ## DOING
 
 - refactor: MP3 playback 20260511-mp3-support
-  - scan_worker() still has MP3 specific code, refactor getting metadata
-  - Test MP3 support
-  - Draw striped box when MP3 or WAV could not be rendered as PNG
-    - ERROR - Error generating waveform for -- remove from DB? 
-      C:\Users\jorgd\Downloads\Bangyars-Misc\Burntablism_Volume_2\Bonus\Satire - 013 Fonky (That’s What I Want) Bonus.mp3: ('failed to decode file', -7)
 - 0.9.2-beta release
   - Explain in README how to extract to run (online)
   - Test out of box experience (manual link in HTML needs fixing!)
