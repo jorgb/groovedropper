@@ -640,9 +640,10 @@ const GrooveDropper = {
                 this.seekToStart();
             } else if (e.code === 'Space') {
                 e.preventDefault();
-                if (e.ctrlKey) this.copyCurrentUrlToClipboard();
-                else if (e.shiftKey) this.restartPlay();
+                if (e.shiftKey) this.restartPlay();
                 else this.togglePlay();
+            } else if (e.code === 'KeyL') {
+                this.copyCurrentUrlToClipboard();
             } else if (e.code === 'KeyR') {
                 this._clearFocusedQpSlot();
                 if (e.shiftKey) this.randomizeCurrentOffset(true).catch(err => console.error(err));
@@ -660,7 +661,7 @@ const GrooveDropper = {
                 this.adjustPitch(0, -10);
             } else if (e.key === '>' || (e.key === '.' && e.shiftKey)) {
                 this.adjustPitch(0, +10);
-            } else if (e.key === 'l' || e.key === 'L') {
+            } else if (e.key === '/') {
                 this.resetPitch();
             } else if (e.code === 'KeyV') {
                 this.storeToNextFreeQpSlot().catch(err => console.error(err));

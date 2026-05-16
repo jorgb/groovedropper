@@ -71,9 +71,9 @@ finishes the waveform will be available upon the next randomization.
   - `,` / `.` — Pitch down / up 1 semitone; hold `Shift` for 10-cent fine 
     steps (see [Pitch Control](#pitch-control))
   - Dragging with mouse over the pitch controls also works
-  - `L` — Reset pitch to zero
+  - `/` — Reset pitch to zero
 - Sharing
-  - `Ctrl + Space` — Copy a direct URL for the current sample and offset (see 
+  - `L` — Copy a direct URL for the current sample and offset (see 
     [Sharing & Saving](#sharing--saving))
   - `S` — Save a 10-second slice from the current playhead position
   - `Ctrl + Click` on the file or folder icon copies the full file path to 
@@ -208,7 +208,7 @@ against the key you're working in, without leaving the app.
 | Key       | Action                                                          |
 |-----------|-----------------------------------------------------------------|
 | `,` / `.` | Pitch down / up 1 semitone; hold `Shift` for 10-cent fine steps |
-| `L`       | Reset pitch to zero                                             |
+| `/`       | Reset pitch to zero                                             |
 
 Use your mouse to drag over the semitones or cents to control the pitch by 
 mouse.
