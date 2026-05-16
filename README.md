@@ -75,17 +75,11 @@ Install Python if you haven't already:
 > winget install python
 ```
 
-Then run from the project directory:
+Then run from the project directory, either by doubleclick or on the command 
+line.
 
 ```bat
-> bin\run.bat "C:\users\{yourname}\groovedropper.db"
-```
-
-The batch file creates a virtual environment and installs all required packages automatically. 
-There is also a PowerShell variant:
-
-```powershell
-> .\bin\run.ps1 "C:\users\{yourname}\groovedropper.db"
+> run.bat 
 ```
 
 ### Linux / MacOS
@@ -95,8 +89,8 @@ python3` on Ubuntu/Debian), then:
 
 ```bash
 # install your pip, python3-venv as well
-> chmod +x bin/run.sh
-> ./bin/run.sh ~/groovedropper.db
+> chmod +x run.sh
+> ./run.sh ~/groovedropper.db
 ```
 
 ### Command line arguments

@@ -80,12 +80,18 @@ foreach ($d in @('groove', 'static', 'templates')) {
     }
 }
 
+# Root-level launchers (double-click entry points)
+foreach ($f in @('run.bat', 'run.sh')) {
+    $Src = Join-Path $ScriptDir $f
+    if (Test-Path $Src) {
+        Copy-Item $Src (Join-Path $StageDir $f) -Force
+    }
+}
+
 # bin/ run scripts (exclude build scripts and this script itself)
 $BinDst = Join-Path $StageDir 'bin'
 $BinIncludes = @(
-    'run.bat', 'run.ps1',
-    'run_gui.bat', 'run_gui.ps1',
-    'run.sh', 'run_gui.sh',
+    'run_gui.bat', 'run_gui.sh',
     'GrooveDropper.desktop', 'groovedropper_icon.png'
 )
 foreach ($f in $BinIncludes) {

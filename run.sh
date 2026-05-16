@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VENV="$SCRIPT_DIR/.venv"
 
 if [ ! -d "$VENV" ]; then
@@ -11,6 +11,7 @@ if [ ! -d "$VENV" ]; then
         echo "  sudo apt install python${PYTHON_VERSION}-venv" >&2
         exit 1
     fi
+    echo "Setting up .venv (first run can take a while)"
     python3 -m venv "$VENV"
 fi
 "$VENV/bin/pip" install -r "$SCRIPT_DIR/requirements.txt" --quiet

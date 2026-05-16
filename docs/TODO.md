@@ -1,5 +1,7 @@
 ## DOING
 
+- fix: The quick pick preset box should not change size, even when the text 
+  does not fit (just truncate the text)
 - refactor: MP3 playback 20260511-mp3-support
   - Test MP3 support
 - 0.9.2-beta release
