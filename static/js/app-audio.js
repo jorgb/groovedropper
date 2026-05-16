@@ -230,6 +230,13 @@ Object.assign(GrooveDropper, {
         this._syncFocusedQpSlotPitch().catch(e => console.error(e));
     },
 
+    // Marks the current playhead position as the new slice/restart origin without seeking.
+    markStartOffset() {
+        if (!this.state.currentSampleId) return;
+        this.state.originalStartOffset = this.state.currentOffset;
+        this.flashPlayhead();
+    },
+
     // Resets semitones and cents to zero, applies the change, and syncs to the focused slot.
     resetPitch() {
         this.state.pitchSemitones = 0;

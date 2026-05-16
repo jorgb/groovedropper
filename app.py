@@ -766,8 +766,9 @@ def run_app(port=5000, open_browser=True, host='127.0.0.1'):
 
 
 if __name__ == '__main__':
+    default_db = str(Path.home() / 'groovedropper.db')
     parser = argparse.ArgumentParser(description="GrooveDropper - Needle Drop Sampling Assistant")
-    parser.add_argument('--db-file', required=True)
+    parser.add_argument('--db-file', default=default_db)
     parser.add_argument('--port', required=False, type=int, default=5000)
     parser.add_argument('--no-browser', action='store_true')
     parser.add_argument('--serve', action='store_true',

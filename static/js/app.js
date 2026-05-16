@@ -640,7 +640,8 @@ const GrooveDropper = {
                 this.seekToStart();
             } else if (e.code === 'Space') {
                 e.preventDefault();
-                if (e.shiftKey) this.restartPlay();
+                if (e.ctrlKey) this.markStartOffset();
+                else if (e.shiftKey) this.restartPlay();
                 else this.togglePlay();
             } else if (e.code === 'KeyL') {
                 this.copyCurrentUrlToClipboard();

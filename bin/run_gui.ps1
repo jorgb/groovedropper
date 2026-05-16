@@ -1,9 +1,3 @@
-param([string]$DbFile)
-if (-not $DbFile) {
-    Write-Error "Database path required. Usage: .\bin\run_gui.ps1 `"C:\path\to\groovedropper.db`""
-    exit 1
-}
-
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
     Write-Host "Python is not installed or not on your PATH."
     Write-Host ""
@@ -21,4 +15,4 @@ if (-not (Test-Path $Venv)) {
 }
 & "$Venv\Scripts\pip" install -r "$ScriptDir\requirements.txt" --quiet
 
-& "$Venv\Scripts\python" "$ScriptDir\app_gui.py" --db-file $DbFile
+& "$Venv\Scripts\python" "$ScriptDir\app_gui.py" @args

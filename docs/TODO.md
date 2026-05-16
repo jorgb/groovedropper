@@ -1,10 +1,5 @@
 ## DOING
 
-- Change Ctrl+Space to L for sharing a link
-- Change Ctrl+Space to fixate cursor to last stopped position (plus toast)
-- No --db-file defaults to default_db = str(Path.home() / 'groovedropper.db')
-  the code from app_gui.py needs to move to app.py
-  - Add log message that it does so!
 - refactor: MP3 playback 20260511-mp3-support
   - Test MP3 support
 - 0.9.2-beta release

@@ -1,8 +1,3 @@
-if ($args.Count -eq 0) {
-    Write-Error "Usage: .\bin\run.ps1 --db-file `"C:\path\to\groovedropper.db`" [--port PORT] [--serve]"
-    exit 1
-}
-
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
     Write-Host "Python is not installed or not on your PATH."
     Write-Host ""

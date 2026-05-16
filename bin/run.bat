@@ -1,10 +1,5 @@
 @echo off
 setlocal
-if "%~1"=="" (
-    echo Usage: bin\run.bat --db-file "C:\path\to\groovedropper.db" [--port PORT] [--serve]
-    exit /b 1
-)
-
 python --version >nul 2>&1
 if errorlevel 1 (
     echo Python is not installed or not on your PATH.

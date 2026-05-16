@@ -61,6 +61,7 @@ finishes the waveform will be available upon the next randomization.
 - Sample playback
   - `Space` — Play / Pause (see [Play and Pause](#play-and-pause))
   - `Shift + Space` — Reset play head to the original randomized position
+  - `Ctrl + Space` — Mark current position as the new slice / restart origin (playhead flashes; does not interrupt playback)
   - `Home` — Jump to the absolute beginning of the sample (offset 00000000)
   - `R` — Pick a new random sample and play immediately (see [Digging for 
     Samples](#digging-for-samples))

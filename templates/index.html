@@ -1531,9 +1531,10 @@
             <table>
                 <tr><td><span class="control-key">SPACE</span></td><td>Play / Pause - Resumes from stopped location</td></tr>
                 <tr><td><span class="control-key">SHIFT + SPACE</span></td><td>Reset playhead - Restarts the sample from the originally randomized offset</td></tr>
+                <tr><td><span class="control-key">CTRL + SPACE</span></td><td>Mark Position - Set the current playhead position as the new slice / restart origin</td></tr>
                 <tr><td><span class="control-key">HOME</span></td><td>Jump to the absolute beginning of the sample (offset 00000000)</td></tr>
                 <tr><td><span class="control-key">L</span></td><td>Copy Link - Copy a direct URL to the current sample and slice to your clipboard</td></tr>
-                <tr><td><span class="control-key">CLICK</span></td><td>Scrub through the waveform by clicking</td></tr>
+                <tr><td><span class="control-key">LEFT MOUSE</span></td><td>Scrub through the waveform by clicking</td></tr>
                 <tr><td><span class="control-key">R</span></td><td>Random Sample - Pick random sample and play immediately</td></tr>
                 <tr><td><span class="control-key">SHIFT + R</span></td><td>Randomize In Sample - Pick new random offset in current sample</td></tr>
                 <tr><td><span class="control-key">P</span></td><td>Previous Sample - Go to previous sample in history</td></tr>
@@ -1547,7 +1548,7 @@
     <audio id="audio-player" preload="auto"></audio>
     <div id="toast"></div>
 
-    <!-- Folder add dialog -->
+<!-- Folder add dialog -->
     <div id="folder-dialog-overlay" class="dialog-overlay hidden">
         <div id="folder-dialog" class="dialog-card">
             <div class="dialog-header">

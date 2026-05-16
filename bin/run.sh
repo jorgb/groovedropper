@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 set -e
-if [ -z "$1" ]; then
-    echo "Error: database path required. Usage: ./bin/run.sh /path/to/groovedropper.db" >&2
-    exit 1
-fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 VENV="$SCRIPT_DIR/.venv"
@@ -19,4 +15,4 @@ if [ ! -d "$VENV" ]; then
 fi
 "$VENV/bin/pip" install -r "$SCRIPT_DIR/requirements.txt" --quiet
 
-"$VENV/bin/python" "$SCRIPT_DIR/app.py" --db-file "$1"
+"$VENV/bin/python" "$SCRIPT_DIR/app.py" "$@"
