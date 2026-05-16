@@ -20,7 +20,6 @@ def generate_waveform(path, width=1024, height=204):
                 path,
                 output_format=miniaudio.SampleFormat.FLOAT32,
                 nchannels=1,
-                sample_rate=None,
             )
             frames = decoded.num_frames
             if frames == 0:
