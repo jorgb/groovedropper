@@ -102,8 +102,6 @@ are managed through the web interface and persisted in the database.
 - `--db-file`: The SQLite database file (e.g. `groovedropper.db`). This file 
   will be created if it does not exist.
 - `--port` *(optional)*: Port to serve the app on (default is 5000).
-- `--refresh` *(optional)*: Pass this flag to drop all existing data and 
-  rescan everything from scratch.
 - `--no-browser` *(optional)*: Start the server without opening a browser tab.
 
 ### Running as a desktop window (pywebview)

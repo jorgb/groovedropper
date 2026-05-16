@@ -9,13 +9,14 @@ import io
 import random
 import webbrowser
 import logging
+import traceback
 from threading import Thread
 from queue import Empty
 
 from flask import Flask, render_template, request, send_file, jsonify
 import soundfile as sf
 
-from groove import db, wav
+from groove import db, audio
 from groove.db import DatabaseTooNewError
 from groove.queue import scan_queue
 
@@ -114,7 +115,7 @@ def scan_worker():
                             duration_samples = sf_info.frames
                         duration = duration_samples / samplerate if samplerate > 0 else 0
 
-                        waveform = wav.generate_waveform(wav_path)
+                        waveform = audio.generate_waveform(wav_path)
 
                         db.scan_insert_sample(
                             cursor, wav_path, os.path.basename(wav_path), os.path.dirname(wav_path),
@@ -340,7 +341,7 @@ def waveform(sample_id):
 
 
 @app.route('/audio/<int:sample_id>')
-def audio(sample_id):
+def serve_audio(sample_id):
     with db.get_db() as conn:
         row = db.fetch_sample_path(conn, sample_id)
 
@@ -378,11 +379,12 @@ def slice_audio(sample_id):
         pitch_suffix = f"_{parts}"
 
     try:
-        buf = wav.make_audio_slice(row['path'], start_offset, samplerate)
+        buf = audio.make_audio_slice(row['path'], start_offset, samplerate)
         return send_file(buf, as_attachment=True,
                          download_name=f"{stem}_{start_offset:08d}{pitch_suffix}.wav",
                          mimetype='audio/wav')
     except Exception as e:
+        print(traceback.format_exc())
         logger.error(f"Error creating slice: {e}")
         return "Internal error", 500
 
