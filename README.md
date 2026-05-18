@@ -47,8 +47,8 @@ over the years.
 
 - Lets you randomize a sample based upon the indexed samples, or randomize 
   in the sample itself
-- You can index multiple folders, and auto-label the folders
-- You can go back in history if you liked a sample that played in the past
+- You can index multiple folders containing compatible media
+- You can go back in history within a session if you liked a sample that played in the past
 - You can change the pitch on the fly to play with the key to see if it matches 
   your song
 - You can add or edit tags to filter the random picking

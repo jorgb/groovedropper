@@ -46,7 +46,7 @@ Everything lives on the `GrooveDropper` singleton object. Key state:
 
 - `currentSampleId / currentDigest` — identify the loaded sample
 - `currentOffset / originalStartOffset` — current playhead vs. the start-of-slice anchor
-- `historyQueue / historyIndex` — client-side back navigation (server-side `history` table stores the same data persistently)
+- `historyQueue / historyIndex` — client-side back navigation; stores full sample snapshot objects, resets on page reload
 - `activePresetId / activePresetLabelIds` — which preset/labels filter random draws
 - `allPresetSelectedLabelIds` — transient label filter when the "ALL" preset is active (not persisted as a preset)
 
@@ -64,8 +64,6 @@ Spawns `app.py` as a child process on a fixed port (5000). On first run (no data
 | `presets` | Named filter sets (OR or AND over labels) |
 | `preset_labels` | Junction: which labels belong to a preset |
 | `sample_labels` | Junction: which labels a sample has (keyed by digest) |
-| `scan_folder_labels` | Junction: labels auto-applied to all samples in a folder |
-| `history` | Every sample play event with start offset |
 | `config` | Persistent key/value settings (theme, loop, UI state) |
 
 The `ALL` preset (`is_system = 1`) is seeded on DB creation and cannot be deleted or renamed.
@@ -74,7 +72,7 @@ The `ALL` preset (`is_system = 1`) is seeded on DB creation and cannot be delete
 
 - **Backend routes**: add/modify in `app.py`. Follow the existing pattern of a `get_db()` context, return `jsonify(...)`. Validate inputs at the boundary; don't guard against impossible states inside helpers.
 - **Frontend**: edit `static/js/app.js`. Keep state mutations inside methods; don't mutate `this.state` from event listeners directly. For new API calls, follow the `async/await` + `try/catch` pattern already used throughout.
-- **Schema changes**: add migrations as conditional `CREATE TABLE IF NOT EXISTS` or `ALTER TABLE` calls in `init_db()`. Never drop existing tables in migrations.
+- **Schema changes**: add a new `_migrate_vN` function in `groove/db.py`, register it in `_MIGRATION_FNS`, and bump `CURRENT_VERSION`. Use `CREATE TABLE IF NOT EXISTS`, `ALTER TABLE`, or `DROP TABLE IF EXISTS` as needed.
 - **Electron**: edit `main.js` only when the app wrapper needs updating (window settings, startup args, first-run flow).
 
 ## Submitting a Pull Request

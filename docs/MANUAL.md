@@ -25,23 +25,20 @@ a searchable index and stream audio for playback.
 When you launch GrooveDropper for the first time the library database is empty. 
 The first step is to point it at a folder of WAV files.  
 
-Click the **folder `+` button** in under the waveform view to open the *Add 
-Scan Folder* dialog. Enter the path to your samples folder, 
-and click on an optional label (e.g. "Breaks", "Melodics", "Chops"), and click 
-**Scan**. GrooveDropper walks the folder recursively, indexes every `.wav` 
-file it finds, and generates waveform thumbnails in the background, and 
-calculates a unique digest to make sure no doubles are added.
+Click the **folder `+` button** under the waveform view to open the *Add 
+Scan Folder* dialog. Enter the path to your samples folder and click **OK**. 
+
+GrooveDropper runs through the the folder recursively, indexes every compatible 
+file it finds, generates waveform thumbnails in the background, and calculates a 
+unique digest to make sure no doubles are added.
 
 ⚠️ You can only select folders to be scanned this way as dragging and 
-dropping a folder does not work in a web browser. If you want to have other 
-labels to classify, please create them first before adding a folder.
+dropping a folder does not work in a web browser.
 
 ![Add folder dialog](images/add-scan-folder.png)
 
-You can add as many folders as you like. Each folder can carry its own 
-auto-label so every file from that folder is tagged automatically, which is A 
-quick way to categorize a whole collection in one go. Once the scan 
-finishes the waveform will be available upon the next randomization.
+You can add as many folders as you like. Once the scan finishes the waveform 
+will be available upon the next randomization.
 
 ### Notes on scanning
 
@@ -131,8 +128,9 @@ that location.
 
 ### Navigate history
 
-GrooveDropper remembers everything you've heard in the session.
-Press **`P`** to step back through history.
+GrooveDropper remembers everything you've heard during the current session.
+Press **`P`** to step back through history. History is kept in memory and 
+resets when the app is reloaded.
 
 ⚠️ Pressing **`R`** will void all history that comes after the last selected 
 sample.

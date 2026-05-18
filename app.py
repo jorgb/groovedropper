@@ -111,11 +111,6 @@ def scan_worker():
                             size, digest, mtime, duration, samplerate, duration_samples, waveform_img, fid
                         )
 
-                        # Apply auto-labels for this folder
-                        if fid is not None:
-                            for lid in db.scan_get_folder_label_ids(cursor, fid):
-                                db.scan_insert_sample_label(cursor, digest, lid)
-
                         conn.commit()
 
                     except Exception as e:
@@ -242,18 +237,11 @@ def random_sample():
                 return jsonify({"error": "No samples found"}), 404
 
         start_offset = get_random_offset(row['duration_samples'], row['samplerate'])
-
-        if not randomize_only:
-            history_id = db.insert_history(conn, row['id'], start_offset)
-        else:
-            history_id = -1  # no history entry; caller only wants a new offset
-
         index_num = db.fetch_sample_index(conn, row['id'])
 
     result = dict(row)
     result['index_num'] = index_num
     result['start_offset'] = start_offset
-    result['history_id'] = history_id
     result['randomize_only'] = randomize_only
     return jsonify(result)
 
@@ -270,12 +258,9 @@ def get_sample_by_index(index_num):
         if not row:
             return jsonify({"error": "Sample not found"}), 404
 
-        history_id = db.insert_history(conn, row['id'], 0)
-
     result = dict(row)
     result['index_num'] = index_num
     result['start_offset'] = 0
-    result['history_id'] = history_id
     return jsonify(result)
 
 
@@ -289,34 +274,12 @@ def get_sample_by_digest(digest):
             return jsonify({"error": "Sample not found"}), 404
 
         start_offset = start_offset_param if 0 <= start_offset_param <= row['duration_samples'] else 0
-        history_id = db.insert_history(conn, row['id'], start_offset)
         index_num = db.fetch_sample_index(conn, row['id'])
 
     result = dict(row)
     result['index_num'] = index_num
     result['start_offset'] = start_offset
-    result['history_id'] = history_id
     return jsonify(result)
-
-
-@app.route('/api/history/<int:history_id>')
-def get_history(history_id):
-    with db.get_db() as conn:
-        row = db.fetch_history(conn, history_id)
-        if not row:
-            return jsonify({"error": "History not found"}), 404
-        index_num = db.fetch_sample_index(conn, row['id'])
-
-    data = dict(row)
-    data['index_num'] = index_num
-    return jsonify(data)
-
-
-@app.route('/api/history/latest')
-def latest_history():
-    with db.get_db() as conn:
-        latest_id = db.fetch_latest_history_id(conn)
-    return jsonify({"history_id": latest_id})
 
 
 @app.route('/waveform/<int:sample_id>')
@@ -717,17 +680,16 @@ def add_folder():
     if not os.path.isdir(path):
         return jsonify({"error": "not_a_directory"}), 400
 
-    label_ids = data.get('label_ids') or []
     created_at = time.time()
 
     with db.get_db() as conn:
         try:
-            folder_id, labels = db.insert_folder(conn, path, label_ids, created_at)
+            folder_id = db.insert_folder(conn, path, created_at)
         except sqlite3.IntegrityError:
             return jsonify({"error": "folder_exists"}), 409
 
     scan_queue.push_folder(path)
-    return jsonify({"id": folder_id, "path": path, "label_ids": labels, "created_at": created_at}), 201
+    return jsonify({"id": folder_id, "path": path, "created_at": created_at}), 201
 
 
 @app.route('/api/folders/<int:folder_id>', methods=['DELETE'])
@@ -736,22 +698,6 @@ def delete_folder(folder_id):
         found = db.delete_folder(conn, folder_id)
     if not found:
         return jsonify({"error": "Folder not found"}), 404
-    return jsonify({"status": "ok"})
-
-
-@app.route('/api/folders/<int:folder_id>/labels/<int:label_id>', methods=['POST'])
-def add_folder_label(folder_id, label_id):
-    with db.get_db() as conn:
-        found = db.insert_folder_label(conn, folder_id, label_id)
-    if not found:
-        return jsonify({"error": "Folder not found"}), 404
-    return jsonify({"status": "ok"})
-
-
-@app.route('/api/folders/<int:folder_id>/labels/<int:label_id>', methods=['DELETE'])
-def remove_folder_label(folder_id, label_id):
-    with db.get_db() as conn:
-        db.delete_folder_label(conn, folder_id, label_id)
     return jsonify({"status": "ok"})
 
 

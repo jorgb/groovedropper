@@ -509,44 +509,16 @@ Object.assign(GrooveDropper, {
     // -------------------------------------------------------------------------
 
     openFolderDialog() {
-        this.state.folderDialogLabelIds = [];
         this.elements.folderPathInput.value = '';
         this.elements.folderDialogOk.disabled = true;
-        this.renderFolderDialogLabels();
         this.elements.folderDialogOverlay.classList.remove('hidden');
         this.elements.folderPathInput.focus();
     },
 
     closeFolderDialog() {
         this.elements.folderDialogOverlay.classList.add('hidden');
-        this.state.folderDialogLabelIds = [];
         this.elements.folderPathInput.value = '';
         this.elements.folderDialogOk.disabled = true;
-    },
-
-    renderFolderDialogLabels() {
-        const container = this.elements.folderDialogLabels;
-        container.innerHTML = '';
-        const hint = document.getElementById('dialog-label-hint');
-        if (hint) hint.style.display = this.state.allLabels.length > 0 ? '' : 'none';
-        const selected = new Set(this.state.folderDialogLabelIds);
-        for (const label of this.state.allLabels) {
-            const tag = document.createElement('span');
-            tag.className = 'label-tag' + (selected.has(label.id) ? '' : ' dimmed');
-            tag.textContent = label.name;
-            tag.style.backgroundColor = 'var(--accent-color)';
-            tag.style.cursor = 'pointer';
-            tag.addEventListener('click', () => {
-                const idx = this.state.folderDialogLabelIds.indexOf(label.id);
-                if (idx === -1) {
-                    this.state.folderDialogLabelIds.push(label.id);
-                } else {
-                    this.state.folderDialogLabelIds.splice(idx, 1);
-                }
-                this.renderFolderDialogLabels();
-            });
-            container.appendChild(tag);
-        }
     },
 
     async submitFolderDialog() {
@@ -558,7 +530,7 @@ Object.assign(GrooveDropper, {
             const res = await fetch('/api/folders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ path, label_ids: this.state.folderDialogLabelIds }),
+                body: JSON.stringify({ path }),
             });
             const data = await res.json();
             if (res.status === 201) {

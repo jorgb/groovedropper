@@ -46,12 +46,7 @@ def get_db():
         conn.close()
 
 
-CURRENT_VERSION = 2
-
-MIGRATIONS = {
-    1: '_migrate_v1',
-    2: '_migrate_v2',
-}
+CURRENT_VERSION = 3
 
 
 def _migrate_v1(conn):
@@ -76,14 +71,6 @@ def _migrate_v1(conn):
             duration_samples INTEGER,
             waveform         BLOB,
             folder_id        INTEGER REFERENCES scan_folders(id) ON DELETE CASCADE
-        )
-    ''')
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS history (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
-            sample_id    INTEGER,
-            start_offset INTEGER,
-            FOREIGN KEY(sample_id) REFERENCES samples(id) ON DELETE CASCADE
         )
     ''')
     conn.execute('''
@@ -125,13 +112,6 @@ def _migrate_v1(conn):
             PRIMARY KEY (digest, label_id)
         )
     ''')
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS scan_folder_labels (
-            folder_id INTEGER NOT NULL REFERENCES scan_folders(id) ON DELETE CASCADE,
-            label_id  INTEGER NOT NULL REFERENCES labels(id)       ON DELETE CASCADE,
-            PRIMARY KEY (folder_id, label_id)
-        )
-    ''')
     conn.execute("INSERT OR IGNORE INTO config (key, value) VALUES ('theme', 'theme-default')")
     conn.execute("INSERT OR IGNORE INTO config (key, value) VALUES ('loop', 'true')")
     conn.execute("INSERT OR IGNORE INTO config (key, value) VALUES ('controls-folded', 'true')")
@@ -140,6 +120,11 @@ def _migrate_v1(conn):
         "INSERT OR IGNORE INTO presets (name, is_system, filter_mode, created_at) VALUES ('ALL', 1, 'OR', ?)",
         (time.time(),)
     )
+
+
+def _migrate_v3(conn):
+    conn.execute('DROP TABLE IF EXISTS scan_folder_labels')
+    conn.execute('DROP TABLE IF EXISTS history')
 
 
 def _migrate_v2(conn):
@@ -167,6 +152,7 @@ def _migrate_v2(conn):
 _MIGRATION_FNS = {
     1: _migrate_v1,
     2: _migrate_v2,
+    3: _migrate_v3,
 }
 
 
@@ -346,36 +332,11 @@ def delete_sample(conn, sample_id):
 
 
 # ---------------------------------------------------------------------------
-# History
-# ---------------------------------------------------------------------------
-
-def insert_history(conn, sample_id, start_offset):
-    cursor = conn.execute(
-        'INSERT INTO history (sample_id, start_offset) VALUES (?, ?)',
-        (sample_id, start_offset)
-    )
-    return cursor.lastrowid
-
-
-def fetch_history(conn, history_id):
-    return conn.execute('''
-        SELECT h.id as history_id, h.start_offset, s.id, s.name, s.directory, s.size, s.duration, s.samplerate, s.duration_samples, s.digest
-        FROM history h
-        JOIN samples s ON h.sample_id = s.id
-        WHERE h.id = ?
-    ''', (history_id,)).fetchone()
-
-
-def fetch_latest_history_id(conn):
-    return conn.execute('SELECT MAX(id) FROM history').fetchone()[0]
-
-
-# ---------------------------------------------------------------------------
 # Refresh
 # ---------------------------------------------------------------------------
 
 def refresh_samples(conn, delete_sample_labels=False):
-    """Clear samples and history while optionally preserving sample_labels.
+    """Clear samples while optionally preserving sample_labels.
 
     delete_sample_labels=False (default): suspends FK enforcement before the
     first DML so the ON DELETE CASCADE on sample_labels(digest) does not fire.
@@ -391,7 +352,6 @@ def refresh_samples(conn, delete_sample_labels=False):
         # there is no need to restore FK=ON explicitly.
         conn.execute('PRAGMA foreign_keys = OFF')
     count = conn.execute('SELECT COUNT(*) FROM samples').fetchone()[0]
-    conn.execute('DELETE FROM history')
     conn.execute('DELETE FROM samples')
     return count
 
@@ -569,35 +529,18 @@ def fetch_scan_folder_paths(conn):
 
 
 def fetch_folders(conn):
-    folders = conn.execute(
+    rows = conn.execute(
         'SELECT id, path, created_at FROM scan_folders ORDER BY created_at ASC'
     ).fetchall()
-    result = []
-    for f in folders:
-        labels = conn.execute(
-            'SELECT label_id FROM scan_folder_labels WHERE folder_id = ?', (f['id'],)
-        ).fetchall()
-        d = dict(f)
-        d['label_ids'] = [r['label_id'] for r in labels]
-        result.append(d)
-    return result
+    return [dict(row) for row in rows]
 
 
-def insert_folder(conn, path, label_ids, created_at):
+def insert_folder(conn, path, created_at):
     cursor = conn.execute(
         'INSERT INTO scan_folders (path, created_at) VALUES (?, ?)',
         (path, created_at)
     )
-    folder_id = cursor.lastrowid
-    for lid in label_ids:
-        conn.execute(
-            'INSERT OR IGNORE INTO scan_folder_labels (folder_id, label_id) VALUES (?, ?)',
-            (folder_id, lid)
-        )
-    labels = [r['label_id'] for r in conn.execute(
-        'SELECT label_id FROM scan_folder_labels WHERE folder_id = ?', (folder_id,)
-    ).fetchall()]
-    return folder_id, labels
+    return cursor.lastrowid
 
 
 def delete_folder(conn, folder_id):
@@ -605,23 +548,6 @@ def delete_folder(conn, folder_id):
     if row:
         conn.execute('DELETE FROM scan_folders WHERE id = ?', (folder_id,))
     return row is not None
-
-
-def insert_folder_label(conn, folder_id, label_id):
-    row = conn.execute('SELECT id FROM scan_folders WHERE id = ?', (folder_id,)).fetchone()
-    if row:
-        conn.execute(
-            'INSERT OR IGNORE INTO scan_folder_labels (folder_id, label_id) VALUES (?, ?)',
-            (folder_id, label_id)
-        )
-    return row is not None
-
-
-def delete_folder_label(conn, folder_id, label_id):
-    conn.execute(
-        'DELETE FROM scan_folder_labels WHERE folder_id = ? AND label_id = ?',
-        (folder_id, label_id)
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -662,11 +588,6 @@ def scan_insert_sample(cursor, wav_path, name, directory, size, digest, mtime, d
             (path, name, directory, size, digest, timestamp, duration, samplerate, duration_samples, waveform, folder_id)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (wav_path, name, directory, size, digest, mtime, duration, samplerate, duration_samples, waveform, folder_id))
-
-
-def scan_get_folder_label_ids(cursor, folder_id):
-    cursor.execute('SELECT label_id FROM scan_folder_labels WHERE folder_id = ?', (folder_id,))
-    return [row['label_id'] for row in cursor.fetchall()]
 
 
 def scan_insert_sample_label(cursor, digest, label_id):

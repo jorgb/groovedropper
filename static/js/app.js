@@ -24,7 +24,6 @@ const GrooveDropper = {
         allPresetSelectedLabelIds: [],  // transient label filter used when the "ALL" preset is active
         untaggedFilterActive: false,
         controlsFolded: false,
-        folderDialogLabelIds: [],
         dbPath: null,
         pitchSemitones: 0,
         pitchCents: 0,
@@ -296,12 +295,12 @@ const GrooveDropper = {
     },
 
 
-    _pushHistory(historyId) {
+    _pushHistory(snapshot) {
         // Branching: discard any forward entries when navigating to a new sample mid-history.
         if (this.state.historyIndex < this.state.historyQueue.length - 1) {
             this.state.historyQueue = this.state.historyQueue.slice(0, this.state.historyIndex + 1);
         }
-        this.state.historyQueue.push(historyId);
+        this.state.historyQueue.push(snapshot);
         this.state.historyIndex = this.state.historyQueue.length - 1;
     },
 
@@ -365,7 +364,7 @@ const GrooveDropper = {
                 this.showToast('No samples in current preset selection');
                 return;
             }
-            this._pushHistory(data.history_id);
+            this._pushHistory(data);
             this.updateUI(data, playInstantly);
         } catch (e) {
             console.error(e);
@@ -378,7 +377,7 @@ const GrooveDropper = {
             if (!res.ok) { this.elements.indexInput.classList.add('error'); return; }
             const data = await res.json();
             this.elements.indexInput.classList.remove('error');
-            this._pushHistory(data.history_id);
+            this._pushHistory(data);
 
             if (this.state.isPlaying) {
                 this.elements.audio.pause();
@@ -401,7 +400,7 @@ const GrooveDropper = {
                 return;
             }
             const data = await res.json();
-            this._pushHistory(data.history_id);
+            this._pushHistory(data);
             this.updateUI(data, false);
             if (pitch !== 0 || cents !== 0) {
                 this.state.pitchSemitones = pitch;
@@ -415,17 +414,11 @@ const GrooveDropper = {
         }
     },
 
-    async loadPrevHistory() {
+    loadPrevHistory() {
         if (this.state.historyIndex <= 0) { console.log("No more history"); return; }
         this.state.historyIndex--;
-        const historyId = this.state.historyQueue[this.state.historyIndex];
-        try {
-            const res = await fetch(`/api/history/${historyId}`);
-            if (!res.ok) { console.error("History not found"); return; }
-            this.updateUI(await res.json(), false);
-        } catch (e) {
-            console.error(e);
-        }
+        const snapshot = this.state.historyQueue[this.state.historyIndex];
+        this.updateUI(snapshot, false);
     },
 
 
@@ -651,7 +644,7 @@ const GrooveDropper = {
                 else this.loadNextRandom(true).catch(err => console.error(err));
             } else if (e.code === 'KeyP') {
                 this._clearFocusedQpSlot();
-                this.loadPrevHistory().catch(err => console.error(err));
+                this.loadPrevHistory();
             } else if (e.code === 'KeyS') {
                 this.downloadSlice();
             } else if (e.key === ',' && !e.shiftKey) {

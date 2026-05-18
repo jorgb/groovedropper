@@ -1,6 +1,7 @@
 ## DOING
 
-- Cut and delete implementation
+- Delete with D, only if --mutable flag is given: http://127.0.0.1:5000/?sample=54b6adab6b6e3b9a4571e160c5965f8b&start=8158794
+- Manage sample folders implementation
 - 0.9.2-beta release
   - Explain in README how to extract to run (online)
   - Test out of box experience (manual link in HTML needs fixing!)
@@ -12,7 +13,11 @@
 
 ## LATER
 
+- Before CUT and delete
+  - Minor adjustments to start of sample offset (buttons)
+  - Find next transient functionality
 - CUT AND DELETE MODE (C / D)
+  - Candidate for slicing: http://127.0.0.1:5000/?sample=04c0c5fd059d1bd2752ed0658f413bc6&start=7414394
   - Always use a confirmation dialog, and use toast for confirmation
   - Simple cut mode which splits the sample at the last confirmed starting 
     point
