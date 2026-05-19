@@ -1264,6 +1264,74 @@
             box-sizing: border-box;
         }
 
+        #manage-folders-dialog {
+            min-width: 500px;
+            max-width: 640px;
+        }
+
+        .manage-folders-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .manage-folders-path {
+            flex: 1 1 auto;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.85em;
+        }
+
+        .manage-folders-count {
+            flex: 0 0 auto;
+            text-align: right;
+            min-width: 40px;
+            font-variant-numeric: tabular-nums;
+            font-size: 0.85em;
+            opacity: 0.75;
+        }
+
+        .manage-folders-trash {
+            flex: 0 0 auto;
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            padding: 3px 6px;
+            cursor: pointer;
+            color: var(--text-color);
+            font-size: 0.85em;
+            transition: background 0.1s, color 0.1s;
+        }
+
+        .manage-folders-trash.selected {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+
+        .manage-folders-warning {
+            margin-top: 12px;
+            font-size: 0.82em;
+            opacity: 0.8;
+        }
+
+        .manage-folders-pending {
+            margin-bottom: 6px;
+            font-style: italic;
+        }
+
+        .manage-folders-warning ul {
+            margin: 4px 0 0 0;
+            padding-left: 18px;
+        }
+
+        .manage-folders-caution {
+            margin-right: 4px;
+        }
+
         .dialog-footer {
             display: flex;
             justify-content: flex-end;
@@ -1548,6 +1616,32 @@
             <div class="dialog-footer">
                 <button id="folder-dialog-cancel">Cancel</button>
                 <button id="folder-dialog-ok" disabled>OK</button>
+            </div>
+        </div>
+    </div>
+
+<!-- Manage scan folders dialog -->
+    <div id="manage-folders-overlay" class="dialog-overlay hidden">
+        <div id="manage-folders-dialog" class="dialog-card">
+            <div class="dialog-header">
+                <span>Manage scan folders</span>
+                <button id="manage-folders-close" class="dialog-close-btn" title="Close">&times;</button>
+            </div>
+            <div class="dialog-body">
+                <div id="manage-folders-list"></div>
+                <div class="manage-folders-warning">
+                    <div class="manage-folders-pending">Deletion will take place once OK is pressed</div>
+                    <div><span class="manage-folders-caution">⚠️</span>Deleting a sample folder will:</div>
+                    <ul>
+                        <li>Remove all sample references from the database (not on disk)</li>
+                        <li>Remove the sample from all quick pick references</li>
+                        <li>Remove the samples from the assigned labels</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button id="manage-folders-cancel">Cancel</button>
+                <button id="manage-folders-ok">OK</button>
             </div>
         </div>
     </div>

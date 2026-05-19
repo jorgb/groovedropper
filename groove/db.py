@@ -529,9 +529,14 @@ def fetch_scan_folder_paths(conn):
 
 
 def fetch_folders(conn):
-    rows = conn.execute(
-        'SELECT id, path, created_at FROM scan_folders ORDER BY created_at ASC'
-    ).fetchall()
+    rows = conn.execute('''
+        SELECT sf.id, sf.path, sf.created_at,
+               COUNT(s.id) AS sample_count
+        FROM scan_folders sf
+        LEFT JOIN samples s ON s.folder_id = sf.id
+        GROUP BY sf.id
+        ORDER BY sf.created_at ASC
+    ''').fetchall()
     return [dict(row) for row in rows]
 
 
@@ -544,10 +549,14 @@ def insert_folder(conn, path, created_at):
 
 
 def delete_folder(conn, folder_id):
+    count_row = conn.execute(
+        'SELECT COUNT(*) FROM samples WHERE folder_id = ?', (folder_id,)
+    ).fetchone()
+    sample_count = count_row[0] if count_row else 0
     row = conn.execute('SELECT id FROM scan_folders WHERE id = ?', (folder_id,)).fetchone()
     if row:
         conn.execute('DELETE FROM scan_folders WHERE id = ?', (folder_id,))
-    return row is not None
+    return row is not None, sample_count
 
 
 # ---------------------------------------------------------------------------

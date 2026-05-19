@@ -1,0 +1,67 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="MfU6sowEb6jVAMntK6jH">
+    <mxGraphModel dx="1542" dy="815" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-1" parent="1" style="whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="290" width="470" x="90" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-2" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="Manage scan folders" vertex="1">
+          <mxGeometry height="30" width="130" x="104" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;" value="c:\users\jorgd\Samples\Crops" vertex="1">
+          <mxGeometry height="30" width="385" x="105" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;" value="c:\users\jorgd\Samples\Vinyl Rips" vertex="1">
+          <mxGeometry height="30" width="385" x="105" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;" value="c:\users\jorgd\Samples\Movie Quotes" vertex="1">
+          <mxGeometry height="30" width="385" x="105" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-11" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="X" vertex="1">
+          <mxGeometry height="30" width="30" x="530" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-12" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Cancel" vertex="1">
+          <mxGeometry height="30" width="75" x="388" y="349" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-13" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="⚠️ Deleting a sample folder will" vertex="1">
+          <mxGeometry height="30" width="190" x="95" y="279" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-16" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="- Remove all sample references from the database (not on disk)" vertex="1">
+          <mxGeometry height="30" width="360" x="112.5" y="299" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-17" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="- Remove the sample from all quick pick references" vertex="1">
+          <mxGeometry height="30" width="300" x="112.5" y="319" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-18" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="trash" vertex="1">
+          <mxGeometry height="30" width="30" x="460" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-22" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="trash" vertex="1">
+          <mxGeometry height="30" width="30" x="460" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-23" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="trash" vertex="1">
+          <mxGeometry height="30" width="30" x="460" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-24" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="- Remove the samples from the assigned labels" vertex="1">
+          <mxGeometry height="30" width="280" x="112.5" y="339" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-26" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="123" vertex="1">
+          <mxGeometry height="30" width="40" x="415" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-27" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="93" vertex="1">
+          <mxGeometry height="30" width="40" x="415" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-28" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="810" vertex="1">
+          <mxGeometry height="30" width="40" x="415" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-31" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="Deletion will take place once OK is pressed" vertex="1">
+          <mxGeometry height="30" width="250" x="105" y="249" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-32" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="OK" vertex="1">
+          <mxGeometry height="30" width="75" x="472.5" y="349" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

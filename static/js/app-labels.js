@@ -537,6 +537,7 @@ Object.assign(GrooveDropper, {
                 this._hideFirstRunOverlay();
                 this.closeFolderDialog();
                 this.showToast('Folder added — scanning…');
+                this._refreshFolderMeta().catch(e => console.error(e));
                 return;
             }
             if (res.status === 409) { this.showToast('Folder already added'); }
@@ -552,11 +553,13 @@ Object.assign(GrooveDropper, {
     },
 
     async _checkFirstRun() {
-        if (this.state.totalSamplesCount > 0) return;
         try {
             const res = await fetch('/api/folders');
             const folders = await res.json();
-            if (folders.length === 0) this._showFirstRunOverlay();
+            this._updateManageFolderBtn(folders);
+            if (this.state.totalSamplesCount === 0 && folders.length === 0) {
+                this._showFirstRunOverlay();
+            }
         } catch (e) {
             console.error('First-run check failed', e);
         }
@@ -575,6 +578,117 @@ Object.assign(GrooveDropper, {
         if (this.elements.firstRunOverlay) {
             this.elements.firstRunOverlay.classList.remove('visible');
         }
+    },
+
+    // -------------------------------------------------------------------------
+    // Manage scan folders dialog
+    // -------------------------------------------------------------------------
+
+    _updateManageFolderBtn(folders) {
+        this.elements.folderManageBtn.disabled = folders.length === 0;
+    },
+
+    async _refreshFolderMeta() {
+        try {
+            const res = await fetch('/api/folders');
+            if (!res.ok) return;
+            const folders = await res.json();
+            this._updateManageFolderBtn(folders);
+        } catch (e) {
+            console.error('Failed to refresh folder meta', e);
+        }
+    },
+
+    async openManageFoldersDialog() {
+        if (this.state.isScanning) {
+            this.showToast('There is a scan running, please wait before managing folders');
+            return;
+        }
+        try {
+            const res = await fetch('/api/folders');
+            if (!res.ok) return;
+            const folders = await res.json();
+            this._manageFolderDeleteIds = new Set();
+            this._renderManageFolderRows(folders);
+            this.elements.manageFoldersOverlay.classList.remove('hidden');
+        } catch (e) {
+            console.error('Failed to open manage folders dialog', e);
+        }
+    },
+
+    closeManageFoldersDialog() {
+        this.elements.manageFoldersOverlay.classList.add('hidden');
+        this._manageFolderDeleteIds = new Set();
+    },
+
+    _renderManageFolderRows(folders) {
+        const list = document.getElementById('manage-folders-list');
+        list.innerHTML = '';
+        for (const folder of folders) {
+            const row = document.createElement('div');
+            row.className = 'manage-folders-row';
+
+            const path = document.createElement('div');
+            path.className = 'manage-folders-path';
+            this.truncatePathLeft(path, folder.path);
+
+            const count = document.createElement('div');
+            count.className = 'manage-folders-count';
+            count.textContent = folder.sample_count;
+
+            const trash = document.createElement('button');
+            trash.className = 'manage-folders-trash';
+            trash.innerHTML = '<i class="fa-solid fa-trash"></i>';
+            trash.title = 'Mark for deletion';
+            trash.addEventListener('click', () => this._toggleManageFolderDelete(folder.id, trash));
+
+            row.appendChild(path);
+            row.appendChild(count);
+            row.appendChild(trash);
+            list.appendChild(row);
+        }
+    },
+
+    _toggleManageFolderDelete(folderId, trashBtn) {
+        if (this._manageFolderDeleteIds.has(folderId)) {
+            this._manageFolderDeleteIds.delete(folderId);
+            trashBtn.classList.remove('selected');
+        } else {
+            this._manageFolderDeleteIds.add(folderId);
+            trashBtn.classList.add('selected');
+        }
+    },
+
+    async _submitManageFoldersDialog() {
+        if (this._manageFolderDeleteIds.size === 0) {
+            this.showToast('No references deleted from database');
+            this.closeManageFoldersDialog();
+            return;
+        }
+
+        let totalDeleted = 0;
+
+        for (const folderId of this._manageFolderDeleteIds) {
+            try {
+                const res = await fetch(`/api/folders/${folderId}`, { method: 'DELETE' });
+                if (res.ok) {
+                    const data = await res.json();
+                    totalDeleted += data.deleted_sample_count || 0;
+                }
+            } catch (e) {
+                console.error(`Failed to delete folder ${folderId}`, e);
+            }
+        }
+
+        this.closeManageFoldersDialog();
+        await Promise.all([this.pollStatus(), this._refreshFolderMeta()]);
+        await this.loadLabels();
+        await this.loadUntaggedCount();
+        this.renderLabelPanel();
+        this._resetQuickpickState(null);
+        await this.loadQuickpickPresets();
+        this.renderQuickpickBar();
+        this.showToast(`Deleted ${totalDeleted} sample references from database`);
     },
 
 });

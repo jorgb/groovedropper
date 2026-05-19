@@ -88,9 +88,10 @@ const GrooveDropper = {
         folderDialogOverlay: document.getElementById('folder-dialog-overlay'),
         folderDialogClose: document.getElementById('folder-dialog-close'),
         folderPathInput: document.getElementById('folder-path-input'),
-        folderDialogLabels: document.getElementById('folder-dialog-labels'),
         folderDialogCancel: document.getElementById('folder-dialog-cancel'),
         folderDialogOk: document.getElementById('folder-dialog-ok'),
+        // Manage scan folders dialog
+        manageFoldersOverlay: document.getElementById('manage-folders-overlay'),
         // Refresh button
         refreshBtn: document.getElementById('refresh-btn'),
         // Quick Pick
@@ -620,6 +621,10 @@ const GrooveDropper = {
 
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Escape') {
+                if (!this.elements.manageFoldersOverlay.classList.contains('hidden')) {
+                    this.closeManageFoldersDialog();
+                    return;
+                }
                 if (!this.elements.folderDialogOverlay.classList.contains('hidden')) {
                     this.closeFolderDialog();
                     return;
@@ -724,11 +729,17 @@ const GrooveDropper = {
 
         // Folder buttons
         this.elements.folderAddBtn.addEventListener('click', () => this.openFolderDialog());
+        this.elements.folderManageBtn.addEventListener('click', () => this.openManageFoldersDialog().catch(e => console.error(e)));
 
         // Folder add dialog
         this.elements.folderDialogClose.addEventListener('click', () => this.closeFolderDialog());
         this.elements.folderDialogCancel.addEventListener('click', () => this.closeFolderDialog());
         this.elements.folderDialogOk.addEventListener('click', () => this.submitFolderDialog().catch(e => console.error(e)));
+
+        // Manage scan folders dialog
+        document.getElementById('manage-folders-close').addEventListener('click', () => this.closeManageFoldersDialog());
+        document.getElementById('manage-folders-cancel').addEventListener('click', () => this.closeManageFoldersDialog());
+        document.getElementById('manage-folders-ok').addEventListener('click', () => this._submitManageFoldersDialog().catch(e => console.error(e)));
 
         this.elements.folderPathInput.addEventListener('input', () => {
             this.elements.folderDialogOk.disabled = !this.elements.folderPathInput.value.trim();

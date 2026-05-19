@@ -695,10 +695,10 @@ def add_folder():
 @app.route('/api/folders/<int:folder_id>', methods=['DELETE'])
 def delete_folder(folder_id):
     with db.get_db() as conn:
-        found = db.delete_folder(conn, folder_id)
+        found, deleted_count = db.delete_folder(conn, folder_id)
     if not found:
         return jsonify({"error": "Folder not found"}), 404
-    return jsonify({"status": "ok"})
+    return jsonify({"status": "ok", "deleted_sample_count": deleted_count})
 
 
 # ---------------------------------------------------------------------------
