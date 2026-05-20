@@ -439,7 +439,7 @@ const GrooveDropper = {
         this.state.sampleDir = data.directory;
 
         this.elements.indexInput.value = data.index_num;
-        this.elements.sampleName.textContent = data.name;
+        this.truncatePathLeft(this.elements.sampleName, data.name);
         this.truncatePathLeft(this.elements.sampleDir, data.directory);
         this.elements.sampleSize.textContent = this.formatBytes(data.size);
         this.elements.sampleDuration.textContent = this.formatTime(data.duration);
