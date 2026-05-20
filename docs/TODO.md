@@ -1,5 +1,6 @@
 ## DOING
 
+- After initial dialog, pop up the "add folder" dialog
 - Delete with D, only if --mutable flag is given: http://127.0.0.1:5000/?sample=54b6adab6b6e3b9a4571e160c5965f8b&start=8158794
 - Manage sample folders implementation
 - 0.9.2-beta release
