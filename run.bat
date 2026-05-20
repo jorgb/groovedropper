@@ -16,7 +16,7 @@ if errorlevel 1 (
 set VENV=%~dp0.venv
 
 if not exist "%VENV%" (
-    echo Setting up .venv (first run can take a while)
+    echo Setting up .venv first run can take a while
     python -m venv "%VENV%"
 )
 
