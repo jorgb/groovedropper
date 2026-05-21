@@ -325,7 +325,7 @@ Object.assign(GrooveDropper, {
                 // Same sample — just seek (and play if needed)
                 // All four fields move together: offset pair anchors the loop point; pitch pair
                 // must match so _applyPitch and _renderPitchOverlay reflect the slot's tuning.
-                this.state.originalStartOffset = slot.start_offset;
+                this._setOriginOffset(slot.start_offset);
                 this.state.currentOffset = slot.start_offset;
                 this.state.pitchSemitones = slot.pitch_semitones;
                 this.state.pitchCents = slot.pitch_cents;

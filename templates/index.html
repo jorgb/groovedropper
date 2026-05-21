@@ -385,6 +385,24 @@
             display: none;
         }
 
+        #mark-cut {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            left: 0;
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0.6;
+            background: repeating-linear-gradient(
+                to bottom,
+                var(--accent-color) 0px,
+                var(--accent-color) 5px,
+                transparent 5px,
+                transparent 10px
+            );
+        }
+
         #playhead {
             position: absolute;
             top: 0;
@@ -1519,6 +1537,7 @@
 
                 <div id="waveform-container">
                     <img id="waveform-img" src="" alt="Waveform">
+                    <div id="mark-cut"></div>
                     <div id="play-status-icon"><i class="fa-solid fa-stop"></i></div>
                     <div id="sample-label-bar"></div>
                     <div id="playhead"></div>

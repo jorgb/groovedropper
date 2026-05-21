@@ -95,6 +95,8 @@ const GrooveDropper = {
         manageFoldersOverlay: document.getElementById('manage-folders-overlay'),
         // Refresh button
         refreshBtn: document.getElementById('refresh-btn'),
+        // Waveform markers
+        markCut: document.getElementById('mark-cut'),
         // Mutable / archive
         mutableIndicator: document.getElementById('mutable-indicator'),
         archiveDialogOverlay: document.getElementById('archive-dialog-overlay'),
@@ -442,7 +444,7 @@ const GrooveDropper = {
         this.state.totalDuration = data.duration;
         this.state.sampleRate = data.samplerate;
         this.state.durationSamples = data.duration_samples;
-        this.state.originalStartOffset = data.start_offset;
+        this._setOriginOffset(data.start_offset);
         this.state.currentOffset = data.start_offset;
         this.state.sampleName = data.name;
         this.state.sampleDir = data.directory;
@@ -649,7 +651,7 @@ const GrooveDropper = {
                     this.elements.sampleOffset.classList.remove('error');
                     this.elements.sampleOffset.blur();
                     const newOffset = val;
-                    this.state.originalStartOffset = newOffset;
+                    this._setOriginOffset(newOffset);
                     this.state.currentOffset = newOffset;
                     const wasPlaying = this.state.isPlaying;
                     this.state.skipEndedEvent = true;

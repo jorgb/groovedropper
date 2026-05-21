@@ -29,6 +29,20 @@ Object.assign(GrooveDropper, {
         this._rafId = null;
     },
 
+    // Positions the mark-cut dotted line at the reset origin (originalStartOffset).
+    updateMarkCut() {
+        if (this.state.durationSamples > 0) {
+            this.elements.markCut.style.left =
+                `${(this.state.originalStartOffset / this.state.durationSamples) * 100}%`;
+        }
+    },
+
+    // Sets originalStartOffset and syncs the mark-cut marker in one call.
+    _setOriginOffset(offset) {
+        this.state.originalStartOffset = offset;
+        this.updateMarkCut();
+    },
+
     // Briefly adds the 'flash' class to the playhead element to animate a visual cue.
     flashPlayhead() {
         this.elements.playhead.classList.add('flash');
@@ -83,7 +97,7 @@ Object.assign(GrooveDropper, {
     // that the seek itself may fire. Both originalStartOffset and currentOffset must always
     // move together so history and playback both reference the same position.
     _beginSeekTo(offset) {
-        this.state.originalStartOffset = offset;
+        this._setOriginOffset(offset);
         this.state.currentOffset = offset;
         this.state.skipEndedEvent = true;
     },
@@ -164,7 +178,7 @@ Object.assign(GrooveDropper, {
         const fraction = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
         const newOffset = Math.round(fraction * this.state.durationSamples);
 
-        this.state.originalStartOffset = newOffset;
+        this._setOriginOffset(newOffset);
         this.state.currentOffset = newOffset;
 
         const shouldPlay = startPlaying || this.state.isPlaying;
@@ -233,7 +247,7 @@ Object.assign(GrooveDropper, {
     // Marks the current playhead position as the new slice/restart origin without seeking.
     markStartOffset() {
         if (!this.state.currentSampleId) return;
-        this.state.originalStartOffset = this.state.currentOffset;
+        this._setOriginOffset(this.state.currentOffset);
         this.flashPlayhead();
     },
 
