@@ -6,7 +6,10 @@ http://127.0.0.1:5000/?sample=ad1ffbb36ade32e012514122b2d4775b&start=193248
 http://127.0.0.1:5000/?sample=9b80a4ade4f440fa35827ffdcbce74cf&start=11347101
 
 - After initial dialog, pop up the "add folder" dialog
+- Delete with D, only if --mutable flag is given: http://127.0.0.1:5000/?sample=54b6adab6b6e3b9a4571e160c5965f8b&start=8158794
+- Manage sample folders implementation
 - 0.9.2-beta release
+  - Explain in README how to extract to run (online)
   - Test out of box experience (manual link in HTML needs fixing!)
   - Test linux run.sh
   - Can the readme.html BG be patched to dark? 
