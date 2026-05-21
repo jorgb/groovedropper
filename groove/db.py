@@ -331,6 +331,14 @@ def delete_sample(conn, sample_id):
     return row
 
 
+def delete_sample_by_digest(conn, digest):
+    """Delete a sample by digest. Returns the path row, or None if not found."""
+    row = conn.execute('SELECT path FROM samples WHERE digest = ?', (digest,)).fetchone()
+    if row:
+        conn.execute('DELETE FROM samples WHERE digest = ?', (digest,))
+    return row
+
+
 # ---------------------------------------------------------------------------
 # Refresh
 # ---------------------------------------------------------------------------

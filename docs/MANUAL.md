@@ -14,9 +14,10 @@ a searchable index and stream audio for playback.
 5. [Pitch Control](#pitch-control)
 6. [Labels & Presets](#labels--presets)
 7. [Vibe Picks](#vibe-picks)
-8. [Themes](#themes)
-8. [Database Migration Policy](#database-migration-policy)
-9. [Troubleshooting](#troubleshooting)
+8. [Archiving unwanted samples](#archiving-unwanted-samples)
+9. [Themes](#themes)
+10. [Database Migration Policy](#database-migration-policy)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -317,6 +318,48 @@ takes you down a rabbit hole, clone the list and continue altering it so
 that you can remove the samples that do not match the new path, but keep all 
 other presets.
 
+
+---
+
+## Archiving unwanted samples
+
+> **GrooveDropper never deletes files.**
+> Archive mode renames a file on disk to `<name>.bak` — your original data
+> is always preserved and can be recovered by renaming it back.
+
+Archive mode is an optional, opt-in feature that must be explicitly enabled
+at startup by passing the `--mutable` flag:
+
+```bat
+run.bat --mutable
+```
+
+When active, a **skull icon** appears on the left side of the header bar as a
+permanent reminder that archive actions are available. Clicking on this 
+skull will disable the mutable option again.
+
+### Archiving a sample
+
+1. Load the sample you want to remove (press `R` to randomize, or navigate to
+   it directly).
+2. Press **`A`**.
+3. A confirmation dialog appears:
+   > *Are you sure you want to archive sample?
+4. Press **Archive** to confirm, or **Cancel** / **Esc** to abort.
+
+On confirmation:
+
+- The file on disk is renamed from e.g. `BREAKS-001.wav` to `BREAKS-001.wav.bak`.
+- The sample is removed from the database, and any quick pick slots that 
+  referenced it.
+- The next random sample loads (and starts playing if playback was active).
+
+### Recovering an archived sample
+
+Rename the `<sample>.bak` file back to its original name on disk, then press the
+**Refresh** button in GrooveDropper (or restart the app) to re-index it.
+All previously assigned labels are restored automatically because labels are
+stored by content digest, not by filename.
 
 ---
 

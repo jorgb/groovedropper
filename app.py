@@ -183,7 +183,11 @@ def set_config():
 
 @app.route('/api/info')
 def get_info():
-    return jsonify({"db_path": db.DB_FILE, "version": get_version()})
+    return jsonify({
+        "db_path": db.DB_FILE,
+        "version": get_version(),
+        "mutable": app.config.get('MUTABLE', False),
+    })
 
 
 @app.route('/api/stats')
@@ -659,6 +663,40 @@ def delete_quickpick_slot(preset_id, slot_number):
 # Scan folders
 # ---------------------------------------------------------------------------
 
+@app.route('/api/mutable/disable', methods=['POST'])
+def disable_mutable():
+    app.config['MUTABLE'] = False
+    logger.info("MUTABLE mode disabled via UI")
+    return jsonify({"status": "ok"})
+
+
+@app.route('/api/sample/<digest>/archive', methods=['POST'])
+def archive_sample(digest):
+    if not app.config.get('MUTABLE', False):
+        return jsonify({"error": "mutable_disabled"}), 403
+
+    with db.get_db() as conn:
+        row = db.fetch_sample_by_digest(conn, digest)
+        if not row:
+            return jsonify({"error": "sample_not_found"}), 404
+        path_row = db.fetch_sample_path(conn, row['id'])
+
+    path = path_row['path']
+    bak_path = path + '.bak'
+    try:
+        os.rename(path, bak_path)
+    except OSError as e:
+        return jsonify({"error": "rename_failed", "detail": str(e)}), 500
+
+    try:
+        with db.get_db() as conn:
+            db.delete_sample_by_digest(conn, digest)
+    except Exception as e:
+        logger.error(f"DB delete failed after rename {path} -> {bak_path}: {e}")
+
+    return jsonify({"status": "ok", "archived_path": bak_path})
+
+
 @app.route('/api/folders', methods=['GET'])
 def get_folders():
     with db.get_db() as conn:
@@ -721,8 +759,14 @@ if __name__ == '__main__':
     parser.add_argument('--no-browser', action='store_true')
     parser.add_argument('--serve', action='store_true',
                         help="Bind to all interfaces (0.0.0.0) for LAN access; no browser is launched")
+    parser.add_argument('--mutable', action='store_true',
+                        help="Enable archive mode: allow renaming samples to <name>.bak from the UI")
 
     args = parser.parse_args()
+
+    app.config['MUTABLE'] = args.mutable
+    if args.mutable:
+        logger.info("MUTABLE mode enabled — archive actions are available in the UI")
 
     db_path = str(Path(args.db_file).resolve())
     logger.info(f"Database: {db_path}")
