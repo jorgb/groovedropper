@@ -125,10 +125,8 @@
             margin: 0;
         }
 
-        /* Theme switcher — right cell of the header grid */
+        /* Theme switcher — inside #header-right flex group */
         #theme-switcher-container {
-            grid-column: 3;
-            justify-self: end;
             display: flex;
             flex-direction: column;
             align-items: flex-end;
@@ -338,6 +336,27 @@
             white-space: nowrap;
             overflow: hidden;
             min-width: 0;
+        }
+
+        #header-right {
+            grid-column: 3;
+            justify-self: end;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #mutable-indicator {
+            color: var(--accent-color);
+            font-size: 1.3em;
+            cursor: pointer;
+        }
+        #mutable-indicator.hidden { display: none; }
+
+        #archive-dialog-skull {
+            color: var(--accent-color);
+            margin-right: 6px;
         }
 
         /* ------------------------------------------------------------------ */
@@ -1395,7 +1414,7 @@
         @media (max-width: 480px) {
             #header-row { display: flex; flex-direction: column; align-items: stretch; }
             #header-title { order: 1; }
-            #theme-switcher-container { order: 2; justify-self: unset; align-self: flex-end; }
+            #header-right { order: 2; justify-content: flex-end; }
             .dialog-card { min-width: unset; }
         }
     </style>
@@ -1410,16 +1429,21 @@
             <h1>GrooveDropper</h1>
             <div class="subtitle">Needle Drop Sampling Assistant</div>
         </div>
-        <div id="theme-switcher-container">
-            <div id="theme-switcher-row">
-                <span id="theme-icon"><i class="fa-solid fa-palette"></i></span>
-                <select id="theme-select">
-                    <option value="theme-default">Default</option>
-                    <option value="theme-hacker">Hacker</option>
-                    <option value="theme-protracker">ProTracker</option>
-                </select>
+        <div id="header-right">
+            <div id="mutable-indicator" class="hidden">
+                <i class="fa-solid fa-skull"></i>
             </div>
-            <span id="app-version"></span>
+            <div id="theme-switcher-container">
+                <div id="theme-switcher-row">
+                    <span id="theme-icon"><i class="fa-solid fa-palette"></i></span>
+                    <select id="theme-select">
+                        <option value="theme-default">Default</option>
+                        <option value="theme-hacker">Hacker</option>
+                        <option value="theme-protracker">ProTracker</option>
+                    </select>
+                </div>
+                <span id="app-version"></span>
+            </div>
         </div>
     </div>
 
@@ -1580,7 +1604,7 @@
     <div id="controls-row">
         <div id="controls-info" class="folded">
             <h3 id="controls-header"><i id="controls-fold-icon" class="fa-solid fa-chevron-right"></i>Controls</h3>
-            <table>
+            <table id="controls-table">
                 <tr><td><span class="control-key">SPACE</span></td><td>Play / Pause - Resumes from stopped location</td></tr>
                 <tr><td><span class="control-key">SHIFT + SPACE</span></td><td>Reset playhead - Restarts the sample from the originally randomized offset</td></tr>
                 <tr><td><span class="control-key">CTRL + SPACE</span></td><td>Mark Position - Set the current playhead position as the new slice / restart origin</td></tr>
@@ -1642,6 +1666,23 @@
             <div class="dialog-footer">
                 <button id="manage-folders-cancel">Cancel</button>
                 <button id="manage-folders-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
+<!-- Archive confirmation dialog -->
+    <div id="archive-dialog-overlay" class="dialog-overlay hidden">
+        <div id="archive-dialog" class="dialog-card">
+            <div class="dialog-header">
+                <span><i class="fa-solid fa-skull" id="archive-dialog-skull">&nbsp;</i>Archive sample?</span>
+                <button id="archive-dialog-close" class="dialog-close-btn" title="Close">&times;</button>
+            </div>
+            <div class="dialog-body">
+                <p id="archive-dialog-msg"></p>
+            </div>
+            <div class="dialog-footer">
+                <button id="archive-dialog-cancel">Cancel</button>
+                <button id="archive-dialog-ok">Archive</button>
             </div>
         </div>
     </div>

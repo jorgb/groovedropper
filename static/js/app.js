@@ -31,6 +31,7 @@ const GrooveDropper = {
         appVersion: '',
         sampleName: null,
         sampleDir: null,
+        mutable: false,
         quickpick: {
             presets: [],
             activePresetId: null,
@@ -94,6 +95,14 @@ const GrooveDropper = {
         manageFoldersOverlay: document.getElementById('manage-folders-overlay'),
         // Refresh button
         refreshBtn: document.getElementById('refresh-btn'),
+        // Mutable / archive
+        mutableIndicator: document.getElementById('mutable-indicator'),
+        archiveDialogOverlay: document.getElementById('archive-dialog-overlay'),
+        archiveDialogMsg: document.getElementById('archive-dialog-msg'),
+        archiveDialogCancel: document.getElementById('archive-dialog-cancel'),
+        archiveDialogOk: document.getElementById('archive-dialog-ok'),
+        archiveDialogClose: document.getElementById('archive-dialog-close'),
+        controlsTable: document.getElementById('controls-table'),
         // Quick Pick
         qpAddBtn: document.getElementById('qp-add-btn'),
         qpCloneBtn: document.getElementById('qp-clone-btn'),
@@ -475,6 +484,60 @@ const GrooveDropper = {
         }
     },
 
+    async disableMutable() {
+        const res = await fetch('/api/mutable/disable', { method: 'POST' });
+        if (!res.ok) return;
+        this.state.mutable = false;
+        this.elements.mutableIndicator.classList.add('hidden');
+        document.getElementById('controls-archive-row')?.remove();
+        this.showToast('Mutable options (archiving, writing) are disabled');
+    },
+
+    promptArchiveSample() {
+        const name = this.state.sampleName;
+        if (!name) return;
+        const bak = name + '.bak';
+        const msg = this.elements.archiveDialogMsg;
+        const bold = t => { const b = document.createElement('strong'); b.textContent = t; return b; };
+        msg.innerHTML = '';
+        msg.appendChild(document.createTextNode('Are you sure you want to archive sample?'));
+        msg.appendChild(document.createElement('br'));
+        msg.appendChild(document.createElement('br'));
+        msg.appendChild(document.createTextNode('Sample will be renamed to:'));
+        msg.appendChild(document.createElement('br'));
+        msg.appendChild(bold(bak));
+        this.elements.archiveDialogOverlay.classList.remove('hidden');
+    },
+
+    async archiveSample() {
+        const digest = this.state.currentDigest;
+        const name   = this.state.sampleName;
+        if (!digest) return;
+
+        const res = await fetch(`/api/sample/${digest}/archive`, { method: 'POST' });
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            this.showToast(`Archive failed: ${body.detail || body.error || res.status}`);
+            return;
+        }
+
+        this.showToast(`Archived: "${name}" renamed to "${name}.bak"`);
+        await this._postArchiveRefresh();
+    },
+
+    async _postArchiveRefresh() {
+        await this.pollStatus();
+        await this.loadLabels();
+        await this.loadUntaggedCount();
+        this.renderLabelPanel();
+        const activeQpId = this.state.quickpick.activePresetId;
+        if (activeQpId) {
+            await this.loadQuickpickSlots(activeQpId);
+            this.renderQuickpickBar();
+        }
+        await this.loadNextRandom(this.state.isPlaying);
+    },
+
     truncatePathLeft(el, path) {
         // Binary search: find the shortest tail of `path` that still fits the element width.
         el.textContent = path;
@@ -524,6 +587,15 @@ const GrooveDropper = {
             if (data.version) {
                 this.state.appVersion = 'v' + data.version;
                 this.elements.appVersion.textContent = this.state.appVersion;
+            }
+            this.state.mutable = !!data.mutable;
+            if (this.state.mutable) {
+                this.elements.mutableIndicator.classList.remove('hidden');
+                const row = document.createElement('tr');
+                row.id = 'controls-archive-row';
+                row.innerHTML = '<td><span class="control-key">A</span></td>' +
+                    '<td>Archive Sample — rename current sample to &lt;name&gt;.bak and remove from library</td>';
+                this.elements.controlsTable.appendChild(row);
             }
         } catch (e) {
             console.error('Failed to load info', e);
@@ -619,8 +691,22 @@ const GrooveDropper = {
             if (btn) btn.blur();
         });
 
+        this.elements.mutableIndicator.addEventListener('click', () => this.disableMutable().catch(err => console.error(err)));
+
+        const _closeArchiveDialog = () => this.elements.archiveDialogOverlay.classList.add('hidden');
+        this.elements.archiveDialogCancel.addEventListener('click', _closeArchiveDialog);
+        this.elements.archiveDialogClose.addEventListener('click', _closeArchiveDialog);
+        this.elements.archiveDialogOk.addEventListener('click', () => {
+            _closeArchiveDialog();
+            this.archiveSample().catch(err => console.error(err));
+        });
+
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Escape') {
+                if (!this.elements.archiveDialogOverlay.classList.contains('hidden')) {
+                    _closeArchiveDialog();
+                    return;
+                }
                 if (!this.elements.manageFoldersOverlay.classList.contains('hidden')) {
                     this.closeManageFoldersDialog();
                     return;
@@ -664,6 +750,8 @@ const GrooveDropper = {
                 this.resetPitch();
             } else if (e.code === 'KeyV') {
                 this.storeToNextFreeQpSlot().catch(err => console.error(err));
+            } else if (e.code === 'KeyA' && this.state.mutable) {
+                this.promptArchiveSample();
             } else if (e.code === 'ArrowLeft' || e.code === 'KeyJ') {
                 e.preventDefault();
                 this.navigateQuickpickSlot(-1);
