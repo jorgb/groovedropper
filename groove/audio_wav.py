@@ -34,6 +34,31 @@ def get_audio_info(path):
     return info.samplerate, info.frames
 
 
+def iter_blocks(path, start_sample, frame_block_size=64, hop_length=512, n_fft=2048):
+    """Yield (block_start_sample, sr, y_mono_float32) for streaming onset detection.
+
+    Uses librosa.stream for true block-by-block I/O; no full-file decode.
+    """
+    import librosa
+    info = sf.info(path)
+    sr = info.samplerate
+    offset_secs = max(0, start_sample) / sr
+    overlap = n_fft - hop_length
+    global_offset = max(0, start_sample)
+
+    stream = librosa.stream(
+        path,
+        block_length=frame_block_size,
+        frame_length=n_fft,
+        hop_length=hop_length,
+        mono=True,
+        offset=offset_secs,
+    )
+    for y_block in stream:
+        yield global_offset, sr, y_block
+        global_offset += len(y_block) - overlap
+
+
 def make_audio_slice(path, start_offset, samplerate, duration_secs=10):
     info = sf.info(path)
     data, sr = sf.read(path, start=start_offset, frames=int(duration_secs * samplerate))

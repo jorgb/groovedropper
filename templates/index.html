@@ -1531,7 +1531,10 @@
                             <i class="fa-solid fa-i-cursor info-copy-icon" id="copy-icon-offset" title="Copy offset"></i>
                             <span class="info-label" id="offset-label">Offset:</span>
                         </span>
-                        <input type="text" id="sample-offset" class="index-input" value="00000000">
+                        <span style="display:flex;align-items:center;gap:4px;">
+                            <button id="btn-find-transient" class="panel-icon-btn" title="Jump to next transient (T)"><i class="fa-solid fa-wave-square"></i></button>
+                            <input type="text" id="sample-offset" class="index-input" value="00000000">
+                        </span>
                     </div>
                 </div>
 
@@ -1632,6 +1635,7 @@
                 <tr><td><span class="control-key">LEFT MOUSE</span></td><td>Scrub through the waveform by clicking</td></tr>
                 <tr><td><span class="control-key">R</span></td><td>Random Sample - Pick random sample and play immediately</td></tr>
                 <tr><td><span class="control-key">SHIFT + R</span></td><td>Randomize In Sample - Pick new random offset in current sample</td></tr>
+                <tr><td><span class="control-key">T</span></td><td>Find Transient — jump to the next onset after the current offset</td></tr>
                 <tr><td><span class="control-key">P</span></td><td>Previous Sample - Go to previous sample in history</td></tr>
                 <tr><td><span class="control-key">, / .</span></td><td>Pitch Down / Up — transpose by 1 semitone; hold SHIFT for 10-cent fine steps</td></tr>
                 <tr><td><span class="control-key">/</span></td><td>Reset Pitch — Regular playback, return to zero (0 semitones, 0 cents)</td></tr>

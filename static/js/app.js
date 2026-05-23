@@ -97,6 +97,8 @@ const GrooveDropper = {
         refreshBtn: document.getElementById('refresh-btn'),
         // Waveform markers
         markCut: document.getElementById('mark-cut'),
+        // Transient finder
+        btnFindTransient: document.getElementById('btn-find-transient'),
         // Mutable / archive
         mutableIndicator: document.getElementById('mutable-indicator'),
         archiveDialogOverlay: document.getElementById('archive-dialog-overlay'),
@@ -752,6 +754,8 @@ const GrooveDropper = {
                 this.resetPitch();
             } else if (e.code === 'KeyV') {
                 this.storeToNextFreeQpSlot().catch(err => console.error(err));
+            } else if (e.code === 'KeyT') {
+                this.findAndSnapToTransient(e.shiftKey).catch(err => console.error(err));
             } else if (e.code === 'KeyA' && this.state.mutable) {
                 this.promptArchiveSample();
             } else if (e.code === 'ArrowLeft' || e.code === 'KeyJ') {
@@ -774,6 +778,8 @@ const GrooveDropper = {
                 }
             }
         });
+
+        this.elements.btnFindTransient.addEventListener('click', (e) => this.findAndSnapToTransient(e.shiftKey).catch(err => console.error(err)));
 
         // Preset box
         this.elements.presetAddBtn.addEventListener('click', () => this.addPreset().catch(e => console.error(e)));

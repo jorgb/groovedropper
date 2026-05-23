@@ -136,6 +136,17 @@ resets when the app is reloaded.
 ⚠️ Pressing **`R`** will void all history that comes after the last selected 
 sample.
 
+### Transient Alignment
+
+By pressing **`T`** or **`Shift + T`** you can align the play head to match 
+the next transient. This can also be done by using the waveform symbol next 
+to the sample offset.
+
+Pressing this, will advance the playhead to the next transient. Using 
+`Shift + T` will search for transients with bigger energy, and might skip 
+over hi-hats.
+
+
 ---
 
 ## Sharing & Saving

@@ -260,6 +260,38 @@ Object.assign(GrooveDropper, {
         this._syncFocusedQpSlotPitch().catch(e => console.error(e));
     },
 
+    // Scans forward from the current origin offset, snaps to the next transient zero-crossing.
+    // bigOnly=true skips hi-hats (raises delta threshold, cuts high frequencies).
+    async findAndSnapToTransient(bigOnly = false) {
+        if (!this.state.currentSampleId) return;
+
+        const res = await fetch('/api/find_transient', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sample_id:    this.state.currentSampleId,
+                start_sample: this.state.originalStartOffset,
+                big_only:     bigOnly,
+            }),
+        });
+        const data = await res.json();
+
+        if (!data.found) {
+            this.showToast('no transient found');
+            return;
+        }
+
+        const offset = data.zero_crossing_sample;
+        this._beginSeekTo(offset);
+        this.elements.audio.currentTime = offset / this.state.sampleRate;
+        this.updateOffsetDisplay(offset);
+        this.updatePlayhead();
+        this.flashPlayhead();
+        this._resumeIfPlaying();
+        setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
+        this.showToast('transient found');
+    },
+
     // Attaches a vertical mouse-drag handler to el; each STEP_PX of drag calls onStep(±steps).
     _attachPitchDrag(el, onStep) {
         let startY = 0;

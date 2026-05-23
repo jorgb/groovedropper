@@ -37,6 +37,34 @@ def get_audio_info(path):
     return mi.sample_rate, mi.num_frames
 
 
+def iter_blocks(path, start_sample, frame_block_size=64, hop_length=512, n_fft=2048):
+    """Yield (block_start_sample, sr, y_mono_float32) for streaming onset detection.
+
+    Decodes the MP3 once to a flat float32 array (miniaudio does not expose
+    true streaming with arbitrary seek), then slices it into overlapping blocks
+    that match what librosa.stream would produce for WAV.
+    """
+    decoded = miniaudio.decode_file(
+        path,
+        output_format=miniaudio.SampleFormat.FLOAT32,
+        nchannels=1,
+    )
+    sr = decoded.sample_rate
+    samples = np.frombuffer(decoded.samples, dtype=np.float32)
+    total = len(samples)
+
+    step = frame_block_size * hop_length
+    block_size = n_fft + (frame_block_size - 1) * hop_length
+    offset = max(0, start_sample)
+
+    while offset < total:
+        y_block = samples[offset:offset + block_size]
+        if len(y_block) < n_fft:
+            break
+        yield offset, sr, y_block
+        offset += step
+
+
 def make_audio_slice(path, start_offset, samplerate, duration_secs=10):
     decoded = miniaudio.decode_file(
         path,

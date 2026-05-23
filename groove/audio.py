@@ -35,3 +35,7 @@ def get_audio_info(path):
 
 def make_audio_slice(path, start_offset, samplerate, duration_secs=10):
     return _handler(path).make_audio_slice(path, start_offset, samplerate, duration_secs)
+
+
+def iter_blocks(path, start_sample, frame_block_size=64, hop_length=512, n_fft=2048):
+    return _handler(path).iter_blocks(path, start_sample, frame_block_size, hop_length, n_fft)

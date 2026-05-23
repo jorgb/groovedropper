@@ -14,7 +14,7 @@ from threading import Thread
 from queue import Empty
 
 from flask import Flask, render_template, request, send_file, jsonify
-from groove import db, audio
+from groove import db, audio, transient as _transient
 from groove.db import DatabaseTooNewError
 from groove.queue import scan_queue
 
@@ -306,6 +306,26 @@ def serve_audio(sample_id):
         mimetype = audio.MIME_BY_EXT.get(ext, 'audio/wav')
         return send_file(row['path'], conditional=True, mimetype=mimetype)
     return "Not found", 404
+
+
+@app.route('/api/find_transient', methods=['POST'])
+def api_find_transient():
+    data = request.get_json(silent=True) or {}
+    sample_id    = data.get('sample_id')
+    start_sample = int(data.get('start_sample', 0))
+    big_only     = bool(data.get('big_only', False))
+
+    if sample_id is None:
+        return jsonify({"error": "sample_id required"}), 400
+
+    with db.get_db() as conn:
+        row = db.fetch_sample_path(conn, sample_id)
+
+    if not row or not row['path'] or not os.path.exists(row['path']):
+        return jsonify({"error": "sample not found"}), 404
+
+    result = _transient.find_transient(row['path'], start_sample, big_only=big_only)
+    return jsonify(result)
 
 
 @app.route('/api/slice/<int:sample_id>')
