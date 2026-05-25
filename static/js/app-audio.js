@@ -295,6 +295,13 @@ Object.assign(GrooveDropper, {
     async showCutDialog() {
         if (!this.state.currentSampleId || !this.state.mutable) return;
 
+        if (this.state.isPlaying) {
+            this.elements.audio.pause();
+            this._stopPlayheadUpdater();
+            this.state.isPlaying = false;
+            this.updateStatusText('STOPPED');
+        }
+
         this._cutState = { mode: 'both' };
         this._setCutMode('both');
 

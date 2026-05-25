@@ -627,11 +627,17 @@ const GrooveDropper = {
             this.state.mutable = !!data.mutable;
             if (this.state.mutable) {
                 this.elements.mutableIndicator.classList.remove('hidden');
-                const row = document.createElement('tr');
-                row.id = 'controls-archive-row';
-                row.innerHTML = '<td><span class="control-key">A</span></td>' +
+                const archiveRow = document.createElement('tr');
+                archiveRow.id = 'controls-archive-row';
+                archiveRow.innerHTML = '<td><span class="control-key">A</span></td>' +
                     '<td>Archive Sample — rename current sample to &lt;name&gt;.bak and remove from library</td>';
-                this.elements.controlsTable.appendChild(row);
+                this.elements.controlsTable.appendChild(archiveRow);
+
+                const cutRow = document.createElement('tr');
+                cutRow.id = 'controls-cut-row';
+                cutRow.innerHTML = '<td><span class="control-key">C</span></td>' +
+                    '<td>Cut Sample — open the cut dialog to split the sample at the current offset</td>';
+                this.elements.controlsTable.appendChild(cutRow);
             }
         } catch (e) {
             console.error('Failed to load info', e);
@@ -739,6 +745,10 @@ const GrooveDropper = {
 
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Escape') {
+                if (!this.elements.cutDialogOverlay.classList.contains('hidden')) {
+                    this._closeCutDialog();
+                    return;
+                }
                 if (!this.elements.archiveDialogOverlay.classList.contains('hidden')) {
                     _closeArchiveDialog();
                     return;
