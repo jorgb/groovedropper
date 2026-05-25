@@ -39,3 +39,15 @@ def make_audio_slice(path, start_offset, samplerate, duration_secs=10):
 
 def iter_blocks(path, start_sample, frame_block_size=64, hop_length=512, n_fft=2048):
     return _handler(path).iter_blocks(path, start_sample, frame_block_size, hop_length, n_fft)
+
+
+def generate_cut_waveform(path, begin_offset, width=560, height=90):
+    try:
+        return _handler(path).generate_cut_waveform(path, begin_offset, width, height)
+    except Exception as e:
+        logger.error("Error generating cut waveform for %s: %s", path, e)
+        return None
+
+
+def save_slice_wav(src_path, dest_path, start_frame, end_frame):
+    return _handler(src_path).save_slice_wav(src_path, dest_path, start_frame, end_frame)

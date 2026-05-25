@@ -1242,6 +1242,12 @@
             display: none;
         }
 
+        #cut-dialog .cut-btn.active {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border-color: var(--accent-color);
+        }
+
         .dialog-card {
             background: var(--box-bg);
             border: 1px solid var(--border-color);
@@ -1706,6 +1712,51 @@
             <div class="dialog-footer">
                 <button id="archive-dialog-cancel">Cancel</button>
                 <button id="archive-dialog-ok">Archive</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sample Cut Dialog -->
+    <div id="cut-dialog-overlay" class="dialog-overlay hidden">
+        <div id="cut-dialog" class="dialog-card" style="max-width:660px;">
+            <div class="dialog-header">
+                <span>Cut the sample in half?</span>
+                <button id="cut-dialog-close" class="dialog-close-btn" title="Close">&times;</button>
+            </div>
+            <div class="dialog-body">
+                <p id="cut-waveform-status" style="margin:0 0 4px;font-size:0.8em;color:var(--muted);">
+                    Previewing waveform, please wait...
+                </p>
+                <div style="position:relative;">
+                    <img id="cut-waveform-img" alt="Cut preview waveform"
+                         src="/static/img/waveform_placeholder.png"
+                         style="width:100%;height:90px;object-fit:fill;display:block;" />
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:4px;">
+                    <div style="display:flex;gap:2px;">
+                        <button id="btn-cut-tl" class="panel-icon-btn cut-btn" title="Trash left side">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                        <button id="btn-cut-kl" class="panel-icon-btn cut-btn" title="Keep left side">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                        </button>
+                    </div>
+                    <div style="display:flex;gap:2px;">
+                        <button id="btn-cut-kr" class="panel-icon-btn cut-btn" title="Keep right side">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                        </button>
+                        <button id="btn-cut-tr" class="panel-icon-btn cut-btn" title="Trash right side">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <p style="margin:8px 0 0;font-size:0.75em;color:var(--muted);">
+                    Kept sides are saved as new WAV files. The original is renamed / archived (.bak).
+                </p>
+            </div>
+            <div class="dialog-footer">
+                <button id="cut-dialog-cancel" class="panel-icon-btn">Cancel</button>
+                <button id="cut-dialog-ok"     class="panel-icon-btn" disabled>OK</button>
             </div>
         </div>
     </div>

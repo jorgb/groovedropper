@@ -4,7 +4,7 @@ import miniaudio
 import numpy as np
 import soundfile as sf
 
-from groove.audio_common import render_waveform_png
+from groove.audio_common import CUT_WRITE_BUFFER, cut_window, render_waveform_png
 
 EXTENSIONS = ('.mp3',)
 MIME_TYPE = 'audio/mpeg'
@@ -63,6 +63,83 @@ def iter_blocks(path, start_sample, frame_block_size=64, hop_length=512, n_fft=2
             break
         yield offset, sr, y_block
         offset += step
+
+
+def generate_cut_waveform(path, begin_offset, width=560, height=90):
+    """Waveform PNG centred on begin_offset, streaming only the zoom window."""
+    mi    = miniaudio.get_file_info(path)
+    total = mi.num_frames
+    w_start, w_end = cut_window(total, begin_offset)
+    window = w_end - w_start
+
+    block_size = max(1, window // width)
+    mins = np.zeros(width)
+    maxs = np.zeros(width)
+    col  = 0
+    pos  = 0
+
+    stream = miniaudio.stream_file(
+        path,
+        output_format=miniaudio.SampleFormat.FLOAT32,
+        nchannels=1,
+        frames_to_read=block_size,
+    )
+    for chunk_bytes in stream:
+        chunk     = np.frombuffer(chunk_bytes, dtype=np.float32)
+        chunk_end = pos + len(chunk)
+
+        if chunk_end <= w_start:
+            pos = chunk_end
+            continue
+        if pos >= w_end:
+            break
+
+        local_start = max(0, w_start - pos)
+        local_end   = min(len(chunk), w_end - pos)
+        trimmed     = chunk[local_start:local_end]
+
+        if col < width and len(trimmed) > 0:
+            mins[col] = trimmed.min()
+            maxs[col] = trimmed.max()
+            col += 1
+
+        pos = chunk_end
+
+    cut_px = int((begin_offset - w_start) / max(1, window) * width)
+    return render_waveform_png(mins, maxs, width, height, cut_px=cut_px)
+
+
+def save_slice_wav(src_path, dest_path, start_frame, end_frame):
+    """Stream-copy frames [start_frame, end_frame) to a new 16-bit PCM WAV file."""
+    mi     = miniaudio.get_file_info(src_path)
+    stream = miniaudio.stream_file(
+        src_path,
+        output_format=miniaudio.SampleFormat.FLOAT32,
+        nchannels=mi.nchannels,
+        frames_to_read=CUT_WRITE_BUFFER,
+    )
+    pos = 0
+    with sf.SoundFile(dest_path, mode='w',
+                      samplerate=mi.sample_rate,
+                      channels=mi.nchannels,
+                      subtype='PCM_16') as dst:
+        for chunk_bytes in stream:
+            chunk        = np.frombuffer(chunk_bytes, dtype=np.float32)
+            if mi.nchannels > 1:
+                chunk = chunk.reshape(-1, mi.nchannels)
+            chunk_frames = chunk.shape[0] if chunk.ndim > 1 else len(chunk)
+            chunk_end    = pos + chunk_frames
+
+            if chunk_end <= start_frame:
+                pos = chunk_end
+                continue
+            if pos >= end_frame:
+                break
+
+            local_start = max(0, start_frame - pos)
+            local_end   = min(chunk_frames, end_frame - pos)
+            dst.write(chunk[local_start:local_end])
+            pos = chunk_end
 
 
 def make_audio_slice(path, start_offset, samplerate, duration_secs=10):

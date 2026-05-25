@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from pathlib import Path
 import time
@@ -688,6 +689,112 @@ def disable_mutable():
     app.config['MUTABLE'] = False
     logger.info("MUTABLE mode disabled via UI")
     return jsonify({"status": "ok"})
+
+
+def _archive_file(path, conn, sample_id):
+    """Rename path → path.bak and remove from DB. Shared by archive and cut routes.
+
+    Retries on PermissionError to tolerate sync agents (e.g. Google Drive) that
+    briefly lock the file after a neighbouring write lands in the same directory.
+    """
+    bak = path + '.bak'
+    for attempt in range(6):
+        try:
+            os.rename(path, bak)
+            break
+        except PermissionError:
+            if attempt == 5:
+                raise
+            time.sleep(0.3)
+    db.delete_sample(conn, sample_id)
+
+
+@app.route('/api/cut_waveform/<int:sample_id>')
+def api_cut_waveform(sample_id):
+    begin_offset = int(request.args.get('begin_offset', 0))
+    width  = int(request.args.get('width',  560))
+    height = int(request.args.get('height',  90))
+
+    with db.get_db() as conn:
+        row = db.fetch_sample_path(conn, sample_id)
+    if not row or not os.path.exists(row['path']):
+        return jsonify({'error': 'not found'}), 404
+
+    png_bytes = audio.generate_cut_waveform(row['path'], begin_offset, width, height)
+    if png_bytes is None:
+        return jsonify({'error': 'unsupported format'}), 422
+    return send_file(io.BytesIO(png_bytes), mimetype='image/png')
+
+
+@app.route('/api/cut', methods=['POST'])
+def api_cut():
+    if not app.config.get('MUTABLE', False):
+        return jsonify({'error': 'not in mutable mode'}), 403
+
+    data         = request.get_json(silent=True) or {}
+    sample_id    = data.get('sample_id')
+    begin_offset = int(data.get('begin_offset', 0))
+    keep_left    = bool(data.get('keep_left',  False))
+    keep_right   = bool(data.get('keep_right', False))
+    trash_left   = bool(data.get('trash_left', False))
+    trash_right  = bool(data.get('trash_right', False))
+
+    if sample_id is None:
+        return jsonify({'error': 'sample_id required'}), 400
+    if keep_left and trash_left:
+        return jsonify({'error': 'conflicting left actions'}), 400
+    if keep_right and trash_right:
+        return jsonify({'error': 'conflicting right actions'}), 400
+
+    with db.get_db() as conn:
+        row = db.fetch_sample_path(conn, sample_id)
+    if not row or not row['path'] or not os.path.exists(row['path']):
+        return jsonify({'error': 'sample not found'}), 404
+
+    src_path = row['path']
+    toasts   = []
+    archived = False
+
+    if trash_left and trash_right:
+        with db.get_db() as conn:
+            _archive_file(src_path, conn, sample_id)
+        base = os.path.splitext(os.path.basename(src_path))[0]
+        ext  = os.path.splitext(src_path)[1]
+        toasts.append(f'Sample {base}{ext} renamed to {base}{ext}.bak')
+        archived = True
+
+    else:
+        _, total  = audio.get_audio_info(src_path)
+        end_sample = total - 1
+        base_dir   = os.path.dirname(src_path)
+        base       = os.path.splitext(os.path.basename(src_path))[0]
+        base       = re.sub(r'-\d{8}-\d{8}$', '', base)
+
+        def fmt(n):
+            return f'{int(n):08d}'
+
+        if begin_offset <= 0 and keep_left:
+            return jsonify({'error': 'begin_offset is 0 — left side is empty'}), 400
+        if begin_offset >= total and keep_right:
+            return jsonify({'error': 'begin_offset is at EOF — right side is empty'}), 400
+
+        if keep_left:
+            left_path = os.path.join(base_dir, f'{base}-{fmt(0)}-{fmt(begin_offset - 1)}.wav')
+            audio.save_slice_wav(src_path, left_path, 0, begin_offset)
+            toasts.append(f'Sample {os.path.basename(left_path)} is cut')
+
+        if keep_right:
+            right_path = os.path.join(base_dir, f'{base}-{fmt(begin_offset)}-{fmt(end_sample)}.wav')
+            audio.save_slice_wav(src_path, right_path, begin_offset, total)
+            toasts.append(f'Sample {os.path.basename(right_path)} is cut')
+
+        with db.get_db() as conn:
+            _archive_file(src_path, conn, sample_id)
+        archived = True
+
+        scan_queue.push_folder(base_dir)
+
+    return jsonify({'toasts': toasts, 'archived': archived})
 
 
 @app.route('/api/sample/<digest>/archive', methods=['POST'])

@@ -41,6 +41,8 @@ const GrooveDropper = {
         },
     },
 
+    _cutState: { leftAction: null, rightAction: null },
+
     elements: {
         audio: document.getElementById('audio-player'),
         playhead: document.getElementById('playhead'),
@@ -106,6 +108,17 @@ const GrooveDropper = {
         archiveDialogCancel: document.getElementById('archive-dialog-cancel'),
         archiveDialogOk: document.getElementById('archive-dialog-ok'),
         archiveDialogClose: document.getElementById('archive-dialog-close'),
+        // Sample cut dialog
+        cutDialogOverlay:  document.getElementById('cut-dialog-overlay'),
+        cutDialogClose:    document.getElementById('cut-dialog-close'),
+        cutDialogCancel:   document.getElementById('cut-dialog-cancel'),
+        cutDialogOk:       document.getElementById('cut-dialog-ok'),
+        cutWaveformImg:    document.getElementById('cut-waveform-img'),
+        cutWaveformStatus: document.getElementById('cut-waveform-status'),
+        btnCutTl:          document.getElementById('btn-cut-tl'),
+        btnCutKl:          document.getElementById('btn-cut-kl'),
+        btnCutKr:          document.getElementById('btn-cut-kr'),
+        btnCutTr:          document.getElementById('btn-cut-tr'),
         controlsTable: document.getElementById('controls-table'),
         // Quick Pick
         qpAddBtn: document.getElementById('qp-add-btn'),
@@ -529,6 +542,30 @@ const GrooveDropper = {
         await this._postArchiveRefresh();
     },
 
+    _setCutLeft(action) {
+        this._cutState.leftAction = action;
+        this.elements.btnCutTl.classList.toggle('active', action === 'trash');
+        this.elements.btnCutKl.classList.toggle('active', action === 'keep');
+        this._updateCutOkState();
+    },
+
+    _setCutRight(action) {
+        this._cutState.rightAction = action;
+        this.elements.btnCutKr.classList.toggle('active', action === 'keep');
+        this.elements.btnCutTr.classList.toggle('active', action === 'trash');
+        this._updateCutOkState();
+    },
+
+    _updateCutOkState() {
+        const waveformOk = this.elements.cutWaveformStatus.textContent !== 'Waveform unavailable.';
+        const actionsOk  = this._cutState.leftAction !== null && this._cutState.rightAction !== null;
+        this.elements.cutDialogOk.disabled = !(waveformOk && actionsOk);
+    },
+
+    _closeCutDialog() {
+        this.elements.cutDialogOverlay.classList.add('hidden');
+    },
+
     async _postArchiveRefresh() {
         await this.pollStatus();
         await this.loadLabels();
@@ -758,6 +795,8 @@ const GrooveDropper = {
                 this.findAndSnapToTransient(e.shiftKey).catch(err => console.error(err));
             } else if (e.code === 'KeyA' && this.state.mutable) {
                 this.promptArchiveSample();
+            } else if (e.code === 'KeyC' && e.shiftKey && this.state.mutable) {
+                this.showCutDialog().catch(err => console.error(err));
             } else if (e.code === 'ArrowLeft' || e.code === 'KeyJ') {
                 e.preventDefault();
                 this.navigateQuickpickSlot(-1);
@@ -780,6 +819,18 @@ const GrooveDropper = {
         });
 
         this.elements.btnFindTransient.addEventListener('click', (e) => this.findAndSnapToTransient(e.shiftKey).catch(err => console.error(err)));
+
+        this.elements.btnCutTl.addEventListener('click', () =>
+            this._setCutLeft(this._cutState.leftAction === 'trash' ? null : 'trash'));
+        this.elements.btnCutKl.addEventListener('click', () =>
+            this._setCutLeft(this._cutState.leftAction === 'keep' ? null : 'keep'));
+        this.elements.btnCutKr.addEventListener('click', () =>
+            this._setCutRight(this._cutState.rightAction === 'keep' ? null : 'keep'));
+        this.elements.btnCutTr.addEventListener('click', () =>
+            this._setCutRight(this._cutState.rightAction === 'trash' ? null : 'trash'));
+        this.elements.cutDialogClose .addEventListener('click', () => this._closeCutDialog());
+        this.elements.cutDialogCancel.addEventListener('click', () => this._closeCutDialog());
+        this.elements.cutDialogOk    .addEventListener('click', () => this._commitCut().catch(err => console.error(err)));
 
         // Preset box
         this.elements.presetAddBtn.addEventListener('click', () => this.addPreset().catch(e => console.error(e)));

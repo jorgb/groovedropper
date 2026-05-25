@@ -292,6 +292,69 @@ Object.assign(GrooveDropper, {
         this.showToast('transient found');
     },
 
+    async showCutDialog() {
+        if (!this.state.currentSampleId || !this.state.mutable) return;
+
+        this._cutState = { leftAction: null, rightAction: null };
+        this._setCutLeft(null);
+        this._setCutRight(null);
+
+        this.elements.cutWaveformImg.src = '/static/img/waveform_placeholder.png';
+        this.elements.cutWaveformStatus.textContent = 'Previewing waveform, please wait...';
+        this.elements.cutDialogOk.disabled = true;
+        this.elements.cutDialogOverlay.classList.remove('hidden');
+
+        const beginOffset = this.state.originalStartOffset;
+        const url = `/api/cut_waveform/${this.state.currentSampleId}`
+                  + `?begin_offset=${beginOffset}&width=560&height=90`;
+        try {
+            const res = await fetch(url);
+            if (res.ok) {
+                const blob = await res.blob();
+                this.elements.cutWaveformImg.src = URL.createObjectURL(blob);
+                this.elements.cutWaveformStatus.textContent = '';
+            } else {
+                this.elements.cutWaveformStatus.textContent = 'Waveform unavailable.';
+            }
+        } catch (_) {
+            this.elements.cutWaveformStatus.textContent = 'Waveform unavailable.';
+        }
+        this._updateCutOkState();
+    },
+
+    async _commitCut() {
+        const { leftAction, rightAction } = this._cutState;
+        if (!leftAction || !rightAction) return;
+
+        this._closeCutDialog();
+
+        const res = await fetch('/api/cut', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sample_id:    this.state.currentSampleId,
+                begin_offset: this.state.originalStartOffset,
+                keep_left:    leftAction  === 'keep',
+                trash_left:   leftAction  === 'trash',
+                keep_right:   rightAction === 'keep',
+                trash_right:  rightAction === 'trash',
+            }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            this.showErrorToast(data.error || 'Cut failed');
+            return;
+        }
+
+        (data.toasts ?? []).forEach((msg, i) =>
+            setTimeout(() => this.showToast(msg), i * 3200));
+
+        if (data.archived) {
+            await this._postArchiveRefresh();
+        }
+    },
+
     // Attaches a vertical mouse-drag handler to el; each STEP_PX of drag calls onStep(±steps).
     _attachPitchDrag(el, onStep) {
         let startY = 0;
