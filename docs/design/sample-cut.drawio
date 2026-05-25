@@ -1,0 +1,49 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="MfU6sowEb6jVAMntK6jH">
+    <mxGraphModel dx="1285" dy="679" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-1" parent="1" style="whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="240" width="600" x="90" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-11" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="X" vertex="1">
+          <mxGeometry height="30" width="30" x="660" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-12" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Cancel" vertex="1">
+          <mxGeometry height="30" width="75" x="520" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="4keMs4u-lLoOQTTzCkBP-32" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="OK" vertex="1">
+          <mxGeometry height="30" width="75" x="604.5" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="NtVqPmk5XXd2f_YZMjQ9-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="waveform" vertex="1">
+          <mxGeometry height="90" width="560" x="110" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="NtVqPmk5XXd2f_YZMjQ9-6" edge="1" parent="1" source="NtVqPmk5XXd2f_YZMjQ9-3" style="endArrow=none;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;dashed=1;" target="NtVqPmk5XXd2f_YZMjQ9-3" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="375.5" y="290" as="sourcePoint" />
+            <mxPoint x="425.5" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="NtVqPmk5XXd2f_YZMjQ9-7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="TL" vertex="1">
+          <mxGeometry height="20" width="25.5" x="110" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="NtVqPmk5XXd2f_YZMjQ9-8" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="KL" vertex="1">
+          <mxGeometry height="20" width="25.5" x="145.5" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="NtVqPmk5XXd2f_YZMjQ9-9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="TR" vertex="1">
+          <mxGeometry height="20" width="25.5" x="644.5" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="NtVqPmk5XXd2f_YZMjQ9-10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="KR" vertex="1">
+          <mxGeometry height="20" width="25.5" x="610.25" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="NtVqPmk5XXd2f_YZMjQ9-11" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="Cut the sample in half?" vertex="1">
+          <mxGeometry height="30" width="264.5" x="110" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="NtVqPmk5XXd2f_YZMjQ9-12" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="Cutting the sample left / or right will:&lt;div&gt;- Rename the original sample to {sample}.wav.bak&lt;/div&gt;&lt;div&gt;- Write either left and / or right to a new sample (kept or trashed)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="460" x="110" y="280" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
