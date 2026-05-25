@@ -82,7 +82,7 @@ def generate_cut_waveform(path, begin_offset, width=560, height=90):
             maxs[i] = data.max()
 
     cut_px = int((begin_offset - w_start) / max(1, window) * width)
-    return render_waveform_png(mins, maxs, width, height, cut_px=cut_px)
+    return render_waveform_png(mins, maxs, width, height, cut_px=cut_px), cut_px
 
 
 def save_slice_wav(src_path, dest_path, start_frame, end_frame):

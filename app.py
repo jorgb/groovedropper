@@ -749,10 +749,13 @@ def api_cut_waveform(sample_id):
     if not row or not os.path.exists(row['path']):
         return jsonify({'error': 'not found'}), 404
 
-    png_bytes = audio.generate_cut_waveform(row['path'], begin_offset, width, height)
-    if png_bytes is None:
+    result = audio.generate_cut_waveform(row['path'], begin_offset, width, height)
+    if result is None:
         return jsonify({'error': 'unsupported format'}), 422
-    return send_file(io.BytesIO(png_bytes), mimetype='image/png')
+    png_bytes, cut_px = result
+    response = send_file(io.BytesIO(png_bytes), mimetype='image/png')
+    response.headers['X-Cut-Px'] = str(cut_px)
+    return response
 
 
 @app.route('/api/cut', methods=['POST'])

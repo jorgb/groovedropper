@@ -295,23 +295,33 @@ Object.assign(GrooveDropper, {
     async showCutDialog() {
         if (!this.state.currentSampleId || !this.state.mutable) return;
 
-        this._cutState = { leftAction: null, rightAction: null };
-        this._setCutLeft(null);
-        this._setCutRight(null);
+        this._cutState = { mode: 'both' };
+        this._setCutMode('both');
 
-        this.elements.cutWaveformImg.src = '/static/img/waveform_placeholder.png';
+        const placeholder = '/static/img/waveform_placeholder.png';
+        this.elements.cutWaveformLeft.src  = placeholder;
+        this.elements.cutWaveformRight.src = placeholder;
+        this.elements.cutWaveformLeft.style.clipPath  = 'inset(0 50% 0 0)';
+        this.elements.cutWaveformRight.style.clipPath = 'inset(0 0 0 50%)';
         this.elements.cutWaveformStatus.textContent = 'Previewing waveform, please wait...';
         this.elements.cutDialogOk.disabled = true;
         this.elements.cutDialogOverlay.classList.remove('hidden');
 
         const beginOffset = this.state.originalStartOffset;
+        const waveWidth   = 560;
         const url = `/api/cut_waveform/${this.state.currentSampleId}`
-                  + `?begin_offset=${beginOffset}&width=560&height=90`;
+                  + `?begin_offset=${beginOffset}&width=${waveWidth}&height=90`;
         try {
             const res = await fetch(url);
             if (res.ok) {
-                const blob = await res.blob();
-                this.elements.cutWaveformImg.src = URL.createObjectURL(blob);
+                const cutPx   = parseInt(res.headers.get('X-Cut-Px') ?? String(waveWidth / 2));
+                const leftPct = (cutPx / waveWidth * 100).toFixed(2);
+                const rightPct = (100 - cutPx / waveWidth * 100).toFixed(2);
+                const blobUrl  = URL.createObjectURL(await res.blob());
+                this.elements.cutWaveformLeft.src  = blobUrl;
+                this.elements.cutWaveformRight.src = blobUrl;
+                this.elements.cutWaveformLeft.style.clipPath  = `inset(0 ${rightPct}% 0 0)`;
+                this.elements.cutWaveformRight.style.clipPath = `inset(0 0 0 ${leftPct}%)`;
                 this.elements.cutWaveformStatus.textContent = '';
             } else {
                 this.elements.cutWaveformStatus.textContent = 'Waveform unavailable.';
@@ -323,9 +333,7 @@ Object.assign(GrooveDropper, {
     },
 
     async _commitCut() {
-        const { leftAction, rightAction } = this._cutState;
-        if (!leftAction || !rightAction) return;
-
+        const { mode } = this._cutState;
         this._closeCutDialog();
 
         const res = await fetch('/api/cut', {
@@ -334,10 +342,10 @@ Object.assign(GrooveDropper, {
             body: JSON.stringify({
                 sample_id:    this.state.currentSampleId,
                 begin_offset: this.state.originalStartOffset,
-                keep_left:    leftAction  === 'keep',
-                trash_left:   leftAction  === 'trash',
-                keep_right:   rightAction === 'keep',
-                trash_right:  rightAction === 'trash',
+                keep_left:    mode === 'left' || mode === 'both',
+                trash_left:   mode === 'right',
+                keep_right:   mode === 'right' || mode === 'both',
+                trash_right:  mode === 'left',
             }),
         });
 

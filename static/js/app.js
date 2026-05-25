@@ -41,7 +41,7 @@ const GrooveDropper = {
         },
     },
 
-    _cutState: { leftAction: null, rightAction: null },
+    _cutState: { mode: 'both' },
 
     elements: {
         audio: document.getElementById('audio-player'),
@@ -113,12 +113,12 @@ const GrooveDropper = {
         cutDialogClose:    document.getElementById('cut-dialog-close'),
         cutDialogCancel:   document.getElementById('cut-dialog-cancel'),
         cutDialogOk:       document.getElementById('cut-dialog-ok'),
-        cutWaveformImg:    document.getElementById('cut-waveform-img'),
+        cutWaveformLeft:   document.getElementById('cut-waveform-left'),
+        cutWaveformRight:  document.getElementById('cut-waveform-right'),
         cutWaveformStatus: document.getElementById('cut-waveform-status'),
-        btnCutTl:          document.getElementById('btn-cut-tl'),
         btnCutKl:          document.getElementById('btn-cut-kl'),
+        btnCutBoth:        document.getElementById('btn-cut-both'),
         btnCutKr:          document.getElementById('btn-cut-kr'),
-        btnCutTr:          document.getElementById('btn-cut-tr'),
         controlsTable: document.getElementById('controls-table'),
         // Quick Pick
         qpAddBtn: document.getElementById('qp-add-btn'),
@@ -542,24 +542,19 @@ const GrooveDropper = {
         await this._postArchiveRefresh();
     },
 
-    _setCutLeft(action) {
-        this._cutState.leftAction = action;
-        this.elements.btnCutTl.classList.toggle('active', action === 'trash');
-        this.elements.btnCutKl.classList.toggle('active', action === 'keep');
-        this._updateCutOkState();
-    },
-
-    _setCutRight(action) {
-        this._cutState.rightAction = action;
-        this.elements.btnCutKr.classList.toggle('active', action === 'keep');
-        this.elements.btnCutTr.classList.toggle('active', action === 'trash');
+    _setCutMode(mode) {
+        this._cutState.mode = mode;
+        this.elements.btnCutKl  .classList.toggle('active', mode === 'left');
+        this.elements.btnCutBoth.classList.toggle('active', mode === 'both');
+        this.elements.btnCutKr  .classList.toggle('active', mode === 'right');
+        this.elements.cutWaveformLeft .style.opacity = mode === 'right' ? '0.3' : '1';
+        this.elements.cutWaveformRight.style.opacity = mode === 'left'  ? '0.3' : '1';
         this._updateCutOkState();
     },
 
     _updateCutOkState() {
         const waveformOk = this.elements.cutWaveformStatus.textContent !== 'Waveform unavailable.';
-        const actionsOk  = this._cutState.leftAction !== null && this._cutState.rightAction !== null;
-        this.elements.cutDialogOk.disabled = !(waveformOk && actionsOk);
+        this.elements.cutDialogOk.disabled = !waveformOk;
     },
 
     _closeCutDialog() {
@@ -795,7 +790,7 @@ const GrooveDropper = {
                 this.findAndSnapToTransient(e.shiftKey).catch(err => console.error(err));
             } else if (e.code === 'KeyA' && this.state.mutable) {
                 this.promptArchiveSample();
-            } else if (e.code === 'KeyC' && e.shiftKey && this.state.mutable) {
+            } else if (e.code === 'KeyC' && this.state.mutable) {
                 this.showCutDialog().catch(err => console.error(err));
             } else if (e.code === 'ArrowLeft' || e.code === 'KeyJ') {
                 e.preventDefault();
@@ -820,14 +815,9 @@ const GrooveDropper = {
 
         this.elements.btnFindTransient.addEventListener('click', (e) => this.findAndSnapToTransient(e.shiftKey).catch(err => console.error(err)));
 
-        this.elements.btnCutTl.addEventListener('click', () =>
-            this._setCutLeft(this._cutState.leftAction === 'trash' ? null : 'trash'));
-        this.elements.btnCutKl.addEventListener('click', () =>
-            this._setCutLeft(this._cutState.leftAction === 'keep' ? null : 'keep'));
-        this.elements.btnCutKr.addEventListener('click', () =>
-            this._setCutRight(this._cutState.rightAction === 'keep' ? null : 'keep'));
-        this.elements.btnCutTr.addEventListener('click', () =>
-            this._setCutRight(this._cutState.rightAction === 'trash' ? null : 'trash'));
+        this.elements.btnCutKl  .addEventListener('click', () => this._setCutMode('left'));
+        this.elements.btnCutBoth.addEventListener('click', () => this._setCutMode('both'));
+        this.elements.btnCutKr  .addEventListener('click', () => this._setCutMode('right'));
         this.elements.cutDialogClose .addEventListener('click', () => this._closeCutDialog());
         this.elements.cutDialogCancel.addEventListener('click', () => this._closeCutDialog());
         this.elements.cutDialogOk    .addEventListener('click', () => this._commitCut().catch(err => console.error(err)));
