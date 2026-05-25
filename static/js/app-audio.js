@@ -341,13 +341,14 @@ Object.assign(GrooveDropper, {
 
     async _commitCut() {
         const { mode } = this._cutState;
+        const sampleIdAtCut = this.state.currentSampleId;
         this._closeCutDialog();
 
         const res = await fetch('/api/cut', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                sample_id:    this.state.currentSampleId,
+                sample_id:    sampleIdAtCut,
                 begin_offset: this.state.originalStartOffset,
                 keep_left:    mode === 'left' || mode === 'both',
                 trash_left:   mode === 'right',
@@ -372,7 +373,8 @@ Object.assign(GrooveDropper, {
             setTimeout(() => this.showToast(msg), i * 3200));
 
         if (data.archived) {
-            await this._postArchiveRefresh();
+            const stillOnSame = this.state.currentSampleId === sampleIdAtCut;
+            await this._postArchiveRefresh(stillOnSame);
         }
     },
 

@@ -561,7 +561,7 @@ const GrooveDropper = {
         this.elements.cutDialogOverlay.classList.add('hidden');
     },
 
-    async _postArchiveRefresh() {
+    async _postArchiveRefresh(navigate = true) {
         await this.pollStatus();
         await this.loadLabels();
         await this.loadUntaggedCount();
@@ -571,7 +571,9 @@ const GrooveDropper = {
             await this.loadQuickpickSlots(activeQpId);
             this.renderQuickpickBar();
         }
-        await this.loadNextRandom(this.state.isPlaying);
+        if (navigate) {
+            await this.loadNextRandom(this.state.isPlaying);
+        }
     },
 
     truncatePathLeft(el, path) {
