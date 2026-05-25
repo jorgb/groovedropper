@@ -919,9 +919,21 @@ def delete_folder(folder_id):
 # Server startup
 # ---------------------------------------------------------------------------
 
+def _warmup_librosa():
+    """Run a tiny librosa.stft() so numba JIT-compiles before the first real request."""
+    try:
+        import librosa, numpy as np
+        dummy = np.zeros(2048, dtype=np.float32)
+        librosa.stft(dummy, n_fft=2048, hop_length=512)
+        logger.info("librosa warmup complete")
+    except Exception:
+        logger.debug("librosa warmup failed (non-fatal)", exc_info=True)
+
+
 def run_app(port=5000, open_browser=True, host='127.0.0.1'):
     url = f"http://{host}:{port}"
     logger.info(f"Starting server. You can access the app at: {url}")
+    Thread(target=_warmup_librosa, daemon=True).start()
     if open_browser:
         Thread(target=lambda: (time.sleep(1), webbrowser.open(url))).start()
     app.run(host=host, port=port, debug=False)
