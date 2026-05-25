@@ -82,6 +82,7 @@ def generate_cut_waveform(path, begin_offset, width=560, height=90):
         path,
         output_format=miniaudio.SampleFormat.FLOAT32,
         nchannels=1,
+        sample_rate=mi.sample_rate,
         frames_to_read=block_size,
     )
     for chunk_bytes in stream:
@@ -116,6 +117,7 @@ def save_slice_wav(src_path, dest_path, start_frame, end_frame):
         src_path,
         output_format=miniaudio.SampleFormat.FLOAT32,
         nchannels=mi.nchannels,
+        sample_rate=mi.sample_rate,
         frames_to_read=CUT_WRITE_BUFFER,
     )
     pos = 0
