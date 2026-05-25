@@ -1,6 +1,8 @@
 ## DOING
 
 Cut candidates
+http://127.0.0.1:5000/?sample=b486ea33e0e607af31fd213ed48eb640&start=1486329
+
 http://127.0.0.1:5000/?sample=e8e6f7a14af2ca9bf78797086d6b595d&start=1268493
 http://127.0.0.1:5000/?sample=ad1ffbb36ade32e012514122b2d4775b&start=193248
 http://127.0.0.1:5000/?sample=9b80a4ade4f440fa35827ffdcbce74cf&start=11347101

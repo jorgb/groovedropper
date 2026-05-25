@@ -785,19 +785,19 @@ def api_cut():
     archived = False
 
     try:
+        orig_name = os.path.basename(src_path)
+
         if trash_left and trash_right:
             with db.get_db() as conn:
                 _archive_file(src_path, conn, sample_id)
-            base = os.path.splitext(os.path.basename(src_path))[0]
-            ext  = os.path.splitext(src_path)[1]
-            logger.info(f'CUT: Sample {base}{ext} will be renamed {base}{ext}.bak (trash left + right)')
-            toasts.append(f'Sample {base}{ext} renamed to {base}{ext}.bak')
+            logger.info(f'CUT: Sample {orig_name} will be renamed {orig_name}.bak (trash left + right)')
+            toasts.append(f"Left and right are trashed, sample '{orig_name}' is archived")
 
         else:
             _, total   = audio.get_audio_info(src_path)
             end_sample = total - 1
             base_dir   = os.path.dirname(src_path)
-            base       = os.path.splitext(os.path.basename(src_path))[0]
+            base       = os.path.splitext(orig_name)[0]
             base       = re.sub(r'-\d{8}-\d{8}$', '', base)
 
             def fmt(n):
@@ -808,13 +808,15 @@ def api_cut():
             if begin_offset >= total and keep_right:
                 return jsonify({'error': 'begin_offset is at EOF — right side is empty'}), 400
 
+            left_path  = None
+            right_path = None
+
             if keep_left:
                 left_name = f'{base}-{fmt(0)}-{fmt(begin_offset - 1)}.wav'
                 left_path = os.path.join(base_dir, left_name)
 
                 logger.info(f'CUT: Saving left side of sample: {left_path}')
                 audio.save_slice_wav(src_path, left_path, 0, begin_offset)
-                toasts.append(f'Sample {os.path.basename(left_path)} is cut')
 
             if keep_right:
                 right_name = f'{base}-{fmt(begin_offset)}-{fmt(end_sample)}.wav'
@@ -822,7 +824,14 @@ def api_cut():
 
                 logger.info(f'CUT: Saving right side of sample: {right_path}')
                 audio.save_slice_wav(src_path, right_path, begin_offset, total)
-                toasts.append(f'Sample {os.path.basename(right_path)} is cut')
+
+            if keep_left and keep_right:
+                toasts.append(f"Sample '{orig_name}' cut left to '{os.path.basename(left_path)}'")
+                toasts.append(f"Sample '{orig_name}' cut right to '{os.path.basename(right_path)}'")
+            elif keep_left:
+                toasts.append(f"Sample '{orig_name}' cut left to '{os.path.basename(left_path)}'")
+            elif keep_right:
+                toasts.append(f"Sample '{orig_name}' cut right to '{os.path.basename(right_path)}'")
 
             with db.get_db() as conn:
                 logger.info(f'CUT: Archiving old original sample: {src_path}')

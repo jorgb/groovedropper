@@ -35,9 +35,9 @@ def render_waveform_png(mins, maxs, width, height, cut_px=None):
             y_max += 1
         draw.line([(i, y_min), (i, y_max)], fill=(255, 255, 255, 255))
     if cut_px is not None:
-        dash_color = (220, 220, 220, 200)
+        dash_color = (255, 87, 34, 255)
         for y in range(0, height, 6):
-            draw.line([(cut_px, y), (cut_px, y + 3)], fill=dash_color, width=1)
+            draw.line([(cut_px, y), (cut_px, y + 3)], fill=dash_color, width=2)
     buf = io.BytesIO()
     img.save(buf, format='PNG')
     return buf.getvalue()
