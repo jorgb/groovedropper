@@ -79,11 +79,19 @@ def find_transient(file_path, start_sample, big_only=False):
     """
     cfg = _BIG_ONLY if big_only else _ALL
     mode = "big-only" if big_only else "all"
-    logger.info("transient search start  file=%s sample=%d mode=%s", file_path, start_sample, mode)
+
+    if big_only:
+        file_sr, _ = audio.get_audio_info(file_path)
+        frame_block_size = max(FRAME_BLOCK_SIZE, -(-int(6.0 * file_sr) // HOP_LENGTH))  # ceil div
+    else:
+        frame_block_size = FRAME_BLOCK_SIZE
+
+    logger.info("transient search start  file=%s sample=%d mode=%s block_frames=%d",
+                file_path, start_sample, mode, frame_block_size)
     t0 = time.monotonic()
     try:
         for block_start, sr, y_mono in audio.iter_blocks(
-            file_path, start_sample, FRAME_BLOCK_SIZE, HOP_LENGTH, N_FFT
+            file_path, start_sample, frame_block_size, HOP_LENGTH, N_FFT
         ):
             if np.max(np.abs(y_mono)) < SILENCE_THRESH:
                 continue

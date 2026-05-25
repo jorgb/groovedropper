@@ -513,6 +513,14 @@ const GrooveDropper = {
     promptArchiveSample() {
         const name = this.state.sampleName;
         if (!name) return;
+
+        if (this.state.isPlaying) {
+            this.elements.audio.pause();
+            this._stopPlayheadUpdater();
+            this.state.isPlaying = false;
+            this.updateStatusText('STOPPED');
+        }
+
         const bak = name + '.bak';
         const msg = this.elements.archiveDialogMsg;
         const bold = t => { const b = document.createElement('strong'); b.textContent = t; return b; };
@@ -523,7 +531,7 @@ const GrooveDropper = {
         msg.appendChild(document.createTextNode('Sample will be renamed to:'));
         msg.appendChild(document.createElement('br'));
         msg.appendChild(bold(bak));
-        this.elements.archiveDialogOverlay.classList.remove('hidden');
+        setTimeout(() => this.elements.archiveDialogOverlay.classList.remove('hidden'), 200);
     },
 
     async archiveSample() {
