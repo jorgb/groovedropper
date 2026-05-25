@@ -12,7 +12,7 @@ import webbrowser
 import logging
 import traceback
 from threading import Thread
-from queue import Empty
+from queue import Empty, Queue
 
 from flask import Flask, render_template, request, send_file, jsonify
 from groove import db, audio, transient as _transient
@@ -20,6 +20,36 @@ from groove.db import DatabaseTooNewError
 from groove.queue import scan_queue
 
 HTTP_DEBUG = False
+
+# ---------------------------------------------------------------------------
+# Background rename queue — retries file renames that Windows locks temporarily
+# ---------------------------------------------------------------------------
+_rename_queue: Queue = Queue()
+
+def _rename_worker():
+    """Daemon thread: retries os.rename() for files locked by sync agents.
+
+    Items are (src_path, bak_path, deadline_monotonic).  Retries every second
+    until the deadline (60 s).  If it still fails, logs a warning and gives up —
+    the file keeps its original name but is already removed from the DB.
+    """
+    while True:
+        src, bak, deadline = _rename_queue.get()
+        renamed = False
+        while time.monotonic() < deadline:
+            try:
+                if os.path.exists(src):
+                    os.rename(src, bak)
+                    logger.info("Background rename done: %s → %s", src, bak)
+                renamed = True
+                break
+            except PermissionError:
+                time.sleep(1.0)
+        if not renamed:
+            logger.warning(
+                "Background rename timed out after 60 s — file left as-is: %s", src
+            )
+        _rename_queue.task_done()
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -146,7 +176,8 @@ def start_background_scan():
         logger.info("No scan folders configured. Add folders via the web UI.")
 
     scan_queue.start(len(folders))
-    Thread(target=scan_worker, daemon=True).start()
+    Thread(target=scan_worker,  daemon=True).start()
+    Thread(target=_rename_worker, daemon=True).start()
 
 
 def get_random_offset(duration_samples, samplerate):
@@ -692,21 +723,19 @@ def disable_mutable():
 
 
 def _archive_file(path, conn, sample_id):
-    """Rename path → path.bak and remove from DB. Shared by archive and cut routes.
+    """Remove sample from DB and rename the file to .bak.
 
-    Retries on PermissionError to tolerate sync agents (e.g. Google Drive) that
-    briefly lock the file after a neighbouring write lands in the same directory.
+    DB delete happens first so the sample disappears from the UI immediately.
+    If the rename is locked by another process (e.g. a sync agent), the rename
+    is handed off to the background _rename_worker which retries for up to 60 s.
     """
-    bak = path + '.bak'
-    for attempt in range(6):
-        try:
-            os.rename(path, bak)
-            break
-        except PermissionError:
-            if attempt == 5:
-                raise
-            time.sleep(0.3)
     db.delete_sample(conn, sample_id)
+    bak = path + '.bak'
+    try:
+        os.rename(path, bak)
+    except PermissionError:
+        logger.warning("File locked — rename queued for background retry: %s", path)
+        _rename_queue.put((path, bak, time.monotonic() + 60))
 
 
 @app.route('/api/cut_waveform/<int:sample_id>')
@@ -755,46 +784,57 @@ def api_cut():
     toasts   = []
     archived = False
 
-    if trash_left and trash_right:
-        with db.get_db() as conn:
-            _archive_file(src_path, conn, sample_id)
-        base = os.path.splitext(os.path.basename(src_path))[0]
-        ext  = os.path.splitext(src_path)[1]
-        toasts.append(f'Sample {base}{ext} renamed to {base}{ext}.bak')
-        archived = True
+    try:
+        if trash_left and trash_right:
+            with db.get_db() as conn:
+                _archive_file(src_path, conn, sample_id)
+            base = os.path.splitext(os.path.basename(src_path))[0]
+            ext  = os.path.splitext(src_path)[1]
+            logger.info(f'CUT: Sample {base}{ext} will be renamed {base}{ext}.bak (trash left + right)')
+            toasts.append(f'Sample {base}{ext} renamed to {base}{ext}.bak')
 
-    else:
-        _, total  = audio.get_audio_info(src_path)
-        end_sample = total - 1
-        base_dir   = os.path.dirname(src_path)
-        base       = os.path.splitext(os.path.basename(src_path))[0]
-        base       = re.sub(r'-\d{8}-\d{8}$', '', base)
+        else:
+            _, total   = audio.get_audio_info(src_path)
+            end_sample = total - 1
+            base_dir   = os.path.dirname(src_path)
+            base       = os.path.splitext(os.path.basename(src_path))[0]
+            base       = re.sub(r'-\d{8}-\d{8}$', '', base)
 
-        def fmt(n):
-            return f'{int(n):08d}'
+            def fmt(n):
+                return f'{int(n):08d}'
 
-        if begin_offset <= 0 and keep_left:
-            return jsonify({'error': 'begin_offset is 0 — left side is empty'}), 400
-        if begin_offset >= total and keep_right:
-            return jsonify({'error': 'begin_offset is at EOF — right side is empty'}), 400
+            if begin_offset <= 0 and keep_left:
+                return jsonify({'error': 'begin_offset is 0 — left side is empty'}), 400
+            if begin_offset >= total and keep_right:
+                return jsonify({'error': 'begin_offset is at EOF — right side is empty'}), 400
 
-        if keep_left:
-            left_path = os.path.join(base_dir, f'{base}-{fmt(0)}-{fmt(begin_offset - 1)}.wav')
-            audio.save_slice_wav(src_path, left_path, 0, begin_offset)
-            toasts.append(f'Sample {os.path.basename(left_path)} is cut')
+            if keep_left:
+                left_name = f'{base}-{fmt(0)}-{fmt(begin_offset - 1)}.wav'
+                left_path = os.path.join(base_dir, left_name)
 
-        if keep_right:
-            right_path = os.path.join(base_dir, f'{base}-{fmt(begin_offset)}-{fmt(end_sample)}.wav')
-            audio.save_slice_wav(src_path, right_path, begin_offset, total)
-            toasts.append(f'Sample {os.path.basename(right_path)} is cut')
+                logger.info(f'CUT: Saving left side of sample: {left_path}')
+                audio.save_slice_wav(src_path, left_path, 0, begin_offset)
+                toasts.append(f'Sample {os.path.basename(left_path)} is cut')
 
-        with db.get_db() as conn:
-            _archive_file(src_path, conn, sample_id)
-        archived = True
+            if keep_right:
+                right_name = f'{base}-{fmt(begin_offset)}-{fmt(end_sample)}.wav'
+                right_path = os.path.join(base_dir, right_name)
 
-        scan_queue.push_folder(base_dir)
+                logger.info(f'CUT: Saving right side of sample: {right_path}')
+                audio.save_slice_wav(src_path, right_path, begin_offset, total)
+                toasts.append(f'Sample {os.path.basename(right_path)} is cut')
 
-    return jsonify({'toasts': toasts, 'archived': archived})
+            with db.get_db() as conn:
+                logger.info(f'CUT: Archiving old original sample: {src_path}')
+                _archive_file(src_path, conn, sample_id)
+
+            scan_queue.push_folder(base_dir)
+
+    except Exception as exc:
+        logger.exception("Cut failed for %s", src_path)
+        return jsonify({'error': str(exc)}), 500
+
+    return jsonify({'toasts': toasts, 'archived': True})
 
 
 @app.route('/api/sample/<digest>/archive', methods=['POST'])

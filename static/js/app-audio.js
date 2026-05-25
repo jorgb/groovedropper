@@ -341,7 +341,13 @@ Object.assign(GrooveDropper, {
             }),
         });
 
-        const data = await res.json();
+        let data;
+        try {
+            data = await res.json();
+        } catch (_) {
+            this.showErrorToast('Cut failed — unexpected server error');
+            return;
+        }
         if (!res.ok) {
             this.showErrorToast(data.error || 'Cut failed');
             return;
