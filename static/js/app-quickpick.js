@@ -331,7 +331,7 @@ Object.assign(GrooveDropper, {
                 this.state.pitchCents = slot.pitch_cents;
                 this._applyPitch();
                 this._renderPitchOverlay();
-                const shouldPlay = this.state.quickpick.playInstantly || this.state.isPlaying;
+                const shouldPlay = this.state.playInstantly || this.state.isPlaying;
                 this.state.skipEndedEvent = true;
                 this.elements.audio.pause();
                 this.elements.audio.currentTime = slot.start_offset / this.state.sampleRate;
@@ -355,7 +355,7 @@ Object.assign(GrooveDropper, {
                 if (!res.ok) { this.showErrorToast('Sample not found'); return; }
                 const data = await res.json();
                 this._pushHistory(data);
-                this.updateUI(data, this.state.quickpick.playInstantly);
+                this.updateUI(data, this.state.playInstantly);
                 this._renderPitchOverlay();
             }
         } catch (e) { console.error(e); }

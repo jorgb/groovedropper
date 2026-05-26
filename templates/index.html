@@ -576,6 +576,20 @@
             font-size: 0.8em;
             cursor: pointer;
             user-select: none;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 3px 6px;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+        #qp-play-instantly-label:has(input:checked) {
+            background-color: var(--box-bg);
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        #qp-play-instantly-label input[type="checkbox"] {
+            display: none;
         }
 
         #qp-slots {
@@ -1577,6 +1591,11 @@
                             <span id="pitch-semitone-drag">+0</span>
                             <span id="pitch-cents-drag" class="pitch-cents">0c</span>
                         </span>
+                        <label id="qp-play-instantly-label" title="Auto-play when loading a new sample">
+                            <input type="checkbox" id="qp-play-instantly">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span>Play Instantly</span>
+                        </label>
                         <button id="loop-toggle" class="toggle-btn">
                             <span class="loop-cross">[X]</span>Loop
                         </button>
@@ -1599,13 +1618,6 @@
                     <div class="qp-row">
                         <div id="qp-slots"></div>
                         <button id="qp-delete-btn" class="panel-icon-btn qp-btn" title="Delete this quick pick preset" disabled><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                    <div class="qp-row">
-                        <label id="qp-play-instantly-label" title="Play immediately when recalling a slot">
-                            <input type="checkbox" id="qp-play-instantly">
-                            <i class="fa-solid fa-bolt"></i>
-                            <span>Play Instantly</span>
-                        </label>
                     </div>
                 </div>
 

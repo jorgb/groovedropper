@@ -32,11 +32,11 @@ const GrooveDropper = {
         sampleName: null,
         sampleDir: null,
         mutable: false,
+        playInstantly: false,
         quickpick: {
             presets: [],
             activePresetId: null,
             slots: {},
-            playInstantly: false,
             focusedSlot: null,
         },
     },
@@ -271,8 +271,8 @@ const GrooveDropper = {
                 this.applyControlsFold();
             }
             if (config['quick-play-instantly'] !== undefined) {
-                this.state.quickpick.playInstantly = config['quick-play-instantly'] === 'true';
-                this.elements.qpPlayInstantly.checked = this.state.quickpick.playInstantly;
+                this.state.playInstantly = config['quick-play-instantly'] === 'true';
+                this.elements.qpPlayInstantly.checked = this.state.playInstantly;
             }
         } catch (e) {
             console.error("Failed to load config", e);
@@ -441,11 +441,11 @@ const GrooveDropper = {
         }
     },
 
-    loadPrevHistory() {
+    loadPrevHistory(playInstantly = false) {
         if (this.state.historyIndex <= 0) { console.log("No more history"); return; }
         this.state.historyIndex--;
         const snapshot = this.state.historyQueue[this.state.historyIndex];
-        this.updateUI(snapshot, false);
+        this.updateUI(snapshot, playInstantly);
     },
 
 
@@ -580,7 +580,7 @@ const GrooveDropper = {
             this.renderQuickpickBar();
         }
         if (navigate) {
-            await this.loadNextRandom(this.state.isPlaying);
+            await this.loadNextRandom(this.state.isPlaying || this.state.playInstantly);
         }
     },
 
@@ -787,11 +787,12 @@ const GrooveDropper = {
                 this.copyCurrentUrlToClipboard();
             } else if (e.code === 'KeyR') {
                 this._clearFocusedQpSlot();
-                if (e.shiftKey) this.randomizeCurrentOffset(true).catch(err => console.error(err));
-                else this.loadNextRandom(true).catch(err => console.error(err));
+                const autoPlay = this.state.isPlaying || this.state.playInstantly;
+                if (e.shiftKey) this.randomizeCurrentOffset(autoPlay).catch(err => console.error(err));
+                else this.loadNextRandom(autoPlay).catch(err => console.error(err));
             } else if (e.code === 'KeyP') {
                 this._clearFocusedQpSlot();
-                this.loadPrevHistory();
+                this.loadPrevHistory(this.state.isPlaying || this.state.playInstantly);
             } else if (e.code === 'KeyS') {
                 this.downloadSlice();
             } else if (e.key === ',' && !e.shiftKey) {
@@ -953,9 +954,9 @@ const GrooveDropper = {
         });
 
         this.elements.qpPlayInstantly.addEventListener('change', () => {
-            this.state.quickpick.playInstantly = this.elements.qpPlayInstantly.checked;
+            this.state.playInstantly = this.elements.qpPlayInstantly.checked;
             this.elements.qpPlayInstantly.blur();
-            this.saveConfig('quick-play-instantly', String(this.state.quickpick.playInstantly)).catch(e => console.error(e));
+            this.saveConfig('quick-play-instantly', String(this.state.playInstantly)).catch(e => console.error(e));
         });
 
         this.elements.audio.addEventListener('ended', () => {
