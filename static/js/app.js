@@ -808,9 +808,9 @@ const GrooveDropper = {
                 this.storeToNextFreeQpSlot().catch(err => console.error(err));
             } else if (e.code === 'KeyT') {
                 this.findAndSnapToTransient(e.shiftKey).catch(err => console.error(err));
-            } else if (e.code === 'KeyA' && this.state.mutable) {
+            } else if (e.code === 'KeyA' && this.state.mutable && !e.ctrlKey && !e.shiftKey) {
                 this.promptArchiveSample();
-            } else if (e.code === 'KeyC' && this.state.mutable) {
+            } else if (e.code === 'KeyC' && this.state.mutable && !e.ctrlKey && !e.shiftKey) {
                 this.showCutDialog().catch(err => console.error(err));
             } else if (e.code === 'ArrowLeft' || e.code === 'KeyJ') {
                 e.preventDefault();
