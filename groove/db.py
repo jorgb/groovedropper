@@ -576,7 +576,15 @@ def delete_folder(conn, folder_id):
 def scan_get_folder_id(cursor, folder_path):
     cursor.execute('SELECT id FROM scan_folders WHERE path = ?', (folder_path,))
     row = cursor.fetchone()
-    return row['id'] if row else None
+    if row:
+        return row['id']
+    # folder_path may be a subdirectory pushed by api_cut — find the containing scan folder
+    cursor.execute('SELECT id, path FROM scan_folders')
+    for r in cursor.fetchall():
+        registered = r['path']
+        if folder_path.startswith(registered + os.sep):
+            return r['id']
+    return None
 
 
 def scan_fetch_samples_by_folder_id(cursor, folder_id):
