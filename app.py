@@ -46,9 +46,8 @@ def _rename_worker():
             except PermissionError:
                 time.sleep(1.0)
         if not renamed:
-            logger.warning(
-                "Background rename timed out after 60 s — file left as-is: %s", src
-            )
+            logger.warning("Background rename timed out after 60 s — file left as-is: %s", src)
+
         _rename_queue.task_done()
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -723,19 +722,15 @@ def disable_mutable():
 
 
 def _archive_file(path, conn, sample_id):
-    """Remove sample from DB and rename the file to .bak.
+    """Remove sample from DB and queue the file rename to .bak.
 
     DB delete happens first so the sample disappears from the UI immediately.
-    If the rename is locked by another process (e.g. a sync agent), the rename
-    is handed off to the background _rename_worker which retries for up to 60 s.
+    The rename is always handed off to the background _rename_worker so the
+    request returns fast and sync agents can't cause a 60-s hang.
     """
     db.delete_sample(conn, sample_id)
     bak = path + '.bak'
-    try:
-        os.rename(path, bak)
-    except PermissionError:
-        logger.warning("File locked — rename queued for background retry: %s", path)
-        _rename_queue.put((path, bak, time.monotonic() + 60))
+    _rename_queue.put((path, bak, time.monotonic() + 60))
 
 
 @app.route('/api/cut_waveform/<int:sample_id>')
@@ -859,21 +854,10 @@ def archive_sample(digest):
         if not row:
             return jsonify({"error": "sample_not_found"}), 404
         path_row = db.fetch_sample_path(conn, row['id'])
+        path = path_row['path']
+        _archive_file(path, conn, row['id'])
 
-    path = path_row['path']
-    bak_path = path + '.bak'
-    try:
-        os.rename(path, bak_path)
-    except OSError as e:
-        return jsonify({"error": "rename_failed", "detail": str(e)}), 500
-
-    try:
-        with db.get_db() as conn:
-            db.delete_sample_by_digest(conn, digest)
-    except Exception as e:
-        logger.error(f"DB delete failed after rename {path} -> {bak_path}: {e}")
-
-    return jsonify({"status": "ok", "archived_path": bak_path})
+    return jsonify({"status": "ok", "archived_path": path + '.bak'})
 
 
 @app.route('/api/folders', methods=['GET'])
