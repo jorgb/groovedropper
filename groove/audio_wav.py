@@ -1,4 +1,6 @@
 import io
+import os
+import tempfile
 
 import numpy as np
 import soundfile as sf
@@ -86,20 +88,36 @@ def generate_cut_waveform(path, begin_offset, width=560, height=90):
 
 
 def save_slice_wav(src_path, dest_path, start_frame, end_frame):
-    """Stream-copy frames [start_frame, end_frame) to a new 16-bit PCM WAV file."""
-    with sf.SoundFile(src_path) as src:
-        src.seek(start_frame)
-        with sf.SoundFile(dest_path, mode='w',
-                          samplerate=src.samplerate,
-                          channels=src.channels,
-                          subtype='PCM_16') as dst:
-            remaining = end_frame - start_frame
-            while remaining > 0:
-                data = src.read(min(CUT_WRITE_BUFFER, remaining))
-                if len(data) == 0:
-                    break
-                dst.write(data)
-                remaining -= len(data)
+    """Stream-copy frames [start_frame, end_frame) to a new 16-bit PCM WAV file.
+
+    Writes to a temp file in the same directory and renames on success so a
+    failed write never leaves a partial file at dest_path.
+    """
+    dest_dir = os.path.dirname(dest_path) or '.'
+    fd, tmp_path = tempfile.mkstemp(dir=dest_dir, suffix='.wav.tmp')
+    os.close(fd)
+    try:
+        with sf.SoundFile(src_path) as src:
+            src.seek(start_frame)
+            with sf.SoundFile(tmp_path, mode='w',
+                              samplerate=src.samplerate,
+                              channels=src.channels,
+                              format='WAV',
+                              subtype='PCM_16') as dst:
+                remaining = end_frame - start_frame
+                while remaining > 0:
+                    data = src.read(min(CUT_WRITE_BUFFER, remaining))
+                    if len(data) == 0:
+                        break
+                    dst.write(data)
+                    remaining -= len(data)
+        os.replace(tmp_path, dest_path)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
 
 
 def make_audio_slice(path, start_offset, samplerate, duration_secs=10):

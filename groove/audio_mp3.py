@@ -1,4 +1,6 @@
 import io
+import os
+import tempfile
 
 import miniaudio
 import numpy as np
@@ -111,7 +113,7 @@ def generate_cut_waveform(path, begin_offset, width=560, height=90):
 
 
 def save_slice_wav(src_path, dest_path, start_frame, end_frame):
-    """Stream-copy frames [start_frame, end_frame) to a new 16-bit PCM WAV file."""
+    """Decode frames [start_frame, end_frame) from an MP3 to a new 16-bit PCM WAV file."""
     mi     = miniaudio.get_file_info(src_path)
     stream = miniaudio.stream_file(
         src_path,
@@ -120,28 +122,40 @@ def save_slice_wav(src_path, dest_path, start_frame, end_frame):
         sample_rate=mi.sample_rate,
         frames_to_read=CUT_WRITE_BUFFER,
     )
-    pos = 0
-    with sf.SoundFile(dest_path, mode='w',
-                      samplerate=mi.sample_rate,
-                      channels=mi.nchannels,
-                      subtype='PCM_16') as dst:
-        for chunk_bytes in stream:
-            chunk        = np.frombuffer(chunk_bytes, dtype=np.float32)
-            if mi.nchannels > 1:
-                chunk = chunk.reshape(-1, mi.nchannels)
-            chunk_frames = chunk.shape[0] if chunk.ndim > 1 else len(chunk)
-            chunk_end    = pos + chunk_frames
+    dest_dir = os.path.dirname(dest_path) or '.'
+    fd, tmp_path = tempfile.mkstemp(dir=dest_dir, suffix='.wav.tmp')
+    os.close(fd)
+    try:
+        pos = 0
+        with sf.SoundFile(tmp_path, mode='w',
+                          samplerate=mi.sample_rate,
+                          channels=mi.nchannels,
+                          format='WAV',
+                          subtype='PCM_16') as dst:
+            for chunk_bytes in stream:
+                chunk        = np.frombuffer(chunk_bytes, dtype=np.float32)
+                if mi.nchannels > 1:
+                    chunk = chunk.reshape(-1, mi.nchannels)
+                chunk_frames = chunk.shape[0] if chunk.ndim > 1 else len(chunk)
+                chunk_end    = pos + chunk_frames
 
-            if chunk_end <= start_frame:
+                if chunk_end <= start_frame:
+                    pos = chunk_end
+                    continue
+                if pos >= end_frame:
+                    break
+
+                local_start = max(0, start_frame - pos)
+                local_end   = min(chunk_frames, end_frame - pos)
+                dst.write(chunk[local_start:local_end])
                 pos = chunk_end
-                continue
-            if pos >= end_frame:
-                break
-
-            local_start = max(0, start_frame - pos)
-            local_end   = min(chunk_frames, end_frame - pos)
-            dst.write(chunk[local_start:local_end])
-            pos = chunk_end
+        os.replace(tmp_path, dest_path)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
 
 
 def make_audio_slice(path, start_offset, samplerate, duration_secs=10):
