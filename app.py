@@ -83,6 +83,11 @@ def scan_worker():
     conn = db.open_connection()
     cursor = conn.cursor()
 
+    # TODO: delete old entries from the table "sample" that are not on disk anymore
+    # - use logger.info() to notify every sample that is removed
+    # - make sure that the foreign key constraints are in place
+    # - after that start the scan worker as below
+
     reported_done = False
     try:
         while True:
@@ -101,6 +106,8 @@ def scan_worker():
                             logger.info(f"Removing missing sample from database: {sample_path}")
                             db.scan_delete_sample_by_path(cursor, sample_path)
                     conn.commit()
+                else:
+                    logger.info(f"Orphaned sample: {sample_path}")
 
                 for root, _, files in os.walk(folder_path):
                     for file in files:
