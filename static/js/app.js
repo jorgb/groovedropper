@@ -505,7 +505,7 @@ const GrooveDropper = {
         const res = await fetch('/api/mutable/disable', { method: 'POST' });
         if (!res.ok) return;
         this.state.mutable = false;
-        this.elements.mutableIndicator.classList.add('hidden');
+        this.elements.mutableIndicator.classList.add('disabled');
         document.getElementById('controls-archive-row')?.remove();
         this.showToast('Mutable options (archiving, writing) are disabled');
     },

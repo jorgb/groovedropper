@@ -353,6 +353,11 @@
             cursor: pointer;
         }
         #mutable-indicator.hidden { display: none; }
+        #mutable-indicator.disabled {
+            color: color-mix(in srgb, var(--box-bg) 97%, black 3%);
+            cursor: default;
+            pointer-events: none;
+        }
 
         #archive-dialog-skull {
             color: var(--accent-color);
