@@ -1,11 +1,10 @@
 import io
 import os
-import tempfile
 
 import numpy as np
 import soundfile as sf
 
-from groove.audio_common import CUT_WRITE_BUFFER, cut_window, render_waveform_png
+from groove.audio_common import CUT_WRITE_BUFFER, cut_window, make_tmp_path, render_waveform_png
 
 EXTENSIONS = ('.wav',)
 MIME_TYPE = 'audio/wav'
@@ -93,9 +92,7 @@ def save_slice_wav(src_path, dest_path, start_frame, end_frame):
     Writes to a temp file in the same directory and renames on success so a
     failed write never leaves a partial file at dest_path.
     """
-    dest_dir = os.path.dirname(dest_path) or '.'
-    fd, tmp_path = tempfile.mkstemp(dir=dest_dir, suffix='.wav.tmp')
-    os.close(fd)
+    tmp_path = make_tmp_path(dest_path)
     try:
         with sf.SoundFile(src_path) as src:
             src.seek(start_frame)

@@ -1,12 +1,11 @@
 import io
 import os
-import tempfile
 
 import miniaudio
 import numpy as np
 import soundfile as sf
 
-from groove.audio_common import CUT_WRITE_BUFFER, cut_window, render_waveform_png
+from groove.audio_common import CUT_WRITE_BUFFER, cut_window, make_tmp_path, render_waveform_png
 
 EXTENSIONS = ('.mp3',)
 MIME_TYPE = 'audio/mpeg'
@@ -122,9 +121,7 @@ def save_slice_wav(src_path, dest_path, start_frame, end_frame):
         sample_rate=mi.sample_rate,
         frames_to_read=CUT_WRITE_BUFFER,
     )
-    dest_dir = os.path.dirname(dest_path) or '.'
-    fd, tmp_path = tempfile.mkstemp(dir=dest_dir, suffix='.wav.tmp')
-    os.close(fd)
+    tmp_path = make_tmp_path(dest_path)
     try:
         pos = 0
         with sf.SoundFile(tmp_path, mode='w',

@@ -1,10 +1,19 @@
 import io
+import os
+import tempfile
 
 import numpy as np
 from PIL import Image, ImageDraw
 
 CUT_WAVEFORM_ZOOM = 1.5    # visible window = total_frames / zoom (1 = full file)
 CUT_WRITE_BUFFER  = 65536  # frames per streaming read/write chunk (~1.5 s at 44.1 kHz)
+
+
+def make_tmp_path(dest_path, suffix='.wav.tmp'):
+    dest_dir = os.path.dirname(dest_path) or '.'
+    fd, tmp_path = tempfile.mkstemp(dir=dest_dir, suffix=suffix)
+    os.close(fd)
+    return tmp_path
 
 
 def cut_window(total_frames, begin_offset):
