@@ -78,20 +78,42 @@ ALLOWED_CONFIG_KEYS = frozenset({'theme', 'loop', 'controls-folded', 'offset-pre
 
 
 
+def scan_stale_samples(cursor, conn):
+    total_count = db.scan_count_all_samples(cursor)
+    logger.info(f"Scanning {total_count} entries for stale samples")
+    stale_paths = []
+    batch_size = 50
+    offset = 0
+    while True:
+        batch = db.scan_fetch_all_sample_paths_paginated(cursor, batch_size, offset)
+        if not batch:
+            break
+        for sample_path in batch:
+            if not os.path.exists(sample_path):
+                stale_paths.append(sample_path)
+        offset += batch_size
+    for sample_path in stale_paths:
+        logger.info(f"Removing stale sample from database: {sample_path}")
+    db.scan_delete_samples_by_paths(cursor, stale_paths)
+    conn.commit()
+    removed_count = len(stale_paths)
+    logger.info(f"Removed {removed_count} stale sample entries")
+
+
 def scan_worker():
     logger.info("Starting background scan worker...")
     conn = db.open_connection()
     cursor = conn.cursor()
 
-    # TODO: delete old entries from the table "sample" that are not on disk anymore
-    # - use logger.info() to notify every sample that is removed
-    # - make sure that the foreign key constraints are in place
-    # - after that start the scan worker as below
-
     reported_done = False
+    stale_check_done = False
     try:
         while True:
             try:
+                if not stale_check_done:
+                    stale_check_done = True
+                    scan_stale_samples(cursor, conn)
+
                 folder_path = scan_queue.pop_folder(timeout=1.0)
                 scan_queue.set_scanning_folder(folder_path)
                 logger.info(f"Scanning: {folder_path}")

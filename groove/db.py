@@ -602,6 +602,20 @@ def scan_delete_sample_by_path(cursor, wav_path):
     cursor.execute('DELETE FROM samples WHERE path = ?', (wav_path,))
 
 
+def scan_count_all_samples(cursor):
+    cursor.execute('SELECT COUNT(*) FROM samples')
+    return cursor.fetchone()[0]
+
+
+def scan_fetch_all_sample_paths_paginated(cursor, limit, offset):
+    cursor.execute('SELECT path FROM samples LIMIT ? OFFSET ?', (limit, offset))
+    return [row['path'] for row in cursor.fetchall()]
+
+
+def scan_delete_samples_by_paths(cursor, paths):
+    cursor.executemany('DELETE FROM samples WHERE path = ?', [(p,) for p in paths])
+
+
 def scan_check_digest_exists(cursor, digest):
     cursor.execute('SELECT 1 FROM samples WHERE digest = ?', (digest,))
     return cursor.fetchone() is not None

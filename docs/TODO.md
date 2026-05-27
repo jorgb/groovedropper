@@ -2,10 +2,6 @@
 
 - !! refactor the sample table to only have name / directory, not a path column 
   as well
-- refactor: redo scan_worker() ?? how do we get orphaned not existing samples?
-- bug - files still stale in DB - http://127.0.0.1:5000/?sample=393bd11ca654389c990c6d4c8b104e24&start=3354773
-  - scan all entries in DB regardless of folder, check if on disk, delete 
-    from DB if not (per batch of 50)
 - play instantly needs to be checkbox, not a toggle button
 - the skull needs to be greyed out and dimmed to be enabled as well when 
   clicked
