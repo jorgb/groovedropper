@@ -1,17 +1,21 @@
 ## DOING
 
-Cut candidates
-http://127.0.0.1:5000/?sample=b486ea33e0e607af31fd213ed48eb640&start=1486329
+- !! refactor the sample table to only have name / directory, not a path column 
+  as well
+- refactor: redo scan_worker() ?? how do we get orphaned not existing samples?
+- bug - files still stale in DB - http://127.0.0.1:5000/?sample=393bd11ca654389c990c6d4c8b104e24&start=3354773
+  - scan all entries in DB regardless of folder, check if on disk, delete 
+    from DB if not (per batch of 50)
+- play instantly needs to be checkbox, not a toggle button
+- the skull needs to be greyed out and dimmed to be enabled as well when 
+  clicked
+  - first time (setting) dialog appears to warn
+- Consider C change into X (without shift)
+- Shift+S saves whole sample
+- feature: rename sample that has multiple offsets e.g 0000020-2002020 002020-020202
+  - Maybe remove the offset pairs and add a hashing tag (last 4 digits)?
 
-http://127.0.0.1:5000/?sample=e8e6f7a14af2ca9bf78797086d6b595d&start=1268493
-http://127.0.0.1:5000/?sample=ad1ffbb36ade32e012514122b2d4775b&start=193248
-http://127.0.0.1:5000/?sample=9b80a4ade4f440fa35827ffdcbce74cf&start=11347101
-http://127.0.0.1:5000/?sample=1be5899620095ad13f1c716625b1a166&start=10310003
-
-- Transient finding
-  - Write test harness (with transients to find, and to skip)
-  - Transient window? Do not go past that
-- 0.9.2-beta release
+- 0.9.3-beta release
   - Test out of box experience (manual link in HTML needs fixing!)
   - Test linux run.sh
   - Can the readme.html BG be patched to dark? 
@@ -21,22 +25,10 @@ http://127.0.0.1:5000/?sample=1be5899620095ad13f1c716625b1a166&start=10310003
 
 ## LATER
 
+- Check for new version button
 - Before CUT and delete
   - Minor adjustments to start of sample offset (buttons)
   - Find next transient functionality
-- CUT AND DELETE MODE (C / D)
-  - Candidate for slicing: http://127.0.0.1:5000/?sample=04c0c5fd059d1bd2752ed0658f413bc6&start=7414394
-  - Always use a confirmation dialog, and use toast for confirmation
-  - Simple cut mode which splits the sample at the last confirmed starting 
-    point
-  - First time pressing C, a dialog appears what happens, original file is 
-    renamed to .bak, sample is split at replay marker (yes / no)
-  - The copy action and rename action is done
-  - The folder the sample belongs to, is rescheduled in the queue (if not 
-    present) 
-  - Next sample is selected from current filter
-  - HTTP post that does this synchronously (wait dialog), rename at end!
-  - Slice write name is "original-name-{begin-offset}-{end-offset}.wav"
 - LINUX
   - fix: AppImage installer on linux does not work?
   - skip all together or use a different packager?
@@ -60,16 +52,6 @@ http://127.0.0.1:5000/?sample=1be5899620095ad13f1c716625b1a166&start=10310003
   - Export icon for all slots to a ZIP file
   - (Shift-V saves all slots to a file as a zip?)
   - future: save this set as a Vibe, reset vibe, reset set
-- TRANSIENT SKIP (forward)
-  - Let Claude design the transient detection algorithm, with zero crossing 
-    (if possible) 
-  - Press fa-wave-square icon and the back-end will find the next transient
-  - The offset it sent back to the UI plus information that transient is 
-    detected on that offset
-  - The button should be below the waveform editor
-  - The playhead is updated
-  - Pressing the button again will forward to the next transient
-  - When playing, the sample should continue to play 
 - UNIFORM KEYBOARD CONTROLS
   - Controls on UI next to key bindings
     - Back button that goes to previous sample, RANDOMIZE for the current
