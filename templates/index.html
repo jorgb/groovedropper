@@ -807,6 +807,18 @@
             margin: 0 0 10px 0;
             cursor: pointer;
             user-select: none;
+            justify-content: space-between;
+        }
+
+        #donation-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #donation-links form {
+            display: flex;
+            align-items: center;
         }
 
         #controls-info h3:hover {
@@ -1659,7 +1671,16 @@
     <!-- -------------------------------------------------------------------- -->
     <div id="controls-row">
         <div id="controls-info" class="folded">
-            <h3 id="controls-header"><i id="controls-fold-icon" class="fa-solid fa-chevron-right"></i>Controls</h3>
+            <h3 id="controls-header">
+                <span><i id="controls-fold-icon" class="fa-solid fa-chevron-right"></i> Controls</span>
+                <div id="donation-links" onclick="event.stopPropagation()">
+                    <form action="https://www.paypal.com/donate" method="post" target="_top">
+                        <input type="hidden" name="hosted_button_id" value="MS9KT7V299SYC" />
+                        <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
+                        <img alt="" border="0" src="https://www.paypal.com/en_NL/i/scr/pixel.gif" width="1" height="1" />
+                    </form>
+                </div>
+            </h3>
             <table id="controls-table">
                 <tr><td><span class="control-key">SPACE</span></td><td>Play / Pause - Resumes from stopped location</td></tr>
                 <tr><td><span class="control-key">SHIFT + SPACE</span></td><td>Reset playhead - Restarts the sample from the originally randomized offset</td></tr>
