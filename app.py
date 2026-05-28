@@ -825,7 +825,10 @@ def api_cut():
             end_sample = total - 1
             base_dir   = os.path.dirname(src_path)
             base       = os.path.splitext(orig_name)[0]
-            base       = re.sub(r'-\d{8}-\d{8}$', '', base)
+            if re.search(r'-\d{8}-\d{8}$', base):
+                truncated = re.sub(r'-\d{8}-(\d{8})$', r'-\1', base)
+                logger.info(f"CUT: Truncating offset suffix '{base}' → '{truncated}'")
+                base = truncated
 
             def fmt(n):
                 return f'{int(n):08d}'
@@ -835,8 +838,6 @@ def api_cut():
             if begin_offset >= total and keep_right:
                 return jsonify({'error': 'begin_offset is at EOF — right side is empty'}), 400
 
-            left_path  = None
-            right_path = None
 
             if keep_left:
                 left_name = f'{base}-{fmt(0)}-{fmt(begin_offset - 1)}.wav'
@@ -844,6 +845,7 @@ def api_cut():
 
                 logger.info(f'CUT: Saving left side of sample: {left_path}')
                 audio.save_slice_wav(src_path, left_path, 0, begin_offset)
+                toasts.append(f"Sample '{orig_name}' cut left to '{os.path.basename(left_path)}'")
 
             if keep_right:
                 right_name = f'{base}-{fmt(begin_offset)}-{fmt(end_sample)}.wav'
@@ -851,13 +853,6 @@ def api_cut():
 
                 logger.info(f'CUT: Saving right side of sample: {right_path}')
                 audio.save_slice_wav(src_path, right_path, begin_offset, total)
-
-            if keep_left and keep_right:
-                toasts.append(f"Sample '{orig_name}' cut left to '{os.path.basename(left_path)}'")
-                toasts.append(f"Sample '{orig_name}' cut right to '{os.path.basename(right_path)}'")
-            elif keep_left:
-                toasts.append(f"Sample '{orig_name}' cut left to '{os.path.basename(left_path)}'")
-            elif keep_right:
                 toasts.append(f"Sample '{orig_name}' cut right to '{os.path.basename(right_path)}'")
 
             with db.get_db() as conn:
