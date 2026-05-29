@@ -116,6 +116,7 @@ def _migrate_v1(conn):
     conn.execute("INSERT OR IGNORE INTO config (key, value) VALUES ('loop', 'true')")
     conn.execute("INSERT OR IGNORE INTO config (key, value) VALUES ('controls-folded', 'true')")
     conn.execute("INSERT OR IGNORE INTO config (key, value) VALUES ('offset-preview', 'time')")
+    conn.execute("INSERT OR IGNORE INTO config (key, value) VALUES ('mutable-warn', 'true')")
     conn.execute(
         "INSERT OR IGNORE INTO presets (name, is_system, filter_mode, created_at) VALUES ('ALL', 1, 'OR', ?)",
         (time.time(),)

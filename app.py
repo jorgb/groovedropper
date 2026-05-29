@@ -74,7 +74,7 @@ app = Flask(__name__,
             static_folder=_resource('static'))
 
 
-ALLOWED_CONFIG_KEYS = frozenset({'theme', 'loop', 'controls-folded', 'offset-preview', 'quick-pick-preset', 'quick-play-instantly'})
+ALLOWED_CONFIG_KEYS = frozenset({'theme', 'loop', 'controls-folded', 'offset-preview', 'quick-pick-preset', 'quick-play-instantly', 'mutable-warn'})
 
 
 
@@ -747,6 +747,13 @@ def delete_quickpick_slot(preset_id, slot_number):
 def disable_mutable():
     app.config['MUTABLE'] = False
     logger.info("MUTABLE mode disabled via UI")
+    return jsonify({"status": "ok"})
+
+
+@app.route('/api/mutable/enable', methods=['POST'])
+def enable_mutable():
+    app.config['MUTABLE'] = True
+    logger.info("MUTABLE mode enabled via UI")
     return jsonify({"status": "ok"})
 
 

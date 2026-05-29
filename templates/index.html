@@ -355,8 +355,7 @@
         #mutable-indicator.hidden { display: none; }
         #mutable-indicator.disabled {
             color: color-mix(in srgb, var(--box-bg) 97%, black 3%);
-            cursor: default;
-            pointer-events: none;
+            cursor: pointer;
         }
 
         #archive-dialog-skull {
@@ -1744,6 +1743,23 @@
             <div class="dialog-footer">
                 <button id="manage-folders-cancel">Cancel</button>
                 <button id="manage-folders-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
+<!-- Mutable-warn confirmation dialog -->
+    <div id="mutable-warn-overlay" class="dialog-overlay hidden">
+        <div id="mutable-warn-dialog" class="dialog-card">
+            <div class="dialog-header">
+                <span><i class="fa-solid fa-skull" style="color:var(--accent-color);margin-right:6px;"></i>Enable mutability?</span>
+                <button id="mutable-warn-close" class="dialog-close-btn" title="Close">&times;</button>
+            </div>
+            <div class="dialog-body">
+                <p>Turning mutability on will allow Groovedropper to rename samples and write new samples to your library (archive and cut features). Groovedropper will never delete files. Are you sure?</p>
+            </div>
+            <div class="dialog-footer">
+                <button id="mutable-warn-cancel">Cancel</button>
+                <button id="mutable-warn-ok">OK</button>
             </div>
         </div>
     </div>

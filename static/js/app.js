@@ -32,6 +32,7 @@ const GrooveDropper = {
         sampleName: null,
         sampleDir: null,
         mutable: false,
+        mutableWarn: true,
         playInstantly: false,
         quickpick: {
             presets: [],
@@ -103,6 +104,10 @@ const GrooveDropper = {
         btnFindTransient: document.getElementById('btn-find-transient'),
         // Mutable / archive
         mutableIndicator: document.getElementById('mutable-indicator'),
+        mutableWarnOverlay: document.getElementById('mutable-warn-overlay'),
+        mutableWarnCancel: document.getElementById('mutable-warn-cancel'),
+        mutableWarnClose: document.getElementById('mutable-warn-close'),
+        mutableWarnOk: document.getElementById('mutable-warn-ok'),
         archiveDialogOverlay: document.getElementById('archive-dialog-overlay'),
         archiveDialogMsg: document.getElementById('archive-dialog-msg'),
         archiveDialogCancel: document.getElementById('archive-dialog-cancel'),
@@ -274,6 +279,7 @@ const GrooveDropper = {
                 this.state.playInstantly = config['quick-play-instantly'] === 'true';
                 this.elements.qpPlayInstantly.checked = this.state.playInstantly;
             }
+            this.state.mutableWarn = config['mutable-warn'] !== 'false';
         } catch (e) {
             console.error("Failed to load config", e);
         }
@@ -507,7 +513,30 @@ const GrooveDropper = {
         this.state.mutable = false;
         this.elements.mutableIndicator.classList.add('disabled');
         document.getElementById('controls-archive-row')?.remove();
+        document.getElementById('controls-cut-row')?.remove();
         this.showToast('Mutable options (archiving, writing) are disabled');
+    },
+
+    async enableMutable() {
+        const res = await fetch('/api/mutable/enable', { method: 'POST' });
+        if (!res.ok) return;
+        this.state.mutable = true;
+        this.elements.mutableIndicator.classList.remove('disabled');
+        if (!document.getElementById('controls-archive-row')) {
+            const archiveRow = document.createElement('tr');
+            archiveRow.id = 'controls-archive-row';
+            archiveRow.innerHTML = '<td><span class="control-key">A</span></td>' +
+                '<td>Archive Sample — rename current sample to &lt;name&gt;.bak and remove from library</td>';
+            this.elements.controlsTable.appendChild(archiveRow);
+        }
+        if (!document.getElementById('controls-cut-row')) {
+            const cutRow = document.createElement('tr');
+            cutRow.id = 'controls-cut-row';
+            cutRow.innerHTML = '<td><span class="control-key">C</span></td>' +
+                '<td>Cut Sample — open the cut dialog to split the sample at the current offset</td>';
+            this.elements.controlsTable.appendChild(cutRow);
+        }
+        this.showToast('Mutable options (archiving, writing) are enabled');
     },
 
     promptArchiveSample() {
@@ -635,8 +664,9 @@ const GrooveDropper = {
                 this.elements.appVersion.textContent = this.state.appVersion;
             }
             this.state.mutable = !!data.mutable;
+            this.elements.mutableIndicator.classList.remove('hidden');
             if (this.state.mutable) {
-                this.elements.mutableIndicator.classList.remove('hidden');
+                this.elements.mutableIndicator.classList.remove('disabled');
                 const archiveRow = document.createElement('tr');
                 archiveRow.id = 'controls-archive-row';
                 archiveRow.innerHTML = '<td><span class="control-key">A</span></td>' +
@@ -648,6 +678,8 @@ const GrooveDropper = {
                 cutRow.innerHTML = '<td><span class="control-key">C</span></td>' +
                     '<td>Cut Sample — open the cut dialog to split the sample at the current offset</td>';
                 this.elements.controlsTable.appendChild(cutRow);
+            } else {
+                this.elements.mutableIndicator.classList.add('disabled');
             }
         } catch (e) {
             console.error('Failed to load info', e);
@@ -743,7 +775,25 @@ const GrooveDropper = {
             if (btn) btn.blur();
         });
 
-        this.elements.mutableIndicator.addEventListener('click', () => this.disableMutable().catch(err => console.error(err)));
+        this.elements.mutableIndicator.addEventListener('click', () => {
+            if (this.state.mutable) {
+                this.disableMutable().catch(err => console.error(err));
+            } else if (this.state.mutableWarn) {
+                this.elements.mutableWarnOverlay.classList.remove('hidden');
+            } else {
+                this.enableMutable().catch(err => console.error(err));
+            }
+        });
+
+        const _closeMutableWarnDialog = () => this.elements.mutableWarnOverlay.classList.add('hidden');
+        this.elements.mutableWarnCancel.addEventListener('click', _closeMutableWarnDialog);
+        this.elements.mutableWarnClose.addEventListener('click', _closeMutableWarnDialog);
+        this.elements.mutableWarnOk.addEventListener('click', () => {
+            _closeMutableWarnDialog();
+            this.state.mutableWarn = false;
+            this.saveConfig('mutable-warn', 'false');
+            this.enableMutable().catch(err => console.error(err));
+        });
 
         const _closeArchiveDialog = () => this.elements.archiveDialogOverlay.classList.add('hidden');
         this.elements.archiveDialogCancel.addEventListener('click', _closeArchiveDialog);
@@ -755,6 +805,10 @@ const GrooveDropper = {
 
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Escape') {
+                if (!this.elements.mutableWarnOverlay.classList.contains('hidden')) {
+                    _closeMutableWarnDialog();
+                    return;
+                }
                 if (!this.elements.cutDialogOverlay.classList.contains('hidden')) {
                     this._closeCutDialog();
                     return;
