@@ -1016,8 +1016,8 @@ const GrooveDropper = {
         this.elements.audio.addEventListener('ended', () => {
             if (this.state.skipEndedEvent) return;
             if (this.state.loopEnabled) {
-                this.elements.audio.currentTime = this.state.originalStartOffset / this.state.sampleRate;
-                this.state.currentOffset = this.state.originalStartOffset;
+                this.elements.audio.currentTime = 0;
+                this.state.currentOffset = 0;
                 this._applyPitch();
                 this.elements.audio.play();
             } else {
