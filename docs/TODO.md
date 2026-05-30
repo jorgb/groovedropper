@@ -1,15 +1,50 @@
 ## DOING
 
-- !! refactor the sample table to only have name / directory, not a path column 
-  as well
-- play instantly needs to be checkbox, not a toggle button
-- the skull needs to be greyed out and dimmed to be enabled as well when 
-  clicked
-  - first time (setting) dialog appears to warn
+- Test offset 000000 to see if a new file is written as WAV (poor man's MP3 
+  convert to wav)
+
+- Marker dialog for 4, 8, 16, 32 (or custom) equal splits, or random splits + 
+  transient finding- https://fontawesome.com/icons/classic/solid/arrows-left-right-to-line
+  - Random marker placement (glitch with or without transient)
+  - Grid placement 4,8,16,32
+  - Marker job in queue (finding or updating markers) - will not allow markers 
+    to be set or deleted
+
+- Cutting marker TODO's
+  - Marker labels in database, defaults to number, but can be replaced with 
+    key information, chord, BPM etc
+  - The trashcan for a marker is not themed, it should stay accent-color or 
+    inverse of it
+  - Manual needs updating!
+
+- Export instead of cut (E)
+  - Keep original sample
+  - Do not archive or skip
+  - Re-use dialog
+
+- fine grained marker control (shift drag or mouse drag on edit box?)
+  - drag, rough movements, marker does not get updated in DB until release
+  - shift+drag fine control
+  - When playing, the playhead will restart
+  - When active marker, the marker will be reese
+
+History table
+- Store all randomly selected ramples (FK relation)
+- Recall by "H" with a scrollable dialog to pick one 
+- Will be placed on top
+- Sort key is updated time
+- When digest is already in history table, put to front
+- Max 128 entries?
+- P always get the entry from the DB (propagate to newest?)
+
+THINK ABOUT
+
+- !! refactor the sample table to only have path column (derive name from path!)
+- Group mutability controls in controls overview with extra divider
 - Consider C change into X (without shift)
 - Shift+S saves whole sample
-- feature: rename sample that has multiple offsets e.g 0000020-2002020 002020-020202
-  - Maybe remove the offset pairs and add a hashing tag (last 4 digits)?
+
+- check how to download with standalone pywebview, is it possible?
 
 - 0.9.3-beta release
   - Test out of box experience (manual link in HTML needs fixing!)
@@ -19,12 +54,40 @@
   - Publish on Reddit
 - test: Linux build with new UI
 
+- Saving dialog:
+  - Future proof to also include XPJ / PROJ / ZIP
+  - same as cut, allow selecting parts    
+  - Save all markers to new samples
+  - Save current marker
+  - S should save from selected marker to next
+  - VIBE EXPORT
+    - Export icon for all slots to a ZIP file
+    - (Shift-V saves all slots to a file as a zip?)
+    - future: save this set as a Vibe, reset vibe, reset set
+
+- normalize job with librosa
+  - calculation job should work like archiving (old sample = gone), but 
+    metadata and link(s) to tags should remain, sample should reload?
+  - Librosa can handle this without an extra package.
+    librosa.util.normalize normalizes to peak 1.0 (0 dBFS), but you can
+    scale the result afterward with a simple multiplier:
+
+    import librosa
+    import numpy as np
+
+    normalized = librosa.util.normalize(audio)  # peaks at 0 dBFS
+    target_db = -1.0
+    scaled = normalized * (10 ** (target_db / 20))  # now peaks at -1 dBFS
+
+    So librosa gives you the normalized signal, and 10^(dB/20) converts
+    your target dB to a linear gain factor. At -1 dB that's ~0.891, at -2
+    dB it's ~0.794.
+
+
 ## LATER
 
 - Check for new version button
-- Before CUT and delete
-  - Minor adjustments to start of sample offset (buttons)
-  - Find next transient functionality
+- bufmeacoffee link
 - LINUX
   - fix: AppImage installer on linux does not work?
   - skip all together or use a different packager?
@@ -44,28 +107,13 @@
   - Later? A button next to the vibe edit, that randomizes the name from a 
     long list (like polyend tracker, digitakt 2)
   - Later? Song name randomizer (same code, back end) for inspiration
-- VIBE EXPORT
-  - Export icon for all slots to a ZIP file
-  - (Shift-V saves all slots to a file as a zip?)
-  - future: save this set as a Vibe, reset vibe, reset set
-- UNIFORM KEYBOARD CONTROLS
+ UNIFORM KEYBOARD CONTROLS
   - Controls on UI next to key bindings
     - Back button that goes to previous sample, RANDOMIZE for the current
     - Input field for the exact sample offset so that I can trigger replays
     - Export length (in seconds)
   - Keys for unused buttons?
   - feat: "U" key to toggle untagged labels only
-- SLICING AND CHOPPING
-  - feat: Slice mode in waveform editor
-    - Shift+Click or ?? will set the END point and draw a small masked overlay
-    - HARD??? Shift+Space will play and loop only between the start and end (or 
-      end sample if no slice stop)
-    - Shift+R will reset the end slice to none, or clicking anywhere in the sample
-    - Saving the slice will save only selected part
-    - Shift+S saves the whole sample (from location as-is without conversion)
-    - Slice management + offset rework (do not use seconds to randomize but slice offset?)
-    - Save slice time customizable, 5s by default? -- NEEDED?
-  - Look into splitting samples left / right, maybe "removing" the source by renaming it?
   - feat: press arrow keys left and right, one second? SHIFT+ left, right 200ms?
   - feat: press arrow up and down should halve the time in the offset
     - e.g. HOME, arrow up will position the play head in the middle

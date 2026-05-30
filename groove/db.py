@@ -46,7 +46,7 @@ def get_db():
         conn.close()
 
 
-CURRENT_VERSION = 3
+CURRENT_VERSION = 4
 
 
 def _migrate_v1(conn):
@@ -150,10 +150,26 @@ def _migrate_v2(conn):
     ''')
 
 
+def _migrate_v4(conn):
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS sample_markers (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            sample_id  INTEGER NOT NULL REFERENCES samples(id) ON DELETE CASCADE,
+            offset     INTEGER NOT NULL,
+            created_at REAL    NOT NULL,
+            UNIQUE (sample_id, offset)
+        )
+    ''')
+    conn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_sample_markers_sample ON sample_markers(sample_id)'
+    )
+
+
 _MIGRATION_FNS = {
     1: _migrate_v1,
     2: _migrate_v2,
     3: _migrate_v3,
+    4: _migrate_v4,
 }
 
 
@@ -210,6 +226,47 @@ def fetch_config(conn):
 def save_config(conn, data):
     for k, v in data.items():
         conn.execute('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', (k, str(v)))
+
+
+# ---------------------------------------------------------------------------
+# Markers
+# ---------------------------------------------------------------------------
+
+def fetch_markers(conn, sample_id):
+    rows = conn.execute(
+        'SELECT id, offset FROM sample_markers WHERE sample_id = ? ORDER BY offset ASC',
+        (sample_id,)
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def count_markers(conn, sample_id):
+    return conn.execute(
+        'SELECT COUNT(*) FROM sample_markers WHERE sample_id = ?', (sample_id,)
+    ).fetchone()[0]
+
+
+def insert_marker(conn, sample_id, offset):
+    cursor = conn.execute(
+        'INSERT INTO sample_markers (sample_id, offset, created_at) VALUES (?, ?, ?)',
+        (sample_id, offset, time.time())
+    )
+    return cursor.lastrowid
+
+
+def delete_marker_by_offset(conn, sample_id, offset):
+    result = conn.execute(
+        'DELETE FROM sample_markers WHERE sample_id = ? AND offset = ?',
+        (sample_id, offset)
+    )
+    return result.rowcount > 0
+
+
+def delete_all_markers(conn, sample_id):
+    result = conn.execute(
+        'DELETE FROM sample_markers WHERE sample_id = ?', (sample_id,)
+    )
+    return result.rowcount
 
 
 # ---------------------------------------------------------------------------

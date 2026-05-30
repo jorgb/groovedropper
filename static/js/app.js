@@ -34,6 +34,8 @@ const GrooveDropper = {
         mutable: false,
         mutableWarn: true,
         playInstantly: false,
+        markers: [],            // [{id, offset}] sorted ascending, loaded from DB
+        activeMarkerIndex: -1,  // index into markers[], -1 = soft playhead
         quickpick: {
             presets: [],
             activePresetId: null,
@@ -42,7 +44,8 @@ const GrooveDropper = {
         },
     },
 
-    _cutState: { mode: 'both' },
+    _cutState: {},
+    _transientPending: false,
 
     elements: {
         audio: document.getElementById('audio-player'),
@@ -113,17 +116,17 @@ const GrooveDropper = {
         archiveDialogCancel: document.getElementById('archive-dialog-cancel'),
         archiveDialogOk: document.getElementById('archive-dialog-ok'),
         archiveDialogClose: document.getElementById('archive-dialog-close'),
+        deleteMarkersOverlay: document.getElementById('delete-markers-overlay'),
+        deleteMarkersCancel: document.getElementById('delete-markers-cancel'),
+        deleteMarkersOk: document.getElementById('delete-markers-ok'),
+        deleteMarkersClose: document.getElementById('delete-markers-close'),
         // Sample cut dialog
-        cutDialogOverlay:  document.getElementById('cut-dialog-overlay'),
-        cutDialogClose:    document.getElementById('cut-dialog-close'),
-        cutDialogCancel:   document.getElementById('cut-dialog-cancel'),
-        cutDialogOk:       document.getElementById('cut-dialog-ok'),
-        cutWaveformLeft:   document.getElementById('cut-waveform-left'),
-        cutWaveformRight:  document.getElementById('cut-waveform-right'),
-        cutWaveformStatus: document.getElementById('cut-waveform-status'),
-        btnCutKl:          document.getElementById('btn-cut-kl'),
-        btnCutBoth:        document.getElementById('btn-cut-both'),
-        btnCutKr:          document.getElementById('btn-cut-kr'),
+        cutDialogOverlay:    document.getElementById('cut-dialog-overlay'),
+        cutDialogClose:      document.getElementById('cut-dialog-close'),
+        cutDialogCancel:     document.getElementById('cut-dialog-cancel'),
+        cutDialogOk:         document.getElementById('cut-dialog-ok'),
+        cutWaveformWrap:     document.getElementById('cut-waveform-wrap'),
+        cutDialogWaveform:   document.getElementById('cut-dialog-waveform'),
         controlsTable: document.getElementById('controls-table'),
         // Quick Pick
         qpAddBtn: document.getElementById('qp-add-btn'),
@@ -339,14 +342,35 @@ const GrooveDropper = {
 
     async pollStatus() {
         try {
-            const res = await fetch('/api/stats');
-            const data = await res.json();
-
+            const [statsRes, jobsRes] = await Promise.all([
+                fetch('/api/stats'),
+                fetch('/api/jobs'),
+            ]);
+            const data = await statsRes.json();
             this.state.totalSamplesCount = data.total_samples || 0;
             this.elements.totalSamples.textContent = this.state.totalSamplesCount;
 
+            // Job status takes priority over scan status
+            if (jobsRes.ok) {
+                const jobs   = await jobsRes.json();
+                const active = jobs.filter(j => j.status === 'queued' || j.status === 'running');
+                if (active.length > 0) {
+                    const cur    = active.find(j => j.status === 'running') || active[0];
+                    const labels = { archive: 'Archiving…', cut: 'Slicing data…', export: 'Preparing export…' };
+                    const msg    = labels[cur.job_type] || 'Processing…';
+                    const extra  = active.length > 1 ? ` (+${active.length - 1} queued)` : '';
+                    this.elements.scanStatus.innerHTML =
+                        `<i class="fa-solid fa-spinner fa-spin"></i> <span>${msg}${extra}</span>`;
+                    if (this.state.totalSamplesCount > 0 && this.state.currentSampleId === null) {
+                        await this.loadNextRandom(false);
+                    }
+                    return;
+                }
+            }
+
             if (!data.is_scanning) {
-                this.elements.scanStatus.innerHTML = `<i class="fa-solid fa-check"></i> <span>Scan complete</span>`;
+                this.elements.scanStatus.innerHTML =
+                    `<i class="fa-solid fa-check"></i> <span>No jobs running</span>`;
                 if (this.state.isScanning === true) {
                     this.loadLabels()
                         .then(() => this.loadUntaggedCount())
@@ -355,12 +379,13 @@ const GrooveDropper = {
                 }
                 this.state.isScanning = false;
             } else {
-                const totalWavs = data.total_wavs || 0;
+                const totalWavs     = data.total_wavs || 0;
                 const foldersQueued = data.folders_queued || 0;
-                const processed = totalWavs - (data.wavs_queued || 0);
+                const processed     = totalWavs - (data.wavs_queued || 0);
                 let msg = `Scanning ${processed} of ${totalWavs}`;
                 if (foldersQueued > 0) msg += ` (queued ${foldersQueued} items)`;
-                this.elements.scanStatus.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>${msg}</span>`;
+                this.elements.scanStatus.innerHTML =
+                    `<i class="fa-solid fa-spinner fa-spin"></i> <span>${msg}</span>`;
                 this.state.isScanning = true;
             }
 
@@ -505,6 +530,8 @@ const GrooveDropper = {
                 this.renderLabelListCheckboxes();
             }).catch(e => console.error(e));
         }
+
+        this.loadMarkers(data.id).catch(e => console.error(e));
     },
 
     async disableMutable() {
@@ -539,6 +566,403 @@ const GrooveDropper = {
         this.showToast('Mutable options (archiving, writing) are enabled');
     },
 
+    // ------------------------------------------------------------------
+    // Markers
+    // ------------------------------------------------------------------
+
+    async loadMarkers(sampleId) {
+        this.state.markers          = [];
+        this.state.activeMarkerIndex = -1;
+        try {
+            const res = await fetch(`/api/sample/${sampleId}/markers`);
+            if (res.ok) {
+                const data = await res.json();
+                this.state.markers = data.markers || [];
+            }
+        } catch (e) {
+            console.error('Failed to load markers', e);
+        }
+        this.renderMarkers();
+    },
+
+    renderMarkersInContainer(container, readonly = false) {
+        container.querySelectorAll('.marker-line').forEach(el => el.remove());
+        if (!this.state.durationSamples) return;
+        const ns = 'http://www.w3.org/2000/svg';
+        this.state.markers.forEach((marker, index) => {
+            const pct  = (marker.offset / this.state.durationSamples) * 100;
+            const line = document.createElement('div');
+            line.className = 'marker-line ' + (index === this.state.activeMarkerIndex ? 'active' : 'pinned');
+            line.style.left = pct + '%';
+
+            const handle = document.createElement('div');
+            handle.className = 'marker-handle';
+
+            // Pentagon pin: rectangle body (1.5–17 px) + downward point (→ 23.5 px)
+            const svg  = document.createElementNS(ns, 'svg');
+            svg.setAttribute('width', '22');
+            svg.setAttribute('height', '25');
+            svg.setAttribute('viewBox', '0 0 22 25');
+            svg.classList.add('marker-pin-svg');
+
+            const poly = document.createElementNS(ns, 'polygon');
+            poly.setAttribute('points', '1.5,1.5 20.5,1.5 20.5,17 11,23.5 1.5,17');
+            poly.classList.add('marker-pin-shape');
+
+            const txt = document.createElementNS(ns, 'text');
+            txt.setAttribute('x', '11');
+            txt.setAttribute('y', '9.25');
+            txt.setAttribute('text-anchor', 'middle');
+            txt.setAttribute('dominant-baseline', 'central');
+            txt.classList.add('marker-pin-label');
+            txt.textContent = String(index + 1);
+
+            svg.appendChild(poly);
+            svg.appendChild(txt);
+            handle.appendChild(svg);
+
+            const delX = document.createElement('i');
+            delX.className = 'fa-solid fa-trash marker-delete-x';
+            handle.appendChild(delX);
+
+            line.appendChild(handle);
+            container.appendChild(line);
+
+            if (!readonly) {
+                handle.addEventListener('mousedown', (e) => { e.stopPropagation(); });
+                handle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.activateMarker(index);
+                });
+                delX.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.deleteMarker(index).catch(err => console.error(err));
+                });
+            }
+        });
+    },
+
+    renderMarkers() {
+        this.renderMarkersInContainer(this.elements.waveformContainer);
+    },
+
+    activateMarker(index) {
+        const marker = this.state.markers[index];
+        if (!marker) return;
+        this.state.activeMarkerIndex = index;
+        this._beginSeekTo(marker.offset);
+        this.state.currentOffset = marker.offset;
+        this.elements.audio.currentTime = marker.offset / this.state.sampleRate;
+        this.updateOffsetDisplay(marker.offset);
+        this.updatePlayhead();
+        this.flashPlayhead();
+        this._resumeIfPlaying();
+        setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
+        this.renderMarkers();
+    },
+
+    async deleteMarker(index) {
+        if (this._transientPending) {
+            this.showErrorToast('Transient for marker is being calculated, please wait');
+            return;
+        }
+        const marker = this.state.markers[index];
+        if (!marker || !this.state.currentSampleId) return;
+        const res = await fetch(
+            `/api/sample/${this.state.currentSampleId}/markers/${marker.offset}`,
+            { method: 'DELETE' }
+        );
+        if (!res.ok) return;
+        this.state.markers.splice(index, 1);
+        if (this.state.activeMarkerIndex === index) {
+            this.state.activeMarkerIndex = -1;
+        } else if (this.state.activeMarkerIndex > index) {
+            this.state.activeMarkerIndex--;
+        }
+        this.renderMarkers();
+    },
+
+    promptDeleteAllMarkers() {
+        if (!this.state.markers.length) return;
+        if (this._transientPending) {
+            this.showErrorToast('Transient for marker is being calculated, please wait');
+            return;
+        }
+        this.elements.deleteMarkersOverlay.classList.remove('hidden');
+    },
+
+    async deleteAllMarkers() {
+        if (!this.state.currentSampleId) return;
+        const res = await fetch(`/api/sample/${this.state.currentSampleId}/markers`, { method: 'DELETE' });
+        if (!res.ok) { this.showToast('Failed to delete markers'); return; }
+        this.state.markers = [];
+        this.state.activeMarkerIndex = -1;
+        this.renderMarkers();
+    },
+
+    async _toggleMarkerAtOrigin() {
+        const offset = this.state.originalStartOffset;
+        const idx    = this.state.markers.findIndex(m => m.offset === offset);
+        if (idx !== -1) {
+            await this.deleteMarker(idx);
+        } else {
+            await this._addMarkerAtOffset(offset);
+        }
+    },
+
+    async _addMarkerAtOffset(offset) {
+        if (!this.state.currentSampleId) return;
+        if (this.state.markers.length >= 32) {
+            this.showToast('Maximum marker limit reached');
+            return;
+        }
+        const res = await fetch(`/api/sample/${this.state.currentSampleId}/markers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ offset }),
+        });
+        if (res.status === 409) return; // already exists at this offset
+        if (res.status === 422) { this.showToast('Maximum marker limit reached'); return; }
+        if (!res.ok) return;
+        const data  = await res.json();
+        const entry = { id: data.id, offset: data.offset };
+        const idx   = this.state.markers.findIndex(m => m.offset > offset);
+        if (idx === -1) {
+            this.state.markers.push(entry);
+            this.state.activeMarkerIndex = this.state.markers.length - 1;
+        } else {
+            this.state.markers.splice(idx, 0, entry);
+            this.state.activeMarkerIndex = idx;
+        }
+        this.renderMarkers();
+    },
+
+    async _addMarkerAtClick(clientX) {
+        if (!this.state.currentSampleId || !this.state.durationSamples) return;
+        const rect     = this.elements.waveformContainer.getBoundingClientRect();
+        const fraction = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const offset   = Math.round(fraction * this.state.durationSamples);
+        // Skip if within ±4 px of an existing marker handle
+        for (const line of this.elements.waveformContainer.querySelectorAll('.marker-line')) {
+            const lx = parseFloat(line.style.left) / 100 * rect.width + rect.left;
+            if (Math.abs(clientX - lx) <= 4) return;
+        }
+        await this._addMarkerAtOffset(offset);
+    },
+
+    _shiftClickWaveform(clientX) {
+        if (!this.state.currentSampleId || !this.state.durationSamples) return;
+        const rect     = this.elements.waveformContainer.getBoundingClientRect();
+        const fraction = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const clicked  = Math.round(fraction * this.state.durationSamples);
+
+        if (this.state.markers.length === 0) {
+            this.seekToWaveformClick(clientX, true);
+            return;
+        }
+        let markerIdx  = -1;
+        let playOffset = 0;
+        for (let i = this.state.markers.length - 1; i >= 0; i--) {
+            if (this.state.markers[i].offset <= clicked) {
+                markerIdx  = i;
+                playOffset = this.state.markers[i].offset;
+                break;
+            }
+        }
+        this.state.activeMarkerIndex = markerIdx;
+        this._beginSeekTo(playOffset);
+        this.state.currentOffset      = playOffset;
+        this.state.skipEndedEvent     = true;
+        this.elements.audio.currentTime = playOffset / this.state.sampleRate;
+        this.updateOffsetDisplay(playOffset);
+        this.updatePlayhead();
+        this.flashPlayhead();
+        this._startPlaying();
+        setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
+        this.renderMarkers();
+    },
+
+    navigateToNextMarker(steps = 1) {
+        if (!this.state.markers.length) { this.showToast('No pinned markers'); return; }
+        const cur = this.state.currentOffset;
+        let idx = this.state.markers.findIndex(m => m.offset > cur);
+        if (idx === -1) idx = 0;
+        for (let s = 1; s < steps; s++) {
+            const next = idx + 1;
+            idx = next < this.state.markers.length ? next : 0;
+        }
+        this.activateMarker(idx);
+    },
+
+    navigateToPrevMarker(steps = 1) {
+        if (!this.state.markers.length) { this.showToast('No pinned markers'); return; }
+        const cur = this.state.currentOffset;
+        let idx = -1;
+        for (let i = this.state.markers.length - 1; i >= 0; i--) {
+            if (this.state.markers[i].offset < cur) { idx = i; break; }
+        }
+        if (idx === -1) idx = this.state.markers.length - 1;
+        for (let s = 1; s < steps; s++) {
+            const prev = idx - 1;
+            idx = prev >= 0 ? prev : this.state.markers.length - 1;
+        }
+        this.activateMarker(idx);
+    },
+
+    async _replaceActiveMarker(newOffset) {
+        const oldIdx   = this.state.activeMarkerIndex;
+        const oldMarker = this.state.markers[oldIdx];
+        if (!oldMarker || !this.state.currentSampleId) return;
+        await fetch(
+            `/api/sample/${this.state.currentSampleId}/markers/${oldMarker.offset}`,
+            { method: 'DELETE' }
+        );
+        const res = await fetch(`/api/sample/${this.state.currentSampleId}/markers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ offset: newOffset }),
+        });
+        if (!res.ok) return;
+        const data  = await res.json();
+        this.state.markers.splice(oldIdx, 1);
+        const entry = { id: data.id, offset: newOffset };
+        const idx   = this.state.markers.findIndex(m => m.offset > newOffset);
+        if (idx === -1) {
+            this.state.markers.push(entry);
+            this.state.activeMarkerIndex = this.state.markers.length - 1;
+        } else {
+            this.state.markers.splice(idx, 0, entry);
+            this.state.activeMarkerIndex = idx;
+        }
+        this._beginSeekTo(newOffset);
+        this.state.currentOffset = newOffset;
+        this.elements.audio.currentTime = newOffset / this.state.sampleRate;
+        this.updateOffsetDisplay(newOffset);
+        this.updatePlayhead();
+        this.renderMarkers();
+        this._resumeIfPlaying();
+        setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
+    },
+
+    // ------------------------------------------------------------------
+    // Cut dialog (marker-aware)
+    // ------------------------------------------------------------------
+
+    _renderCutDialog() {
+        const sampleId   = this.state.currentSampleId;
+        const numRegions = this.state.markers.length + 1;
+
+        this.elements.cutDialogWaveform.src = `/waveform/${sampleId}?t=${Date.now()}`;
+
+        const wrap = this.elements.cutWaveformWrap;
+        wrap.querySelectorAll('.cut-region').forEach(el => el.remove());
+        this.renderMarkersInContainer(wrap, true);
+
+        this._cutState = { regionActive: new Array(numRegions).fill(true) };
+        this._renderCutRegions(wrap);
+        this._updateCutOkState();
+    },
+
+    _renderCutRegions(container) {
+        container.querySelectorAll('.cut-region').forEach(el => el.remove());
+        const markers    = this.state.markers;
+        const duration   = this.state.durationSamples;
+        const boundaries = [0, ...markers.map(m => m.offset), duration];
+
+        for (let i = 0; i < boundaries.length - 1; i++) {
+            const start    = boundaries[i];
+            const end      = boundaries[i + 1];
+            const leftPct  = (start / duration) * 100;
+            const widthPct = ((end - start) / duration) * 100;
+            const isActive = this._cutState.regionActive[i];
+
+            const region = document.createElement('div');
+            region.className   = 'cut-region ' + (isActive ? 'cut-region-active' : 'cut-region-inactive');
+            region.dataset.idx = i;
+            region.style.left  = leftPct + '%';
+            region.style.width = widthPct + '%';
+            region.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = parseInt(region.dataset.idx);
+                this._cutState.regionActive[idx] = !this._cutState.regionActive[idx];
+                this._renderCutRegions(container);
+                this._updateCutOkState();
+                this._updateCutRegionStatus();
+            });
+            container.appendChild(region);
+        }
+        this._updateCutRegionStatus();
+    },
+
+    _updateCutRegionStatus() {
+        const el = document.getElementById('cut-region-status');
+        if (!el) return;
+        const total  = this._cutState.regionActive ? this._cutState.regionActive.length : 0;
+        const active = this._cutState.regionActive ? this._cutState.regionActive.filter(Boolean).length : 0;
+        if (active === total) {
+            el.textContent = 'All sections will be cut to new samples';
+        } else if (active === 0) {
+            el.textContent = 'No sections selected — select at least one to keep';
+        } else {
+            el.textContent = `${active} of ${total} sections will be cut to new samples`;
+        }
+    },
+
+    // ------------------------------------------------------------------
+    // Export via job queue
+    // ------------------------------------------------------------------
+
+    async downloadSlice() {
+        if (!this.state.currentSampleId) return;
+        const checkRes = await fetch(
+            `/api/jobs?sample_id=${this.state.currentSampleId}&type=export`
+        ).catch(() => null);
+        if (checkRes && checkRes.ok) {
+            const jobs   = await checkRes.json();
+            const active = jobs.filter(j => j.status === 'queued' || j.status === 'running');
+            if (active.length > 0) { this.showToast('Export already in progress'); return; }
+        }
+        const markers = this.state.markers.map(m => m.offset);
+        const body = {
+            sample_id:      this.state.currentSampleId,
+            start_offset:   this.state.originalStartOffset,
+            pitch_semitones: this.state.pitchSemitones,
+            pitch_cents:    this.state.pitchCents,
+            markers,
+        };
+        const res = await fetch('/api/jobs/export', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        }).catch(() => null);
+        if (!res || !res.ok) {
+            const data = res ? await res.json().catch(() => ({})) : {};
+            this.showToast(data.error === 'sample_busy' ? 'Export already in progress' : 'Export failed');
+            return;
+        }
+        const { job_id } = await res.json();
+        this.showToast(markers.length ? 'Export started — preparing ZIP…' : 'Export started…');
+        this._pollExportJob(job_id);
+    },
+
+    _pollExportJob(jobId) {
+        const poll = async () => {
+            try {
+                const res  = await fetch(`/api/jobs/${jobId}`);
+                if (!res.ok) { this.showToast('Export check failed'); return; }
+                const data = await res.json();
+                if (data.status === 'done' && data.result_ready) {
+                    window.location.href = `/api/jobs/${jobId}/download`;
+                } else if (data.status === 'failed') {
+                    this.showToast(`Export failed: ${data.error || 'unknown error'}`);
+                } else {
+                    setTimeout(poll, 1000);
+                }
+            } catch (e) { console.error('Export poll:', e); }
+        };
+        setTimeout(poll, 500);
+    },
+
     promptArchiveSample() {
         const name = this.state.sampleName;
         if (!name) return;
@@ -564,34 +988,31 @@ const GrooveDropper = {
     },
 
     async archiveSample() {
-        const digest = this.state.currentDigest;
-        const name   = this.state.sampleName;
-        if (!digest) return;
+        const sampleId = this.state.currentSampleId;
+        const name     = this.state.sampleName;
+        if (!sampleId) return;
 
-        const res = await fetch(`/api/sample/${digest}/archive`, { method: 'POST' });
+        const res = await fetch('/api/jobs/archive', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sample_id: sampleId }),
+        });
         if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            this.showToast(`Archive failed: ${body.detail || body.error || res.status}`);
+            if (body.error === 'sample_busy') {
+                this.showToast('A job on this sample is scheduled, please wait');
+            } else {
+                this.showToast(`Archive failed: ${body.error || res.status}`);
+            }
             return;
         }
-
-        this.showToast(`Archived: "${name}" renamed to "${name}.bak"`);
+        this.showToast(`Archive queued: "${name}" will be renamed to "${name}.bak"`);
         await this._postArchiveRefresh();
     },
 
-    _setCutMode(mode) {
-        this._cutState.mode = mode;
-        this.elements.btnCutKl  .classList.toggle('active', mode === 'left');
-        this.elements.btnCutBoth.classList.toggle('active', mode === 'both');
-        this.elements.btnCutKr  .classList.toggle('active', mode === 'right');
-        this.elements.cutWaveformLeft .style.opacity = mode === 'right' ? '0.3' : '1';
-        this.elements.cutWaveformRight.style.opacity = mode === 'left'  ? '0.3' : '1';
-        this._updateCutOkState();
-    },
-
     _updateCutOkState() {
-        const waveformOk = this.elements.cutWaveformStatus.textContent !== 'Waveform unavailable.';
-        this.elements.cutDialogOk.disabled = !waveformOk;
+        const anyActive = this._cutState.regionActive && this._cutState.regionActive.some(Boolean);
+        this.elements.cutDialogOk.disabled = !anyActive;
     },
 
     _closeCutDialog() {
@@ -693,12 +1114,35 @@ const GrooveDropper = {
 
         this.elements.waveformContainer.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return;
-            this.seekToWaveformClick(e.clientX, false);
+            if (e.ctrlKey) {
+                e.preventDefault();
+                this._addMarkerAtClick(e.clientX).catch(err => console.error(err));
+            } else if (e.shiftKey) {
+                e.preventDefault();
+                this._shiftClickWaveform(e.clientX);
+            } else {
+                this.state.activeMarkerIndex = -1;
+                this.seekToWaveformClick(e.clientX, false);
+                this.renderMarkers();
+            }
         });
 
         this.elements.waveformContainer.addEventListener('contextmenu', (e) => {
             e.preventDefault();
+            this.state.activeMarkerIndex = -1;
             this.seekToWaveformClick(e.clientX, true);
+            this.renderMarkers();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Control') this.elements.waveformContainer.classList.add('ctrl-active');
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Control') this.elements.waveformContainer.classList.remove('ctrl-active');
+        });
+        // Also clear on blur so releasing Ctrl outside the window doesn't leave handles stuck
+        window.addEventListener('blur', () => {
+            this.elements.waveformContainer.classList.remove('ctrl-active');
         });
 
         this.elements.indexInput.addEventListener('keydown', (e) => {
@@ -733,6 +1177,11 @@ const GrooveDropper = {
                     this.elements.sampleOffset.classList.remove('error');
                     this.elements.sampleOffset.blur();
                     const newOffset = val;
+                    if (this.state.activeMarkerIndex >= 0 &&
+                        this.state.markers[this.state.activeMarkerIndex]?.offset !== newOffset) {
+                        this._replaceActiveMarker(newOffset).catch(err => console.error(err));
+                        return;
+                    }
                     this._setOriginOffset(newOffset);
                     this.state.currentOffset = newOffset;
                     const wasPlaying = this.state.isPlaying;
@@ -803,6 +1252,14 @@ const GrooveDropper = {
             this.archiveSample().catch(err => console.error(err));
         });
 
+        const _closeDeleteMarkersDialog = () => this.elements.deleteMarkersOverlay.classList.add('hidden');
+        this.elements.deleteMarkersCancel.addEventListener('click', _closeDeleteMarkersDialog);
+        this.elements.deleteMarkersClose.addEventListener('click', _closeDeleteMarkersDialog);
+        this.elements.deleteMarkersOk.addEventListener('click', () => {
+            _closeDeleteMarkersDialog();
+            this.deleteAllMarkers().catch(err => console.error(err));
+        });
+
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Escape') {
                 if (!this.elements.mutableWarnOverlay.classList.contains('hidden')) {
@@ -815,6 +1272,10 @@ const GrooveDropper = {
                 }
                 if (!this.elements.archiveDialogOverlay.classList.contains('hidden')) {
                     _closeArchiveDialog();
+                    return;
+                }
+                if (!this.elements.deleteMarkersOverlay.classList.contains('hidden')) {
+                    this.elements.deleteMarkersOverlay.classList.add('hidden');
                     return;
                 }
                 if (!this.elements.manageFoldersOverlay.classList.contains('hidden')) {
@@ -837,6 +1298,15 @@ const GrooveDropper = {
                 if (e.ctrlKey) this.markStartOffset();
                 else if (e.shiftKey) this.restartPlay();
                 else this.togglePlay();
+            } else if (e.code === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                this._addMarkerAtOffset(this.state.currentOffset).catch(err => console.error(err));
+            } else if (e.code === 'KeyM') {
+                e.preventDefault();
+                this._toggleMarkerAtOrigin().catch(err => console.error(err));
+            } else if (e.code === 'KeyD') {
+                e.preventDefault();
+                this.promptDeleteAllMarkers();
             } else if (e.code === 'KeyL') {
                 this.copyCurrentUrlToClipboard();
             } else if (e.code === 'KeyR') {
@@ -867,10 +1337,16 @@ const GrooveDropper = {
                 this.promptArchiveSample();
             } else if (e.code === 'KeyC' && this.state.mutable && !e.ctrlKey && !e.shiftKey) {
                 this.showCutDialog().catch(err => console.error(err));
-            } else if (e.code === 'ArrowLeft' || e.code === 'KeyJ') {
+            } else if (e.code === 'ArrowLeft') {
+                e.preventDefault();
+                this.navigateToPrevMarker(e.shiftKey ? 2 : 1);
+            } else if (e.code === 'ArrowRight') {
+                e.preventDefault();
+                this.navigateToNextMarker(1);
+            } else if (e.code === 'KeyJ') {
                 e.preventDefault();
                 this.navigateQuickpickSlot(-1);
-            } else if (e.code === 'ArrowRight' || e.code === 'KeyK') {
+            } else if (e.code === 'KeyK') {
                 e.preventDefault();
                 this.navigateQuickpickSlot(1);
             } else if (/^Digit[0-9]$/.test(e.code)) {
@@ -890,9 +1366,6 @@ const GrooveDropper = {
 
         this.elements.btnFindTransient.addEventListener('click', (e) => this.findAndSnapToTransient(e.shiftKey).catch(err => console.error(err)));
 
-        this.elements.btnCutKl  .addEventListener('click', () => this._setCutMode('left'));
-        this.elements.btnCutBoth.addEventListener('click', () => this._setCutMode('both'));
-        this.elements.btnCutKr  .addEventListener('click', () => this._setCutMode('right'));
         this.elements.cutDialogClose .addEventListener('click', () => this._closeCutDialog());
         this.elements.cutDialogCancel.addEventListener('click', () => this._closeCutDialog());
         this.elements.cutDialogOk    .addEventListener('click', () => this._commitCut().catch(err => console.error(err)));

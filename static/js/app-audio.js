@@ -102,18 +102,23 @@ Object.assign(GrooveDropper, {
         this.state.skipEndedEvent = true;
     },
 
-    // Seeks back to the original start offset and resumes the rAF loop if audio was playing.
+    // Seeks back to the active pinned marker (if any) or the original start offset.
     restartPlay() {
         if (!this.state.currentSampleId)
             return;
 
         this.elements.indexInput.classList.remove('error');
 
-        this.state.currentOffset = this.state.originalStartOffset;
-        this.state.skipEndedEvent = true;
-        this.elements.audio.currentTime = this.state.currentOffset / this.state.sampleRate;
+        const marker = this.state.activeMarkerIndex >= 0
+            ? this.state.markers[this.state.activeMarkerIndex]
+            : null;
+        const restartOffset = marker ? marker.offset : this.state.originalStartOffset;
 
-        this.updateOffsetDisplay(this.state.currentOffset);
+        this.state.currentOffset  = restartOffset;
+        this.state.skipEndedEvent = true;
+        this.elements.audio.currentTime = restartOffset / this.state.sampleRate;
+
+        this.updateOffsetDisplay(restartOffset);
         this.updatePlayhead();
         this.flashPlayhead();
 
@@ -199,16 +204,7 @@ Object.assign(GrooveDropper, {
         setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
     },
 
-    // Triggers a slice download of the current sample from the stored start offset with pitch applied.
-    downloadSlice() {
-        if (!this.state.currentSampleId) return;
-        const params = new URLSearchParams({ start: this.state.originalStartOffset });
-        const s = this.state.pitchSemitones;
-        const c = this.state.pitchCents;
-        if (s !== 0) params.set('pitch', s);
-        if (c !== 0) params.set('cents', c);
-        window.location.href = `/api/slice/${this.state.currentSampleId}?${params}`;
-    },
+    // downloadSlice is defined in app.js (job-based, async, marker-aware).
 
     // Sets the audio element's playbackRate to match the current semitone + cent pitch state.
     _applyPitch() {
@@ -262,38 +258,71 @@ Object.assign(GrooveDropper, {
 
     // Scans forward from the current origin offset, snaps to the next transient zero-crossing.
     // bigOnly=true skips hi-hats (raises delta threshold, cuts high frequencies).
+    // When an active pinned marker's offset matches the current begin position, the marker
+    // is moved to the transient together with the begin offset playhead.
     async findAndSnapToTransient(bigOnly = false) {
         if (!this.state.currentSampleId) return;
 
-        const res = await fetch('/api/find_transient', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sample_id:    this.state.currentSampleId,
-                start_sample: this.state.originalStartOffset,
-                big_only:     bigOnly,
-            }),
-        });
-        const data = await res.json();
+        const activeIdx = this.state.activeMarkerIndex;
+        const activeMarker = activeIdx >= 0 ? this.state.markers[activeIdx] : null;
+        const isMarkerMode = !!(activeMarker && activeMarker.offset === this.state.originalStartOffset);
 
-        if (!data.found) {
-            this.showToast('no transient found');
-            return;
+        this._transientPending = true;
+        try {
+            const res = await fetch('/api/find_transient', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sample_id:    this.state.currentSampleId,
+                    start_sample: this.state.originalStartOffset,
+                    big_only:     bigOnly,
+                }),
+            });
+            const data = await res.json();
+
+            if (!data.found) {
+                this.showToast('no transient found');
+                return;
+            }
+
+            const offset = data.zero_crossing_sample;
+            if (isMarkerMode) {
+                await this._replaceActiveMarker(offset);
+                this.showToast('Transient set for marker');
+            } else {
+                this._beginSeekTo(offset);
+                this.elements.audio.currentTime = offset / this.state.sampleRate;
+                this.updateOffsetDisplay(offset);
+                this.updatePlayhead();
+                this.flashPlayhead();
+                this._resumeIfPlaying();
+                setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
+                this.showToast('transient found');
+            }
+        } finally {
+            this._transientPending = false;
         }
-
-        const offset = data.zero_crossing_sample;
-        this._beginSeekTo(offset);
-        this.elements.audio.currentTime = offset / this.state.sampleRate;
-        this.updateOffsetDisplay(offset);
-        this.updatePlayhead();
-        this.flashPlayhead();
-        this._resumeIfPlaying();
-        setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
-        this.showToast('transient found');
     },
 
     async showCutDialog() {
         if (!this.state.currentSampleId || !this.state.mutable) return;
+
+        if (!this.state.markers.length) {
+            await this._addMarkerAtOffset(this.state.originalStartOffset);
+        }
+
+        // Guard: refuse if sample already has a queued/running job
+        try {
+            const res = await fetch(`/api/jobs?sample_id=${this.state.currentSampleId}`);
+            if (res.ok) {
+                const jobs   = await res.json();
+                const active = jobs.filter(j => j.status === 'queued' || j.status === 'running');
+                if (active.length > 0) {
+                    this.showToast('A job on this sample is scheduled, please wait');
+                    return;
+                }
+            }
+        } catch (_) { /* non-fatal */ }
 
         if (this.state.isPlaying) {
             this.elements.audio.pause();
@@ -302,80 +331,40 @@ Object.assign(GrooveDropper, {
             this.updateStatusText('STOPPED');
         }
 
-        this._cutState = { mode: 'both' };
-        this._setCutMode('both');
-
-        const placeholder = '/static/img/waveform_placeholder.png';
-        this.elements.cutWaveformLeft.src  = placeholder;
-        this.elements.cutWaveformRight.src = placeholder;
-        this.elements.cutWaveformLeft.style.clipPath  = 'inset(0 50% 0 0)';
-        this.elements.cutWaveformRight.style.clipPath = 'inset(0 0 0 50%)';
-        this.elements.cutWaveformStatus.textContent = 'Previewing waveform, please wait...';
-        this.elements.cutDialogOk.disabled = true;
         this.elements.cutDialogOverlay.classList.remove('hidden');
-
-        const beginOffset = this.state.originalStartOffset;
-        const waveWidth   = 560;
-        const url = `/api/cut_waveform/${this.state.currentSampleId}`
-                  + `?begin_offset=${beginOffset}&width=${waveWidth}&height=90`;
-        try {
-            const res = await fetch(url);
-            if (res.ok) {
-                const cutPx   = parseInt(res.headers.get('X-Cut-Px') ?? String(waveWidth / 2));
-                const leftPct = (cutPx / waveWidth * 100).toFixed(2);
-                const rightPct = (100 - cutPx / waveWidth * 100).toFixed(2);
-                const blobUrl  = URL.createObjectURL(await res.blob());
-                this.elements.cutWaveformLeft.src  = blobUrl;
-                this.elements.cutWaveformRight.src = blobUrl;
-                this.elements.cutWaveformLeft.style.clipPath  = `inset(0 ${rightPct}% 0 0)`;
-                this.elements.cutWaveformRight.style.clipPath = `inset(0 0 0 ${leftPct}%)`;
-                this.elements.cutWaveformStatus.textContent = '';
-            } else {
-                this.elements.cutWaveformStatus.textContent = 'Waveform unavailable.';
-            }
-        } catch (_) {
-            this.elements.cutWaveformStatus.textContent = 'Waveform unavailable.';
-        }
-        this._updateCutOkState();
+        this._renderCutDialog();
     },
 
     async _commitCut() {
-        const { mode } = this._cutState;
         const sampleIdAtCut = this.state.currentSampleId;
         this._closeCutDialog();
 
-        const res = await fetch('/api/cut', {
+        const body = {
+            sample_id:       sampleIdAtCut,
+            markers:         this.state.markers.map(m => m.offset),
+            regions_to_keep: this._cutState.regionActive
+                .map((active, i) => (active ? i : -1))
+                .filter(i => i >= 0),
+        };
+
+        const res = await fetch('/api/jobs/cut', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sample_id:    sampleIdAtCut,
-                begin_offset: this.state.originalStartOffset,
-                keep_left:    mode === 'left' || mode === 'both',
-                trash_left:   mode === 'right',
-                keep_right:   mode === 'right' || mode === 'both',
-                trash_right:  mode === 'left',
-            }),
+            body: JSON.stringify(body),
         });
 
-        let data;
-        try {
-            data = await res.json();
-        } catch (_) {
-            this.showErrorToast('Cut failed — unexpected server error');
-            return;
-        }
         if (!res.ok) {
-            this.showErrorToast(data.error || 'Cut failed');
+            const data = await res.json().catch(() => ({}));
+            if (data.error === 'sample_busy') {
+                this.showToast('A job on this sample is scheduled, please wait');
+            } else {
+                this.showErrorToast(data.error || 'Cut failed');
+            }
             return;
         }
 
-        (data.toasts ?? []).forEach((msg, i) =>
-            setTimeout(() => this.showToast(msg), i * 3200));
-
-        if (data.archived) {
-            const stillOnSame = this.state.currentSampleId === sampleIdAtCut;
-            await this._postArchiveRefresh(stillOnSame);
-        }
+        this.showToast('Cut job queued');
+        await this._postArchiveRefresh(true);
     },
 
     // Attaches a vertical mouse-drag handler to el; each STEP_PX of drag calls onStep(±steps).

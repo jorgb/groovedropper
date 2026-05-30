@@ -1,0 +1,40 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="MfU6sowEb6jVAMntK6jH">
+    <mxGraphModel dx="881" dy="466" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="tltEWdTiBemCL1e2MuzC-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="waveform-container" vertex="1">
+          <mxGeometry height="130" width="640" x="105" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="tltEWdTiBemCL1e2MuzC-2" parent="1" style="shape=offPageConnector;whiteSpace=wrap;html=1;fillColor=light-dark(#FFFFFF,#FFFFFF);fontColor=light-dark(#000000,#000000);" value="A" vertex="1">
+          <mxGeometry height="30" width="20" x="250" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="tltEWdTiBemCL1e2MuzC-5" edge="1" parent="1" source="tltEWdTiBemCL1e2MuzC-2" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.244;entryY=0.998;entryDx=0;entryDy=0;entryPerimeter=0;" target="tltEWdTiBemCL1e2MuzC-1" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="190" y="320" as="sourcePoint" />
+            <mxPoint x="240" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="tltEWdTiBemCL1e2MuzC-6" parent="1" style="shape=offPageConnector;whiteSpace=wrap;html=1;" value="B" vertex="1">
+          <mxGeometry height="30" width="20" x="520" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="tltEWdTiBemCL1e2MuzC-7" edge="1" parent="1" source="tltEWdTiBemCL1e2MuzC-6" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.244;entryY=0.998;entryDx=0;entryDy=0;entryPerimeter=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="460" y="320" as="sourcePoint" />
+            <mxPoint x="531" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="tltEWdTiBemCL1e2MuzC-8" parent="1" style="shape=offPageConnector;whiteSpace=wrap;html=1;size=0.6666666666666666;" value="C" vertex="1">
+          <mxGeometry height="30" width="20" x="630" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="tltEWdTiBemCL1e2MuzC-9" edge="1" parent="1" source="tltEWdTiBemCL1e2MuzC-8" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.244;entryY=0.998;entryDx=0;entryDy=0;entryPerimeter=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="570" y="320" as="sourcePoint" />
+            <mxPoint x="641" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

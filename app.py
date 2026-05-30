@@ -18,6 +18,10 @@ from flask import Flask, render_template, request, send_file, jsonify
 from groove import db, audio, transient as _transient
 from groove.db import DatabaseTooNewError
 from groove.queue import scan_queue
+from groove.jobs import job_queue, SampleBusyError
+import groove.jobs_archiving  as jobs_archiving
+import groove.jobs_cutting    as jobs_cutting
+import groove.jobs_exporting  as jobs_exporting
 
 HTTP_DEBUG = False
 
@@ -241,6 +245,217 @@ def set_config():
     return jsonify({"status": "ok"})
 
 
+MAX_MARKERS = 32
+
+
+@app.route('/api/sample/<int:sample_id>/markers', methods=['GET'])
+def get_markers(sample_id):
+    with db.get_db() as conn:
+        markers = db.fetch_markers(conn, sample_id)
+    return jsonify({'markers': markers})
+
+
+@app.route('/api/sample/<int:sample_id>/markers', methods=['POST'])
+def add_marker(sample_id):
+    data   = request.get_json(silent=True) or {}
+    offset = data.get('offset')
+    if offset is None:
+        return jsonify({'error': 'offset required'}), 400
+    offset = int(offset)
+    with db.get_db() as conn:
+        if db.count_markers(conn, sample_id) >= MAX_MARKERS:
+            return jsonify({'error': 'marker_limit_reached'}), 422
+        try:
+            marker_id = db.insert_marker(conn, sample_id, offset)
+        except sqlite3.IntegrityError:
+            return jsonify({'error': 'marker_exists'}), 409
+    return jsonify({'id': marker_id, 'offset': offset}), 201
+
+
+@app.route('/api/sample/<int:sample_id>/markers', methods=['DELETE'])
+def delete_all_markers(sample_id):
+    with db.get_db() as conn:
+        count = db.delete_all_markers(conn, sample_id)
+    return jsonify({'status': 'ok', 'deleted': count})
+
+
+@app.route('/api/sample/<int:sample_id>/markers/<int:offset>', methods=['DELETE'])
+def delete_marker(sample_id, offset):
+    with db.get_db() as conn:
+        found = db.delete_marker_by_offset(conn, sample_id, offset)
+    if not found:
+        return jsonify({'error': 'not_found'}), 404
+    return jsonify({'status': 'ok'})
+
+
+# ---------------------------------------------------------------------------
+# Job queue
+# ---------------------------------------------------------------------------
+
+def _scan_folder_for(path):
+    """Return the registered scan folder that owns path, or path's directory."""
+    with db.get_db() as conn:
+        folders = db.fetch_scan_folder_paths(conn)
+    parent = os.path.dirname(path)
+    for f in folders:
+        if path.startswith(f + os.sep):
+            return f
+    return parent
+
+
+@app.route('/api/jobs', methods=['GET'])
+def list_jobs():
+    sample_id = request.args.get('sample_id', type=int)
+    job_type  = request.args.get('type')
+    jobs      = job_queue.snapshot()
+    if sample_id is not None:
+        jobs = [j for j in jobs if j['sample_id'] == sample_id]
+    if job_type:
+        jobs = [j for j in jobs if j['job_type'] == job_type]
+    return jsonify(jobs)
+
+
+@app.route('/api/jobs/<job_id>', methods=['GET'])
+def get_job(job_id):
+    job = job_queue.get_job(job_id)
+    if not job:
+        return jsonify({'error': 'not_found'}), 404
+    from groove.jobs import _to_dict
+    return jsonify(_to_dict(job))
+
+
+@app.route('/api/jobs/<job_id>/download', methods=['GET'])
+def download_job(job_id):
+    from groove.jobs import JobStatus
+    job = job_queue.get_job(job_id)
+    if not job:
+        return jsonify({'error': 'not_found'}), 404
+    if job.status != JobStatus.DONE or job.result is None:
+        return jsonify({'error': 'not_ready'}), 409
+    stem        = job.payload.get('stem', 'export')
+    has_markers = bool(job.payload.get('markers'))
+    if has_markers:
+        return send_file(
+            io.BytesIO(job.result),
+            as_attachment=True,
+            download_name=f'{stem}-slices.zip',
+            mimetype='application/zip',
+        )
+    start = job.payload.get('start_offset', 0)
+    s     = job.payload.get('pitch_semitones', 0)
+    c     = job.payload.get('pitch_cents', 0)
+    parts = ''
+    if s: parts += f'{s}p'
+    if c: parts += f'{c}c'
+    pitch_suffix = f'_{parts}' if parts else ''
+    return send_file(
+        io.BytesIO(job.result),
+        as_attachment=True,
+        download_name=f'{stem}_{start:08d}{pitch_suffix}.wav',
+        mimetype='audio/wav',
+    )
+
+
+@app.route('/api/jobs/<job_id>', methods=['DELETE'])
+def cancel_job(job_id):
+    if not job_queue.cancel(job_id):
+        return jsonify({'error': 'not_found_or_running'}), 404
+    return jsonify({'status': 'ok'})
+
+
+@app.route('/api/jobs/archive', methods=['POST'])
+def job_archive():
+    if not app.config.get('MUTABLE', False):
+        return jsonify({'error': 'not_mutable'}), 403
+    data      = request.get_json(silent=True) or {}
+    sample_id = data.get('sample_id')
+    if sample_id is None:
+        return jsonify({'error': 'sample_id required'}), 400
+    if job_queue.is_sample_busy(sample_id):
+        return jsonify({'error': 'sample_busy'}), 409
+    with db.get_db() as conn:
+        row = db.fetch_sample_by_id(conn, sample_id)
+        if not row:
+            return jsonify({'error': 'not_found'}), 404
+        path_row = db.fetch_sample_path(conn, sample_id)
+        src_path = path_row['path']
+        db.delete_sample(conn, sample_id)
+    payload = {'path': src_path, 'scan_folder_path': _scan_folder_for(src_path)}
+    try:
+        job_id = job_queue.enqueue('archive', sample_id, payload, jobs_archiving.run)
+    except SampleBusyError:
+        return jsonify({'error': 'sample_busy'}), 409
+    return jsonify({'job_id': job_id, 'status': 'queued'}), 202
+
+
+@app.route('/api/jobs/cut', methods=['POST'])
+def job_cut():
+    if not app.config.get('MUTABLE', False):
+        return jsonify({'error': 'not_mutable'}), 403
+    data      = request.get_json(silent=True) or {}
+    sample_id = data.get('sample_id')
+    if sample_id is None:
+        return jsonify({'error': 'sample_id required'}), 400
+    if not data.get('markers'):
+        return jsonify({'error': 'markers required'}), 400
+    if job_queue.is_sample_busy(sample_id):
+        return jsonify({'error': 'sample_busy'}), 409
+    with db.get_db() as conn:
+        row = db.fetch_sample_by_id(conn, sample_id)
+        if not row:
+            return jsonify({'error': 'not_found'}), 404
+        path_row         = db.fetch_sample_path(conn, sample_id)
+        src_path         = path_row['path']
+        samplerate       = row['samplerate'] or 44100
+        duration_samples = row['duration_samples'] or 0
+        db.delete_sample(conn, sample_id)
+    payload = {
+        'path':             src_path,
+        'samplerate':       samplerate,
+        'duration_samples': duration_samples,
+        'scan_folder_path': _scan_folder_for(src_path),
+        'markers':          [int(m) for m in data['markers']],
+        'regions_to_keep':  [int(i) for i in data.get('regions_to_keep', [])],
+    }
+    try:
+        job_id = job_queue.enqueue('cut', sample_id, payload, jobs_cutting.run)
+    except SampleBusyError:
+        return jsonify({'error': 'sample_busy'}), 409
+    return jsonify({'job_id': job_id, 'status': 'queued'}), 202
+
+
+@app.route('/api/jobs/export', methods=['POST'])
+def job_export():
+    data      = request.get_json(silent=True) or {}
+    sample_id = data.get('sample_id')
+    if sample_id is None:
+        return jsonify({'error': 'sample_id required'}), 400
+    if job_queue.is_sample_busy(sample_id):
+        return jsonify({'error': 'sample_busy'}), 409
+    with db.get_db() as conn:
+        row = db.fetch_sample_path_and_name(conn, sample_id)
+    if not row or not os.path.exists(row['path']):
+        return jsonify({'error': 'not_found'}), 404
+    samplerate       = row['samplerate'] or 44100
+    stem             = os.path.splitext(row['name'])[0]
+    _, duration_samples = audio.get_audio_info(row['path'])
+    payload = {
+        'path':             row['path'],
+        'samplerate':       samplerate,
+        'duration_samples': duration_samples,
+        'start_offset':     int(data.get('start_offset', 0)),
+        'pitch_semitones':  int(data.get('pitch_semitones', 0)),
+        'pitch_cents':      int(data.get('pitch_cents', 0)),
+        'markers':          [int(m) for m in data.get('markers', [])],
+        'stem':             stem,
+    }
+    try:
+        job_id = job_queue.enqueue('export', sample_id, payload, jobs_exporting.run)
+    except SampleBusyError:
+        return jsonify({'error': 'sample_busy'}), 409
+    return jsonify({'job_id': job_id, 'status': 'queued'}), 202
+
+
 @app.route('/api/info')
 def get_info():
     return jsonify({
@@ -378,13 +593,20 @@ def api_find_transient():
     if sample_id is None:
         return jsonify({"error": "sample_id required"}), 400
 
+    if job_queue.is_sample_busy(sample_id):
+        return jsonify({"error": "sample_busy"}), 409
+
     with db.get_db() as conn:
         row = db.fetch_sample_path(conn, sample_id)
 
     if not row or not row['path'] or not os.path.exists(row['path']):
         return jsonify({"error": "sample not found"}), 404
 
-    result = _transient.find_transient(row['path'], start_sample, big_only=big_only)
+    job_queue.lock_sample(sample_id)
+    try:
+        result = _transient.find_transient(row['path'], start_sample, big_only=big_only)
+    finally:
+        job_queue.unlock_sample(sample_id)
     return jsonify(result)
 
 
