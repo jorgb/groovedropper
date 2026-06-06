@@ -48,6 +48,10 @@ def run(payload: dict) -> None:
         (boundaries[i], boundaries[i + 1])
         for i in range(len(boundaries) - 1)
     ]
+    # Drop a zero/one-sample region at the very start (marker pinned at offset 0)
+    if regions and regions[0][0] == 0 and regions[0][1] - regions[0][0] <= 1:
+        regions         = regions[1:]
+        regions_to_keep = [i - 1 for i in regions_to_keep if i > 0]
     for idx in regions_to_keep:
         start, end = regions[idx]
         name = f'{base}-{_fmt(start)}-{_fmt(end - 1)}.wav'

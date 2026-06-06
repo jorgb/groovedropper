@@ -398,6 +398,9 @@ def job_cut():
         return jsonify({'error': 'sample_id required'}), 400
     if not data.get('markers'):
         return jsonify({'error': 'markers required'}), 400
+    markers = [int(m) for m in data['markers']]
+    if len(markers) == 1 and markers[0] == 0:
+        return jsonify({'error': 'Cannot cut: sole marker is at the start of the sample'}), 400
     if job_queue.is_sample_busy(sample_id):
         return jsonify({'error': 'sample_busy'}), 409
     with db.get_db() as conn:
@@ -459,10 +462,51 @@ def job_export():
 @app.route('/api/info')
 def get_info():
     return jsonify({
-        "db_path": db.DB_FILE,
-        "version": get_version(),
-        "mutable": app.config.get('MUTABLE', False),
+        "db_path":     db.DB_FILE,
+        "version":     get_version(),
+        "mutable":     app.config.get('MUTABLE', False),
+        "max_markers": MAX_MARKERS,
     })
+
+
+@app.route('/api/sample/<int:sample_id>/markers/linear', methods=['POST'])
+def set_linear_markers(sample_id):
+    data  = request.get_json(silent=True) or {}
+    count = data.get('count')
+    if count is None or not isinstance(count, int) or not (1 <= count <= MAX_MARKERS):
+        return jsonify({'error': 'invalid count'}), 400
+    with db.get_db() as conn:
+        sample = db.fetch_sample_by_id(conn, sample_id)
+        if not sample:
+            return jsonify({'error': 'not_found'}), 404
+        total = sample['duration_samples'] or 0
+        db.delete_all_markers(conn, sample_id)
+        if count == 1:
+            offsets = [round(total / 2)]
+        else:
+            offsets = [0] + [round(i * total / count) for i in range(1, count)]
+        for off in offsets:
+            db.insert_marker(conn, sample_id, off)
+    return jsonify({'status': 'ok', 'markers': offsets})
+
+
+@app.route('/api/sample/<int:sample_id>/markers/random', methods=['POST'])
+def set_random_markers(sample_id):
+    data  = request.get_json(silent=True) or {}
+    count = data.get('count')
+    if count is None or not isinstance(count, int) or not (1 <= count <= MAX_MARKERS):
+        return jsonify({'error': 'invalid count'}), 400
+    with db.get_db() as conn:
+        sample = db.fetch_sample_by_id(conn, sample_id)
+        if not sample:
+            return jsonify({'error': 'not_found'}), 404
+        total = sample['duration_samples'] or 0
+        db.delete_all_markers(conn, sample_id)
+        population = max(total, count)
+        offsets = sorted(random.sample(range(population), count))
+        for off in offsets:
+            db.insert_marker(conn, sample_id, off)
+    return jsonify({'status': 'ok', 'markers': offsets})
 
 
 @app.route('/api/stats')

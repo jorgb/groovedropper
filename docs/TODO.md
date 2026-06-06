@@ -2,6 +2,10 @@
 
 - Test offset 000000 to see if a new file is written as WAV (poor man's MP3 
   convert to wav)
+  - saves into 000000-000001 (should not happen)
+  - and then 0000000-end
+
+http://127.0.0.1:5000/?sample=112143975b09c91e5e7390b39f3dd2c8&start=0
 
 - Marker dialog for 4, 8, 16, 32 (or custom) equal splits, or random splits + 
   transient finding- https://fontawesome.com/icons/classic/solid/arrows-left-right-to-line

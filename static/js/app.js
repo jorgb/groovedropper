@@ -36,6 +36,8 @@ const GrooveDropper = {
         playInstantly: false,
         markers: [],            // [{id, offset}] sorted ascending, loaded from DB
         activeMarkerIndex: -1,  // index into markers[], -1 = soft playhead
+        markersDirty: false,    // true when markers need overwrite confirmation before split
+        maxMarkers: 32,
         quickpick: {
             presets: [],
             activePresetId: null,
@@ -120,6 +122,14 @@ const GrooveDropper = {
         deleteMarkersCancel: document.getElementById('delete-markers-cancel'),
         deleteMarkersOk: document.getElementById('delete-markers-ok'),
         deleteMarkersClose: document.getElementById('delete-markers-close'),
+        overwriteMarkersOverlay: document.getElementById('overwrite-markers-overlay'),
+        overwriteMarkersCancel: document.getElementById('overwrite-markers-cancel'),
+        overwriteMarkersOk: document.getElementById('overwrite-markers-ok'),
+        overwriteMarkersClose: document.getElementById('overwrite-markers-close'),
+        markerCount: document.getElementById('marker-count'),
+        markerCountDropdown: document.getElementById('marker-count-dropdown'),
+        btnSetLinear: document.getElementById('btn-set-linear'),
+        btnSetRandom: document.getElementById('btn-set-random'),
         // Sample cut dialog
         cutDialogOverlay:    document.getElementById('cut-dialog-overlay'),
         cutDialogClose:      document.getElementById('cut-dialog-close'),
@@ -531,6 +541,7 @@ const GrooveDropper = {
             }).catch(e => console.error(e));
         }
 
+        this.state.markersDirty = true;
         this.loadMarkers(data.id).catch(e => console.error(e));
     },
 
@@ -679,6 +690,7 @@ const GrooveDropper = {
         } else if (this.state.activeMarkerIndex > index) {
             this.state.activeMarkerIndex--;
         }
+        this.state.markersDirty = true;
         this.renderMarkers();
     },
 
@@ -697,6 +709,7 @@ const GrooveDropper = {
         if (!res.ok) { this.showToast('Failed to delete markers'); return; }
         this.state.markers = [];
         this.state.activeMarkerIndex = -1;
+        this.state.markersDirty = true;
         this.renderMarkers();
     },
 
@@ -734,6 +747,7 @@ const GrooveDropper = {
             this.state.markers.splice(idx, 0, entry);
             this.state.activeMarkerIndex = idx;
         }
+        this.state.markersDirty = true;
         this.renderMarkers();
     },
 
@@ -839,9 +853,54 @@ const GrooveDropper = {
         this.elements.audio.currentTime = newOffset / this.state.sampleRate;
         this.updateOffsetDisplay(newOffset);
         this.updatePlayhead();
+        this.state.markersDirty = true;
         this.renderMarkers();
         this._resumeIfPlaying();
         setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
+    },
+
+    // ------------------------------------------------------------------
+    // Marker splits
+    // ------------------------------------------------------------------
+
+    _updateSplitButtonGating() {
+        const val = parseInt(this.elements.markerCount.value, 10);
+        const enabled = !isNaN(val) && val >= 1;
+        this.elements.btnSetLinear.disabled = !enabled;
+        this.elements.btnSetRandom.disabled = !enabled;
+    },
+
+    _confirmOverwrite() {
+        return new Promise(resolve => {
+            this._pendingSplitResolve = resolve;
+            this.elements.overwriteMarkersOverlay.classList.remove('hidden');
+        });
+    },
+
+    async applyMarkerSplit(mode) {
+        const count = parseInt(this.elements.markerCount.value, 10);
+        if (isNaN(count) || count < 1) return;
+        if (!this.state.currentSampleId) return;
+
+        if (this.state.markersDirty && this.state.markers.length > 0) {
+            const confirmed = await this._confirmOverwrite();
+            if (!confirmed) return;
+        }
+
+        const res = await fetch(`/api/sample/${this.state.currentSampleId}/markers/${mode}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ count }),
+        });
+        if (!res.ok) {
+            this.showToast('Failed to apply marker split');
+            return;
+        }
+        const data = await res.json();
+        this.state.markers = (data.markers || []).map((off, i) => ({ id: i, offset: off }));
+        this.state.activeMarkerIndex = -1;
+        this.state.markersDirty = false;
+        this.renderMarkers();
     },
 
     // ------------------------------------------------------------------
@@ -1080,6 +1139,7 @@ const GrooveDropper = {
             const res = await fetch('/api/info');
             const data = await res.json();
             this.state.dbPath = data.db_path || '';
+            this.state.maxMarkers = data.max_markers ?? 32;
             if (data.version) {
                 this.state.appVersion = 'v' + data.version;
                 this.elements.appVersion.textContent = this.state.appVersion;
@@ -1260,6 +1320,50 @@ const GrooveDropper = {
             this.deleteAllMarkers().catch(err => console.error(err));
         });
 
+        // Overwrite markers dialog
+        const _resolveOverwrite = (confirmed) => {
+            this.elements.overwriteMarkersOverlay.classList.add('hidden');
+            if (this._pendingSplitResolve) {
+                this._pendingSplitResolve(confirmed);
+                this._pendingSplitResolve = null;
+            }
+        };
+        this.elements.overwriteMarkersOk.addEventListener('click', () => _resolveOverwrite(true));
+        this.elements.overwriteMarkersCancel.addEventListener('click', () => _resolveOverwrite(false));
+        this.elements.overwriteMarkersClose.addEventListener('click', () => _resolveOverwrite(false));
+
+        // Marker count combobox
+        this.elements.markerCount.addEventListener('click', () => {
+            this.elements.markerCountDropdown.classList.toggle('hidden');
+        });
+        this.elements.markerCount.addEventListener('input', () => {
+            this.elements.markerCount.value = this.elements.markerCount.value.replace(/\D/g, '');
+            this._updateSplitButtonGating();
+        });
+        this.elements.markerCount.addEventListener('blur', () => {
+            const val = parseInt(this.elements.markerCount.value, 10);
+            if (isNaN(val) || val < 0 || val > this.state.maxMarkers) {
+                this.elements.markerCount.value = '0';
+            }
+            this._updateSplitButtonGating();
+        });
+        this.elements.markerCountDropdown.addEventListener('click', (e) => {
+            const li = e.target.closest('li[data-value]');
+            if (!li) return;
+            this.elements.markerCount.value = li.dataset.value;
+            this.elements.markerCountDropdown.classList.add('hidden');
+            this._updateSplitButtonGating();
+        });
+        document.addEventListener('click', (e) => {
+            if (!this.elements.markerCount.parentElement.contains(e.target)) {
+                this.elements.markerCountDropdown.classList.add('hidden');
+            }
+        });
+
+        // Split buttons
+        this.elements.btnSetLinear.addEventListener('click', () => this.applyMarkerSplit('linear').catch(err => console.error(err)));
+        this.elements.btnSetRandom.addEventListener('click', () => this.applyMarkerSplit('random').catch(err => console.error(err)));
+
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Escape') {
                 if (!this.elements.mutableWarnOverlay.classList.contains('hidden')) {
@@ -1276,6 +1380,10 @@ const GrooveDropper = {
                 }
                 if (!this.elements.deleteMarkersOverlay.classList.contains('hidden')) {
                     this.elements.deleteMarkersOverlay.classList.add('hidden');
+                    return;
+                }
+                if (!this.elements.overwriteMarkersOverlay.classList.contains('hidden')) {
+                    _resolveOverwrite(false);
                     return;
                 }
                 if (!this.elements.manageFoldersOverlay.classList.contains('hidden')) {
@@ -1307,8 +1415,12 @@ const GrooveDropper = {
             } else if (e.code === 'KeyD') {
                 e.preventDefault();
                 this.promptDeleteAllMarkers();
-            } else if (e.code === 'KeyL') {
+            } else if (e.code === 'KeyL' && e.ctrlKey) {
                 this.copyCurrentUrlToClipboard();
+            } else if (e.code === 'KeyL' && e.shiftKey) {
+                this.applyMarkerSplit('random').catch(err => console.error(err));
+            } else if (e.code === 'KeyL') {
+                this.applyMarkerSplit('linear').catch(err => console.error(err));
             } else if (e.code === 'KeyR') {
                 this._clearFocusedQpSlot();
                 const autoPlay = this.state.isPlaying || this.state.playInstantly;
