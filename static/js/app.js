@@ -1044,7 +1044,10 @@ const GrooveDropper = {
         msg.appendChild(document.createTextNode('Sample will be renamed to:'));
         msg.appendChild(document.createElement('br'));
         msg.appendChild(bold(bak));
-        setTimeout(() => this.elements.archiveDialogOverlay.classList.remove('hidden'), 200);
+        setTimeout(() => {
+            this.elements.archiveDialogOverlay.classList.remove('hidden');
+            this.elements.archiveDialogOk.focus();
+        }, 200);
     },
 
     async archiveSample() {

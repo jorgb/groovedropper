@@ -6,7 +6,7 @@
   - and then 0000000-end
 
 - Clean up app.api_cut(): it still has keep_left and keep_right mechanisms 
-  no longer used by the UI
+no longer used by the UI
 
 http://127.0.0.1:5000/?sample=112143975b09c91e5e7390b39f3dd2c8&start=0
 
