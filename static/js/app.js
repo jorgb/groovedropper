@@ -947,6 +947,7 @@ const GrooveDropper = {
                 this._renderCutRegions(container);
                 this._updateCutOkState();
                 this._updateCutRegionStatus();
+                this.elements.cutDialogOk.focus();
             });
             container.appendChild(region);
         }
@@ -1448,11 +1449,7 @@ const GrooveDropper = {
             } else if (e.code === 'KeyA' && this.state.mutable && !e.ctrlKey && !e.shiftKey) {
                 this.promptArchiveSample();
             } else if (e.code === 'KeyC' && this.state.mutable && !e.ctrlKey && !e.shiftKey) {
-                if (!this.elements.cutDialogOverlay.classList.contains('hidden')) {
-                    if (!this.elements.cutDialogOk.disabled) {
-                        this._commitCut().catch(err => console.error(err));
-                    }
-                } else {
+                if (this.elements.cutDialogOverlay.classList.contains('hidden')) {
                     this.showCutDialog().catch(err => console.error(err));
                 }
             } else if (e.code === 'ArrowLeft') {

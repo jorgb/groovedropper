@@ -333,6 +333,7 @@ Object.assign(GrooveDropper, {
 
         this.elements.cutDialogOverlay.classList.remove('hidden');
         this._renderCutDialog();
+        this.elements.cutDialogOk.focus();
     },
 
     async _commitCut() {

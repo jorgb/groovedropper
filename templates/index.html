@@ -1044,6 +1044,13 @@
             border-color: var(--accent-color);
         }
 
+        .panel-icon-btn:focus-visible {
+            outline: none;
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 35%, transparent);
+        }
+
         .panel-icon-btn:disabled {
             opacity: 0.35;
             cursor: default;
