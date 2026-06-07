@@ -23,6 +23,7 @@ import groove.jobs_archiving  as jobs_archiving
 import groove.jobs_cutting    as jobs_cutting
 import groove.jobs_exporting  as jobs_exporting
 
+# set this to true to log all HTTP requests
 HTTP_DEBUG = False
 
 # ---------------------------------------------------------------------------

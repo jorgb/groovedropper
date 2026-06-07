@@ -1448,7 +1448,13 @@ const GrooveDropper = {
             } else if (e.code === 'KeyA' && this.state.mutable && !e.ctrlKey && !e.shiftKey) {
                 this.promptArchiveSample();
             } else if (e.code === 'KeyC' && this.state.mutable && !e.ctrlKey && !e.shiftKey) {
-                this.showCutDialog().catch(err => console.error(err));
+                if (!this.elements.cutDialogOverlay.classList.contains('hidden')) {
+                    if (!this.elements.cutDialogOk.disabled) {
+                        this._commitCut().catch(err => console.error(err));
+                    }
+                } else {
+                    this.showCutDialog().catch(err => console.error(err));
+                }
             } else if (e.code === 'ArrowLeft') {
                 e.preventDefault();
                 this.navigateToPrevMarker(e.shiftKey ? 2 : 1);
