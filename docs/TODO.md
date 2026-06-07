@@ -1,10 +1,5 @@
 ## DOING
 
-- Test offset 000000 to see if a new file is written as WAV (poor man's MP3 
-  convert to wav)
-  - saves into 000000-000001 (should not happen)
-  - and then 0000000-end
-
 - Clean up app.api_cut(): it still has keep_left and keep_right mechanisms 
 no longer used by the UI
 
