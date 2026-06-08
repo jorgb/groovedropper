@@ -324,6 +324,9 @@ const GrooveDropper = {
     toggleControlsDialog() {
         this.state.controlsDialogOpen = !this.state.controlsDialogOpen;
         this.elements.controlsDialogOverlay.classList.toggle('hidden', !this.state.controlsDialogOpen);
+        if (this.state.controlsDialogOpen) {
+            this.elements.controlsDialogOverlay.querySelector('.dialog-body').focus();
+        }
     },
 
 
