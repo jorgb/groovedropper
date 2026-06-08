@@ -23,7 +23,7 @@ const GrooveDropper = {
         currentSampleLabelIds: [],
         allPresetSelectedLabelIds: [],  // transient label filter used when the "ALL" preset is active
         untaggedFilterActive: false,
-        controlsFolded: false,
+        controlsDialogOpen: false,
         dbPath: null,
         pitchSemitones: 0,
         pitchCents: 0,
@@ -80,8 +80,7 @@ const GrooveDropper = {
         labelSaveBtn: document.getElementById('label-save-btn'),
         labelCancelBtn: document.getElementById('label-cancel-btn'),
         sampleLabelBar: document.getElementById('sample-label-bar'),
-        controlsInfo: document.getElementById('controls-info'),
-        controlsFoldIcon: document.getElementById('controls-fold-icon'),
+        controlsDialogOverlay: document.getElementById('controls-dialog-overlay'),
         appVersion: document.getElementById('app-version'),
         firstRunOverlay: document.getElementById('first-run-overlay'),
         firstRunHeading: document.getElementById('first-run-heading'),
@@ -137,7 +136,6 @@ const GrooveDropper = {
         cutDialogOk:         document.getElementById('cut-dialog-ok'),
         cutWaveformWrap:     document.getElementById('cut-waveform-wrap'),
         cutDialogWaveform:   document.getElementById('cut-dialog-waveform'),
-        controlsTable: document.getElementById('controls-table'),
         // Quick Pick
         qpAddBtn: document.getElementById('qp-add-btn'),
         qpCloneBtn: document.getElementById('qp-clone-btn'),
@@ -284,10 +282,6 @@ const GrooveDropper = {
                 this.state.loopEnabled = config.loop === 'true';
                 this.updateLoopButton();
             }
-            if (config['controls-folded'] !== undefined) {
-                this.state.controlsFolded = config['controls-folded'] === 'true';
-                this.applyControlsFold();
-            }
             if (config['quick-play-instantly'] !== undefined) {
                 this.state.playInstantly = config['quick-play-instantly'] === 'true';
                 this.elements.qpPlayInstantly.checked = this.state.playInstantly;
@@ -327,17 +321,9 @@ const GrooveDropper = {
         this.elements.loopBtn.classList.toggle('active', this.state.loopEnabled);
     },
 
-    toggleControlsFold() {
-        this.state.controlsFolded = !this.state.controlsFolded;
-        this.applyControlsFold();
-        this.saveConfig('controls-folded', String(this.state.controlsFolded)).catch(e => console.error(e));
-    },
-
-    applyControlsFold() {
-        this.elements.controlsInfo.classList.toggle('folded', this.state.controlsFolded);
-        this.elements.controlsFoldIcon.className = this.state.controlsFolded
-            ? 'fa-solid fa-chevron-right'
-            : 'fa-solid fa-chevron-down';
+    toggleControlsDialog() {
+        this.state.controlsDialogOpen = !this.state.controlsDialogOpen;
+        this.elements.controlsDialogOverlay.classList.toggle('hidden', !this.state.controlsDialogOpen);
     },
 
 
@@ -560,20 +546,6 @@ const GrooveDropper = {
         if (!res.ok) return;
         this.state.mutable = true;
         this.elements.mutableIndicator.classList.remove('disabled');
-        if (!document.getElementById('controls-archive-row')) {
-            const archiveRow = document.createElement('tr');
-            archiveRow.id = 'controls-archive-row';
-            archiveRow.innerHTML = '<td><span class="control-key">A</span></td>' +
-                '<td>Archive Sample — rename current sample to &lt;name&gt;.bak and remove from library</td>';
-            this.elements.controlsTable.appendChild(archiveRow);
-        }
-        if (!document.getElementById('controls-cut-row')) {
-            const cutRow = document.createElement('tr');
-            cutRow.id = 'controls-cut-row';
-            cutRow.innerHTML = '<td><span class="control-key">C</span></td>' +
-                '<td>Cut Sample — open the cut dialog to split the sample at the current offset</td>';
-            this.elements.controlsTable.appendChild(cutRow);
-        }
         this.showToast('Mutable options (archiving, writing) are enabled');
     },
 
@@ -1152,17 +1124,6 @@ const GrooveDropper = {
             this.elements.mutableIndicator.classList.remove('hidden');
             if (this.state.mutable) {
                 this.elements.mutableIndicator.classList.remove('disabled');
-                const archiveRow = document.createElement('tr');
-                archiveRow.id = 'controls-archive-row';
-                archiveRow.innerHTML = '<td><span class="control-key">A</span></td>' +
-                    '<td>Archive Sample — rename current sample to &lt;name&gt;.bak and remove from library</td>';
-                this.elements.controlsTable.appendChild(archiveRow);
-
-                const cutRow = document.createElement('tr');
-                cutRow.id = 'controls-cut-row';
-                cutRow.innerHTML = '<td><span class="control-key">C</span></td>' +
-                    '<td>Cut Sample — open the cut dialog to split the sample at the current offset</td>';
-                this.elements.controlsTable.appendChild(cutRow);
             } else {
                 this.elements.mutableIndicator.classList.add('disabled');
             }
@@ -1174,7 +1135,11 @@ const GrooveDropper = {
     addEventListeners() {
         this.elements.themeSelect.addEventListener('change', (e) => this.changeTheme(e.target.value));
         this.elements.loopBtn.addEventListener('click', () => this.toggleLoop());
-        document.getElementById('controls-header').addEventListener('click', () => this.toggleControlsFold());
+        document.getElementById('controls-help-btn').addEventListener('click', () => this.toggleControlsDialog());
+        document.getElementById('controls-dialog-close').addEventListener('click', () => this.toggleControlsDialog());
+        this.elements.controlsDialogOverlay.addEventListener('click', (e) => {
+            if (e.target === this.elements.controlsDialogOverlay) this.toggleControlsDialog();
+        });
 
         this.elements.waveformContainer.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return;
@@ -1370,6 +1335,10 @@ const GrooveDropper = {
 
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Escape') {
+                if (this.state.controlsDialogOpen) {
+                    this.toggleControlsDialog();
+                    return;
+                }
                 if (!this.elements.mutableWarnOverlay.classList.contains('hidden')) {
                     _closeMutableWarnDialog();
                     return;
@@ -1398,6 +1367,11 @@ const GrooveDropper = {
                     this.closeFolderDialog();
                     return;
                 }
+            }
+            if (e.key === '?') {
+                e.preventDefault();
+                this.toggleControlsDialog();
+                return;
             }
             const tag = document.activeElement.tagName;
             if (tag === 'SELECT' || tag === 'BUTTON' || tag === 'INPUT') return;

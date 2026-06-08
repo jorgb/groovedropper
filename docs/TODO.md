@@ -1,7 +1,5 @@
 ## DOING
 
-- fix: The key controls overview  menu as separate popup but keep 
-  controls-row (key ?)
 - Clean up app.api_cut(): it still has keep_left and keep_right mechanisms no longer used by the UI
 
 Reverse MPC sample:

@@ -931,13 +931,12 @@
         }
 
         /* ------------------------------------------------------------------ */
-        /* Row 4 — Controls (starts folded; toggle button below waveform      */
-        /*         opens/closes it)                                           */
+        /* Row 4 — Controls bar (static, non-foldable)                        */
         /* ------------------------------------------------------------------ */
 
         #controls-info {
             background-color: var(--box-bg);
-            padding: 15px;
+            padding: 8px 15px;
             border-radius: 5px;
             width: 100%;
             box-sizing: border-box;
@@ -949,8 +948,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            margin: 0 0 10px 0;
-            cursor: pointer;
+            margin: 0;
             user-select: none;
             justify-content: space-between;
         }
@@ -966,32 +964,79 @@
             align-items: center;
         }
 
-        #controls-info h3:hover {
-            opacity: 0.75;
+        /* ------------------------------------------------------------------ */
+        /* Controls dialog                                                     */
+        /* ------------------------------------------------------------------ */
+
+        #controls-dialog-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        #controls-info.folded h3 {
-            margin-bottom: 0;
-        }
-
-        #controls-info.folded table {
+        #controls-dialog-overlay.hidden {
             display: none;
         }
 
-        #controls-info table {
+        #controls-dialog {
+            background: var(--box-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            min-width: 540px;
+            max-width: 680px;
+            width: 90vw;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 24px var(--box-shadow);
+        }
+
+        #controls-dialog .dialog-header {
+            padding: 12px 16px;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        #controls-dialog .dialog-body {
+            overflow-y: auto;
+            padding: 12px 16px;
+        }
+
+        #controls-dialog table {
             border-collapse: collapse;
             width: 100%;
         }
 
-        #controls-info td {
-            padding: 2px 0;
+        #controls-dialog td {
+            padding: 3px 0;
             vertical-align: top;
-            line-height: 1.2;
+            line-height: 1.3;
         }
 
-        #controls-info td:first-child {
-            padding-right: 5px;
+        #controls-dialog td:first-child {
+            padding-right: 10px;
             white-space: nowrap;
+        }
+
+        #controls-dialog .controls-section {
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent-color);
+            padding: 10px 0 3px;
+            font-weight: bold;
+        }
+
+        #controls-dialog .controls-section:first-child {
+            padding-top: 0;
         }
 
         .control-key {
@@ -1001,7 +1046,7 @@
             font-weight: bold;
             color: var(--text-color);
             border: 1px solid var(--border-color);
-            margin-right: 10px;
+            margin-right: 6px;
             white-space: nowrap;
             display: inline-flex;
             align-items: center;
@@ -1680,9 +1725,8 @@
             </div>
             <div id="index-status-bar">
                 <div id="scan-status"><i class="fa-solid fa-spinner fa-spin"></i> <span>Initializing...</span></div>
-                <button class="panel-icon-btn"
-                        title="Show / hide keyboard controls"
-                        onclick="document.getElementById('controls-header').click()">
+                <button id="controls-help-btn" class="panel-icon-btn"
+                        title="Show / hide keyboard controls (?)">
                     <i class="fa-solid fa-keyboard"></i>
                 </button>
             </div>
@@ -1843,12 +1887,12 @@
     </div>
 
     <!-- -------------------------------------------------------------------- -->
-    <!-- Row 4: keyboard controls reference (starts folded)                   -->
+    <!-- Row 4: controls bar (non-foldable; ? opens the controls dialog)      -->
     <!-- -------------------------------------------------------------------- -->
     <div id="controls-row">
-        <div id="controls-info" class="folded">
+        <div id="controls-info">
             <h3 id="controls-header">
-                <span><i id="controls-fold-icon" class="fa-solid fa-chevron-right"></i> Controls</span>
+                <span>GrooveDropper &#169; 2026 by SlurfPoint</span>
                 <div id="donation-links" onclick="event.stopPropagation()">
                     <form action="https://www.paypal.com/donate" method="post" target="_top">
                         <input type="hidden" name="hosted_button_id" value="MS9KT7V299SYC" />
@@ -1857,25 +1901,61 @@
                     </form>
                 </div>
             </h3>
-            <table id="controls-table">
-                <tr><td><span class="control-key">SPACE</span></td><td>Play / Pause - Resumes from stopped location</td></tr>
-                <tr><td><span class="control-key">SHIFT + SPACE</span></td><td>Reset playhead - Restarts the sample from the originally randomized offset</td></tr>
-                <tr><td><span class="control-key">CTRL + SPACE</span></td><td>Set Begin Offset — mark the current playhead position as the new slice / restart origin (does not add a marker pin)</td></tr>
-                <tr><td><span class="control-key">M</span></td><td>Pin Marker at Begin Offset — add a marker at the last set begin offset</td></tr>
-                <tr><td><span class="control-key">CTRL + ENTER</span></td><td>Pin Marker at Playhead — add a marker at the current (live) playhead position</td></tr>
-                <tr><td><span class="control-key">HOME</span></td><td>Jump to the absolute beginning of the sample (offset 00000000)</td></tr>
-                <tr><td><span class="control-key">L</span></td><td>Set Linear Markers — place evenly-spaced markers using the current marker count</td></tr>
-                <tr><td><span class="control-key">SHIFT + L</span></td><td>Set Random Markers — place randomly-distributed markers using the current marker count</td></tr>
-                <tr><td><span class="control-key">CTRL + L</span></td><td>Copy Link — copy a direct URL to the current sample and slice to your clipboard</td></tr>
-                <tr><td><span class="control-key">LEFT MOUSE</span></td><td>Scrub through the waveform by clicking</td></tr>
-                <tr><td><span class="control-key">R</span></td><td>Random Sample - Pick random sample and play immediately</td></tr>
-                <tr><td><span class="control-key">SHIFT + R</span></td><td>Randomize In Sample - Pick new random offset in current sample</td></tr>
-                <tr><td><span class="control-key">T</span></td><td>Find Transient — jump to the next onset after the current offset</td></tr>
-                <tr><td><span class="control-key">P</span></td><td>Previous Sample - Go to previous sample in history</td></tr>
-                <tr><td><span class="control-key">, / .</span></td><td>Pitch Down / Up — transpose by 1 semitone; hold SHIFT for 10-cent fine steps</td></tr>
-                <tr><td><span class="control-key">/</span></td><td>Reset Pitch — Regular playback, return to zero (0 semitones, 0 cents)</td></tr>
-                <tr><td><span class="control-key">V</span></td><td>Vibe Pick — Store current sample, offset and pitch to the next free quick pick slot</td></tr>
-            </table>
+        </div>
+    </div>
+
+    <!-- -------------------------------------------------------------------- -->
+    <!-- Controls dialog                                                       -->
+    <!-- -------------------------------------------------------------------- -->
+    <div id="controls-dialog-overlay" class="hidden">
+        <div id="controls-dialog">
+            <div class="dialog-header">
+                <span>Keyboard Controls</span>
+                <button id="controls-dialog-close" class="dialog-close-btn" title="Close">&times;</button>
+            </div>
+            <div class="dialog-body">
+                <table>
+                    <tr><td colspan="2" class="controls-section">Playback</td></tr>
+                    <tr><td><span class="control-key">SPACE</span></td><td>Play / Pause</td></tr>
+                    <tr><td><span class="control-key">SHIFT + SPACE</span></td><td>Restart from begin offset</td></tr>
+                    <tr><td><span class="control-key">CTRL + SPACE</span></td><td>Set begin offset at playhead</td></tr>
+
+                    <tr><td colspan="2" class="controls-section">Navigation</td></tr>
+                    <tr><td><span class="control-key">HOME</span></td><td>Jump to absolute start (offset 0)</td></tr>
+                    <tr><td><span class="control-key">← / →</span></td><td>Prev / next marker</td></tr>
+                    <tr><td><span class="control-key">SHIFT + ←</span></td><td>Prev marker (fast step)</td></tr>
+                    <tr><td><span class="control-key">LEFT MOUSE</span></td><td>Scrub waveform</td></tr>
+
+                    <tr><td colspan="2" class="controls-section">Markers</td></tr>
+                    <tr><td><span class="control-key">M</span></td><td>Toggle marker at begin offset</td></tr>
+                    <tr><td><span class="control-key">CTRL + ENTER</span></td><td>Pin marker at playhead</td></tr>
+                    <tr><td><span class="control-key">D</span></td><td>Delete all markers</td></tr>
+                    <tr><td><span class="control-key">L / SHIFT + L</span></td><td>Set linear / random markers</td></tr>
+
+                    <tr><td colspan="2" class="controls-section">Samples</td></tr>
+                    <tr><td><span class="control-key">R / SHIFT + R</span></td><td>Random sample / randomize offset in sample</td></tr>
+                    <tr><td><span class="control-key">P</span></td><td>Previous sample</td></tr>
+                    <tr><td><span class="control-key">T / SHIFT + T</span></td><td>Find transient (soft / hard)</td></tr>
+                    <tr><td><span class="control-key">S</span></td><td>Download current slice</td></tr>
+                    <tr><td><span class="control-key">A</span></td><td>Archive sample <em>(mutable only)</em></td></tr>
+                    <tr><td><span class="control-key">C</span></td><td>Cut sample <em>(mutable only)</em></td></tr>
+
+                    <tr><td colspan="2" class="controls-section">Pitch</td></tr>
+                    <tr><td><span class="control-key">, / .</span></td><td>−1 / +1 semitone</td></tr>
+                    <tr><td><span class="control-key">SHIFT + , / SHIFT + .</span></td><td>−10 / +10 cents</td></tr>
+                    <tr><td><span class="control-key">/</span></td><td>Reset pitch</td></tr>
+
+                    <tr><td colspan="2" class="controls-section">Quick Pick</td></tr>
+                    <tr><td><span class="control-key">V</span></td><td>Save to next free slot</td></tr>
+                    <tr><td><span class="control-key">J / K</span></td><td>Navigate quick pick slots</td></tr>
+                    <tr><td><span class="control-key">1–9, 0</span></td><td>Recall slot (0 = slot 10)</td></tr>
+                    <tr><td><span class="control-key">SHIFT + 1–9, 0</span></td><td>Save to slot</td></tr>
+
+                    <tr><td colspan="2" class="controls-section">Other</td></tr>
+                    <tr><td><span class="control-key">CTRL + U</span></td><td>Copy link to clipboard</td></tr>
+                    <tr><td><span class="control-key">?</span></td><td>Show / hide this dialog</td></tr>
+                </table>
+            </div>
         </div>
     </div>
 
