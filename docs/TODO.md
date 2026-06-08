@@ -1,18 +1,17 @@
 ## DOING
 
-- Clean up app.api_cut(): it still has keep_left and keep_right mechanisms 
-no longer used by the UI
+  http://127.0.0.1:5000/?sample=112143975b09c91e5e7390b39f3dd2c8&start=0
 
-http://127.0.0.1:5000/?sample=112143975b09c91e5e7390b39f3dd2c8&start=0
+- fix: loop should wrap around to offset 0 and then stop, not offset (end)
+- fix: Ctrl+L for share should not select URL in browser
+- fix: The key controls overview  menu as separate popup but keep 
+  controls-row (key ?)
+- Clean up app.api_cut(): it still has keep_left and keep_right mechanisms no longer used by the UI
 
-- Marker dialog for 4, 8, 16, 32 (or custom) equal splits, or random splits + 
-  transient finding- https://fontawesome.com/icons/classic/solid/arrows-left-right-to-line
-  - Random marker placement (glitch with or without transient)
-  - Grid placement 4,8,16,32
-  - Marker job in queue (finding or updating markers) - will not allow markers 
-    to be set or deleted
-
-
+Reverse:
+- Make XPJ with no chop points
+- Make XPJ with one chop point
+- Make XPJ with four chop points
 
 - Cutting marker TODO's
   - Marker labels in database, defaults to number, but can be replaced with 
