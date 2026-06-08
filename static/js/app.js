@@ -1419,7 +1419,8 @@ const GrooveDropper = {
             } else if (e.code === 'KeyD') {
                 e.preventDefault();
                 this.promptDeleteAllMarkers();
-            } else if (e.code === 'KeyL' && e.ctrlKey) {
+            } else if (e.code === 'KeyU' && e.ctrlKey) {
+                e.preventDefault();
                 this.copyCurrentUrlToClipboard();
             } else if (e.code === 'KeyL' && e.shiftKey) {
                 this.applyMarkerSplit('random').catch(err => console.error(err));

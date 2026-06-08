@@ -1,14 +1,10 @@
 ## DOING
 
-  http://127.0.0.1:5000/?sample=112143975b09c91e5e7390b39f3dd2c8&start=0
-
-- fix: loop should wrap around to offset 0 and then stop, not offset (end)
-- fix: Ctrl+L for share should not select URL in browser
 - fix: The key controls overview  menu as separate popup but keep 
   controls-row (key ?)
 - Clean up app.api_cut(): it still has keep_left and keep_right mechanisms no longer used by the UI
 
-Reverse:
+Reverse MPC sample:
 - Make XPJ with no chop points
 - Make XPJ with one chop point
 - Make XPJ with four chop points
@@ -20,10 +16,12 @@ Reverse:
     inverse of it
   - Manual needs updating!
 
-- Export instead of cut (E)
-  - Keep original sample
-  - Do not archive or skip
-  - Re-use dialog
+- Export dialog
+  - export quickpick set
+  - export XPJ
+  - export SP404
+  - export ZIP
+  - export all
 
 - fine grained marker control (shift drag or mouse drag on edit box?)
   - drag, rough movements, marker does not get updated in DB until release
