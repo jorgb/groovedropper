@@ -1614,6 +1614,9 @@ const GrooveDropper = {
             } else {
                 this.state.isPlaying = false;
                 this._stopPlayheadUpdater();
+                this.state.currentOffset = 0;
+                this.elements.audio.currentTime = 0;
+                this.updatePlayhead();
                 this.updateStatusText('STOPPED');
             }
         });
