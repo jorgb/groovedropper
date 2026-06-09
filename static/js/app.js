@@ -842,6 +842,10 @@ const GrooveDropper = {
     _startMarkerDrag(e, index, lineEl) {
         const marker = this.state.markers[index];
         if (!marker) return;
+        if (index !== this.state.activeMarkerIndex) {
+            this.activateMarker(index);
+            return;
+        }
         this._markerDrag = {
             index,
             oldOffset:     marker.offset,
