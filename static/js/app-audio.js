@@ -77,6 +77,7 @@ Object.assign(GrooveDropper, {
     // Toggles playback: pauses and records the current offset, or resumes from it.
     togglePlay() {
         if (!this.state.currentSampleId) return;
+        if (this._markerDrag?.active) return;
         this.elements.indexInput.classList.remove('error');
 
         if (this.state.isPlaying) {
@@ -144,6 +145,7 @@ Object.assign(GrooveDropper, {
     // Asks the API for a new random offset within the current sample and seeks to it.
     async randomizeCurrentOffset(playInstantly) {
         if (!this.state.currentSampleId || this.state.durationSamples <= 0) return;
+        if (this._markerDrag?.active) return;
         this.elements.indexInput.classList.remove('error');
 
         try {

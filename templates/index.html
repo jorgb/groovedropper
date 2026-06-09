@@ -413,6 +413,9 @@
         #waveform-container.ctrl-active .marker-handle:hover .marker-delete-x { display: flex; }
         #waveform-container.ctrl-active .marker-line.active .marker-handle:hover .marker-delete-x { color: var(--bg-color); }
 
+        #waveform-container.marker-dragging { cursor: ew-resize; user-select: none; }
+        .marker-line.dragging { z-index: 30; }
+
         /* ------------------------------------------------------------------ */
         /* Marker splits — count combobox + section divider                   */
         /* ------------------------------------------------------------------ */

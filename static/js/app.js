@@ -397,6 +397,7 @@ const GrooveDropper = {
     },
 
     async loadNextRandom(playInstantly = false) {
+        if (this._markerDrag?.active) return;
         try {
             const isAll = this.state.activePresetId === null;
             const labelIds = isAll
@@ -615,10 +616,10 @@ const GrooveDropper = {
             container.appendChild(line);
 
             if (!readonly) {
-                handle.addEventListener('mousedown', (e) => { e.stopPropagation(); });
-                handle.addEventListener('click', (e) => {
+                handle.addEventListener('mousedown', (e) => {
                     e.stopPropagation();
-                    this.activateMarker(index);
+                    if (e.button !== 0 || e.ctrlKey) return;
+                    this._startMarkerDrag(e, index, line);
                 });
                 delX.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -832,6 +833,171 @@ const GrooveDropper = {
         this.renderMarkers();
         this._resumeIfPlaying();
         setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
+    },
+
+    // ------------------------------------------------------------------
+    // Marker drag-to-move
+    // ------------------------------------------------------------------
+
+    _startMarkerDrag(e, index, lineEl) {
+        const marker = this.state.markers[index];
+        if (!marker) return;
+        this._markerDrag = {
+            index,
+            oldOffset:     marker.offset,
+            currentOffset: marker.offset,
+            lineEl,
+            wasPlaying: this.state.isPlaying,
+            startX:     e.clientX,
+            active:     false,
+        };
+        const onMove = (ev) => this._onMarkerDragMove(ev);
+        const onUp   = (ev) => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup',   onUp);
+            this._onMarkerDragEnd(ev);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup',   onUp);
+    },
+
+    _onMarkerDragMove(e) {
+        const drag = this._markerDrag;
+        if (!drag) return;
+        const deltaX = e.clientX - drag.startX;
+
+        if (!drag.active && Math.abs(deltaX) < 4) return;
+
+        if (!drag.active) {
+            drag.active = true;
+            drag.lineEl.classList.add('dragging');
+            this.elements.waveformContainer.classList.add('marker-dragging');
+            this.state.skipEndedEvent = true;
+        }
+
+        const rect  = this.elements.waveformContainer.getBoundingClientRect();
+        const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        let offset  = Math.round(ratio * this.state.durationSamples);
+
+        // Nudge away from any other marker's offset
+        const others = this.state.markers
+            .filter((_, i) => i !== drag.index)
+            .map(m => m.offset);
+        if (others.includes(offset)) {
+            if (!others.includes(offset + 1)) offset += 1;
+            else if (!others.includes(offset - 1)) offset -= 1;
+        }
+        offset = Math.max(0, Math.min(this.state.durationSamples, offset));
+
+        drag.currentOffset        = offset;
+        drag.lineEl.style.left    = `${(offset / this.state.durationSamples) * 100}%`;
+
+        if (drag.index === this.state.activeMarkerIndex) {
+            this._setOriginOffset(offset);
+            this.updateOffsetDisplay(offset);
+        }
+    },
+
+    _onMarkerDragEnd() {
+        const drag = this._markerDrag;
+        if (!drag) return;
+        this._markerDrag = null;
+        this.elements.waveformContainer.classList.remove('marker-dragging');
+        drag.lineEl.classList.remove('dragging');
+
+        if (!drag.active) {
+            // Threshold never met — treat as a normal select click
+            this.activateMarker(drag.index);
+            return;
+        }
+
+        this._commitMarkerMove(drag).catch(err => console.error(err));
+    },
+
+    async _commitMarkerMove(drag) {
+        const { index, oldOffset, currentOffset, wasPlaying } = drag;
+        const isActiveMarker = (index === this.state.activeMarkerIndex);
+
+        setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
+
+        if (currentOffset === oldOffset) {
+            if (wasPlaying) this._resumeIfPlaying();
+            return;
+        }
+
+        // Collision check — reject if the nudge couldn't find free space
+        if (this.state.markers.some((m, i) => i !== index && m.offset === currentOffset)) {
+            this.showToast('Cannot place marker here');
+            drag.lineEl.style.left = `${(oldOffset / this.state.durationSamples) * 100}%`;
+            if (isActiveMarker) {
+                this._setOriginOffset(oldOffset);
+                this.updateOffsetDisplay(oldOffset);
+            }
+            return;
+        }
+
+        // Remember which offset the active marker is on so we can re-find it after re-sort
+        const activeOffsetBefore = this.state.activeMarkerIndex >= 0
+            ? this.state.markers[this.state.activeMarkerIndex].offset
+            : null;
+        const newActiveOffset = isActiveMarker ? currentOffset : activeOffsetBefore;
+
+        // Optimistic state update + re-sort
+        this.state.markers[index].offset = currentOffset;
+        this.state.markers.sort((a, b) => a.offset - b.offset);
+        this.state.activeMarkerIndex = newActiveOffset !== null
+            ? this.state.markers.findIndex(m => m.offset === newActiveOffset)
+            : -1;
+        this.state.markersDirty = true;
+        this.renderMarkers();
+
+        // Persist: delete old row, insert new row
+        await fetch(
+            `/api/sample/${this.state.currentSampleId}/markers/${oldOffset}`,
+            { method: 'DELETE' }
+        );
+        const res = await fetch(`/api/sample/${this.state.currentSampleId}/markers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ offset: currentOffset }),
+        });
+
+        if (!res.ok) {
+            // Roll back optimistic update
+            const moved = this.state.markers.find(m => m.offset === currentOffset);
+            if (moved) moved.offset = oldOffset;
+            this.state.markers.sort((a, b) => a.offset - b.offset);
+            this.state.activeMarkerIndex = activeOffsetBefore !== null
+                ? this.state.markers.findIndex(m => m.offset === activeOffsetBefore)
+                : -1;
+            if (isActiveMarker) {
+                this._setOriginOffset(oldOffset);
+                this.updateOffsetDisplay(oldOffset);
+            }
+            this.showToast('Failed to move marker');
+            this.renderMarkers();
+            return;
+        }
+
+        const data = await res.json();
+        const moved = this.state.markers.find(m => m.offset === currentOffset);
+        if (moved) moved.id = data.id;
+
+        if (isActiveMarker) {
+            this._beginSeekTo(currentOffset);
+            this.state.currentOffset = currentOffset;
+            this.elements.audio.currentTime = currentOffset / this.state.sampleRate;
+            this.updateOffsetDisplay(currentOffset);
+            this.updatePlayhead();
+        }
+
+        if (wasPlaying) {
+            const resumeOffset = isActiveMarker ? currentOffset : this.state.currentOffset;
+            this.state.skipEndedEvent = true;
+            this.elements.audio.currentTime = resumeOffset / this.state.sampleRate;
+            this._startPlaying();
+            setTimeout(() => { this.state.skipEndedEvent = false; }, 50);
+        }
     },
 
     // ------------------------------------------------------------------
@@ -1146,6 +1312,7 @@ const GrooveDropper = {
 
         this.elements.waveformContainer.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return;
+            if (this._markerDrag) return;
             if (e.ctrlKey) {
                 e.preventDefault();
                 this._addMarkerAtClick(e.clientX).catch(err => console.error(err));
