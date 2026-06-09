@@ -79,7 +79,7 @@ app = Flask(__name__,
             static_folder=_resource('static'))
 
 
-ALLOWED_CONFIG_KEYS = frozenset({'theme', 'loop', 'controls-folded', 'offset-preview', 'quick-pick-preset', 'quick-play-instantly', 'mutable-warn'})
+ALLOWED_CONFIG_KEYS = frozenset({'theme', 'loop', 'offset-preview', 'quick-pick-preset', 'quick-play-instantly', 'mutable-warn'})
 
 
 
@@ -1055,91 +1055,6 @@ def api_cut_waveform(sample_id):
     response.headers['X-Cut-Px'] = str(cut_px)
     return response
 
-
-@app.route('/api/cut', methods=['POST'])
-def api_cut():
-    if not app.config.get('MUTABLE', False):
-        return jsonify({'error': 'not in mutable mode'}), 403
-
-    data         = request.get_json(silent=True) or {}
-    sample_id    = data.get('sample_id')
-    begin_offset = int(data.get('begin_offset', 0))
-    keep_left    = bool(data.get('keep_left',  False))
-    keep_right   = bool(data.get('keep_right', False))
-    trash_left   = bool(data.get('trash_left', False))
-    trash_right  = bool(data.get('trash_right', False))
-
-    if sample_id is None:
-        return jsonify({'error': 'sample_id required'}), 400
-    if keep_left and trash_left:
-        return jsonify({'error': 'conflicting left actions'}), 400
-    if keep_right and trash_right:
-        return jsonify({'error': 'conflicting right actions'}), 400
-
-    with db.get_db() as conn:
-        row = db.fetch_sample_path(conn, sample_id)
-    if not row or not row['path'] or not os.path.exists(row['path']):
-        return jsonify({'error': 'sample not found'}), 404
-
-    src_path = row['path']
-    toasts   = []
-    archived = False
-
-    try:
-        orig_name = os.path.basename(src_path)
-
-        if trash_left and trash_right:
-            with db.get_db() as conn:
-                _archive_file(src_path, conn, sample_id)
-            logger.info(f'CUT: Sample {orig_name} will be renamed {orig_name}.bak (trash left + right)')
-            toasts.append(f"Left and right are trashed, sample '{orig_name}' is archived")
-
-        else:
-            _, total   = audio.get_audio_info(src_path)
-            end_sample = total - 1
-            base_dir   = os.path.dirname(src_path)
-            base       = os.path.splitext(orig_name)[0]
-            if re.search(r'-\d{8}-\d{8}$', base):
-                truncated = re.sub(r'-\d{8}-(\d{8})$', r'-\1', base)
-                logger.info(f"CUT: Truncating offset suffix '{base}' → '{truncated}'")
-                base = truncated
-
-            def fmt(n):
-                return f'{int(n):08d}'
-
-            if begin_offset <= 0 and keep_left:
-                return jsonify({'error': 'begin_offset is 0 — left side is empty'}), 400
-            if begin_offset >= total and keep_right:
-                return jsonify({'error': 'begin_offset is at EOF — right side is empty'}), 400
-
-
-            if keep_left:
-                left_name = f'{base}-{fmt(0)}-{fmt(begin_offset - 1)}.wav'
-                left_path = os.path.join(base_dir, left_name)
-
-                logger.info(f'CUT: Saving left side of sample: {left_path}')
-                audio.save_slice_wav(src_path, left_path, 0, begin_offset)
-                toasts.append(f"Sample '{orig_name}' cut left to '{os.path.basename(left_path)}'")
-
-            if keep_right:
-                right_name = f'{base}-{fmt(begin_offset)}-{fmt(end_sample)}.wav'
-                right_path = os.path.join(base_dir, right_name)
-
-                logger.info(f'CUT: Saving right side of sample: {right_path}')
-                audio.save_slice_wav(src_path, right_path, begin_offset, total)
-                toasts.append(f"Sample '{orig_name}' cut right to '{os.path.basename(right_path)}'")
-
-            with db.get_db() as conn:
-                logger.info(f'CUT: Archiving old original sample: {src_path}')
-                _archive_file(src_path, conn, sample_id)
-
-            scan_queue.push_folder(base_dir)
-
-    except Exception as exc:
-        logger.exception("Cut failed for %s", src_path)
-        return jsonify({'error': str(exc)}), 500
-
-    return jsonify({'toasts': toasts, 'archived': True})
 
 
 @app.route('/api/sample/<digest>/archive', methods=['POST'])

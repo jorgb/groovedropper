@@ -1,17 +1,16 @@
 ## DOING
 
-- Clean up app.api_cut(): it still has keep_left and keep_right mechanisms no longer used by the UI
-
 Reverse MPC sample:
 - Make XPJ with no chop points
 - Make XPJ with one chop point
 - Make XPJ with four chop points
 
+- Being able to drag a marker over the sample, upon release set it in the 
+  database
+
 - Cutting marker TODO's
   - Marker labels in database, defaults to number, but can be replaced with 
     key information, chord, BPM etc
-  - The trashcan for a marker is not themed, it should stay accent-color or 
-    inverse of it
   - Manual needs updating!
 
 - Export dialog
