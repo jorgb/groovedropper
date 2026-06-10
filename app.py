@@ -25,6 +25,10 @@ import groove.jobs_exporting  as jobs_exporting
 
 # set this to true to log all HTTP requests
 HTTP_DEBUG = False
+# Maximum allowed of markers to be set per sample in database
+MAX_MARKERS = 32
+# Configuration API needs validation on keys
+ALLOWED_CONFIG_KEYS = frozenset({'theme', 'loop', 'offset-preview', 'quick-pick-preset', 'quick-play-instantly', 'mutable-warn'})
 
 # ---------------------------------------------------------------------------
 # Background rename queue — retries file renames that Windows locks temporarily
@@ -37,6 +41,10 @@ def _rename_worker():
     Items are (src_path, bak_path, deadline_monotonic).  Retries every second
     until the deadline (60 s).  If it still fails, logs a warning and gives up —
     the file keeps its original name but is already removed from the DB.
+
+    Headache in Windows, files stay locked when in use, so when they need
+    renaming, we need to poll to periodically check if we can rename.
+
     """
     while True:
         src, bak, deadline = _rename_queue.get()
@@ -55,9 +63,12 @@ def _rename_worker():
 
         _rename_queue.task_done()
 
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 if not HTTP_DEBUG:
+    # When set, the log level for HTTP requests will be very chatty
+    # and verbose (per call) which also includes periodic polls from the front-end
     logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 
@@ -77,9 +88,6 @@ def get_version() -> str:
 app = Flask(__name__,
             template_folder=_resource('templates'),
             static_folder=_resource('static'))
-
-
-ALLOWED_CONFIG_KEYS = frozenset({'theme', 'loop', 'offset-preview', 'quick-pick-preset', 'quick-play-instantly', 'mutable-warn'})
 
 
 
@@ -244,9 +252,6 @@ def set_config():
     with db.get_db() as conn:
         db.save_config(conn, data)
     return jsonify({"status": "ok"})
-
-
-MAX_MARKERS = 32
 
 
 @app.route('/api/sample/<int:sample_id>/markers', methods=['GET'])
