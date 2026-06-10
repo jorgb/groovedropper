@@ -338,8 +338,18 @@ def download_job(job_id):
         return jsonify({'error': 'not_found'}), 404
     if job.status != JobStatus.DONE or job.result is None:
         return jsonify({'error': 'not_ready'}), 409
-    stem        = job.payload.get('stem', 'export')
-    has_markers = bool(job.payload.get('markers'))
+    stem         = job.payload.get('stem', 'export')
+    has_markers  = bool(job.payload.get('markers'))
+    raw_original = job.payload.get('raw_original', False)
+    if raw_original:
+        ext  = job.payload.get('ext', '.wav')
+        mime = audio.MIME_BY_EXT.get(ext, 'application/octet-stream')
+        return send_file(
+            io.BytesIO(job.result),
+            as_attachment=True,
+            download_name=f'{stem}{ext}',
+            mimetype=mime,
+        )
     if has_markers:
         return send_file(
             io.BytesIO(job.result),
@@ -348,6 +358,7 @@ def download_job(job_id):
             mimetype='application/zip',
         )
     start = job.payload.get('start_offset', 0)
+    end   = job.payload.get('end_offset', job.payload.get('duration_samples', 0))
     s     = job.payload.get('pitch_semitones', 0)
     c     = job.payload.get('pitch_cents', 0)
     parts = ''
@@ -357,7 +368,7 @@ def download_job(job_id):
     return send_file(
         io.BytesIO(job.result),
         as_attachment=True,
-        download_name=f'{stem}_{start:08d}{pitch_suffix}.wav',
+        download_name=f'{stem}-{start:08d}-{end:08d}{pitch_suffix}.wav',
         mimetype='audio/wav',
     )
 
@@ -447,16 +458,21 @@ def job_export():
         return jsonify({'error': 'not_found'}), 404
     samplerate       = row['samplerate'] or 44100
     stem             = os.path.splitext(row['name'])[0]
+    ext              = os.path.splitext(row['name'])[1].lower()
     _, duration_samples = audio.get_audio_info(row['path'])
     payload = {
         'path':             row['path'],
+        'ext':              ext,
         'samplerate':       samplerate,
         'duration_samples': duration_samples,
         'start_offset':     int(data.get('start_offset', 0)),
+        'end_offset':       int(data.get('end_offset', duration_samples)),
         'pitch_semitones':  int(data.get('pitch_semitones', 0)),
         'pitch_cents':      int(data.get('pitch_cents', 0)),
         'markers':          [int(m) for m in data.get('markers', [])],
         'stem':             stem,
+        'raw_original':     bool(data.get('raw_original', False)),
+        'include_original': bool(data.get('include_original', False)),
     }
     try:
         job_id = job_queue.enqueue('export', sample_id, payload, jobs_exporting.run)

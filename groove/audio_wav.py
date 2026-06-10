@@ -117,9 +117,10 @@ def save_slice_wav(src_path, dest_path, start_frame, end_frame):
         raise
 
 
-def make_audio_slice(path, start_offset, samplerate, duration_secs=10):
+def make_audio_slice(path, start_offset, samplerate, end_offset=None):
     info = sf.info(path)
-    data, sr = sf.read(path, start=start_offset, frames=int(duration_secs * samplerate))
+    frame_count = (end_offset - start_offset) if end_offset is not None else (info.frames - start_offset)
+    data, sr = sf.read(path, start=start_offset, frames=frame_count)
     buf = io.BytesIO()
     sf.write(buf, data, sr, subtype=info.subtype, format='WAV')
     buf.seek(0)

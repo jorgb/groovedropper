@@ -1132,12 +1132,56 @@ const GrooveDropper = {
             const active = jobs.filter(j => j.status === 'queued' || j.status === 'running');
             if (active.length > 0) { this.showToast('Export already in progress'); return; }
         }
+        const markers   = this.state.markers;
+        const activeIdx = this.state.activeMarkerIndex;
+        let startOffset, endOffset;
+        if (activeIdx >= 0 && activeIdx < markers.length) {
+            startOffset = markers[activeIdx].offset;
+            endOffset   = activeIdx + 1 < markers.length
+                ? markers[activeIdx + 1].offset
+                : this.state.durationSamples;
+        } else {
+            startOffset = this.state.originalStartOffset;
+            const nextMarker = markers.find(m => m.offset > startOffset);
+            endOffset = nextMarker ? nextMarker.offset : this.state.durationSamples;
+        }
+        const body = {
+            sample_id:       this.state.currentSampleId,
+            start_offset:    startOffset,
+            end_offset:      endOffset,
+            pitch_semitones: this.state.pitchSemitones,
+            pitch_cents:     this.state.pitchCents,
+        };
+        const res = await fetch('/api/jobs/export', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        }).catch(() => null);
+        if (!res || !res.ok) {
+            const data = res ? await res.json().catch(() => ({})) : {};
+            this.showToast(data.error === 'sample_busy' ? 'Export already in progress' : 'Export failed');
+            return;
+        }
+        const { job_id } = await res.json();
+        this.showToast('Export started…');
+        this._pollExportJob(job_id);
+    },
+
+    async downloadOriginal() {
+        if (!this.state.currentSampleId) return;
+        const checkRes = await fetch(
+            `/api/jobs?sample_id=${this.state.currentSampleId}&type=export`
+        ).catch(() => null);
+        if (checkRes && checkRes.ok) {
+            const jobs   = await checkRes.json();
+            const active = jobs.filter(j => j.status === 'queued' || j.status === 'running');
+            if (active.length > 0) { this.showToast('Export already in progress'); return; }
+        }
         const markers = this.state.markers.map(m => m.offset);
         const body = {
-            sample_id:      this.state.currentSampleId,
-            start_offset:   this.state.originalStartOffset,
-            pitch_semitones: this.state.pitchSemitones,
-            pitch_cents:    this.state.pitchCents,
+            sample_id:        this.state.currentSampleId,
+            raw_original:     markers.length === 0,
+            include_original: markers.length > 0,
             markers,
         };
         const res = await fetch('/api/jobs/export', {
@@ -1588,7 +1632,8 @@ const GrooveDropper = {
                 this._clearFocusedQpSlot();
                 this.loadPrevHistory(this.state.isPlaying || this.state.playInstantly);
             } else if (e.code === 'KeyS') {
-                this.downloadSlice();
+                if (e.shiftKey) this.downloadOriginal();
+                else this.downloadSlice();
             } else if (e.key === ',' && !e.shiftKey) {
                 this.adjustPitch(-1, 0);
             } else if (e.key === '.' && !e.shiftKey) {

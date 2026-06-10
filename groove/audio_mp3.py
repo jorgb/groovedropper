@@ -155,7 +155,7 @@ def save_slice_wav(src_path, dest_path, start_frame, end_frame):
         raise
 
 
-def make_audio_slice(path, start_offset, samplerate, duration_secs=10):
+def make_audio_slice(path, start_offset, samplerate, end_offset=None):
     decoded = miniaudio.decode_file(
         path,
         output_format=miniaudio.SampleFormat.FLOAT32,
@@ -164,7 +164,7 @@ def make_audio_slice(path, start_offset, samplerate, duration_secs=10):
     nch = decoded.nchannels
     samples = np.frombuffer(decoded.samples, dtype=np.float32)
     start_sample = start_offset * nch
-    end_sample = start_sample + int(duration_secs * samplerate) * nch
+    end_sample   = (end_offset * nch) if end_offset is not None else len(samples)
     sliced = samples[start_sample:end_sample]
     data = sliced.reshape(-1, nch) if nch > 1 else sliced
     buf = io.BytesIO()
