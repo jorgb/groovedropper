@@ -1,24 +1,30 @@
 ## DOING
 
-Reverse MPC sample:
-- Make XPJ with no chop points
-- Make XPJ with one chop point
-- Make XPJ with four chop points
-
-- Being able to drag a marker over the sample, upon release set it in the 
-  database
-
-- Cutting marker TODO's
-  - Marker labels in database, defaults to number, but can be replaced with 
-    key information, chord, BPM etc
-  - Manual needs updating!
-
 - Export dialog
   - export quickpick set
   - export XPJ
   - export SP404
   - export ZIP
   - export all
+
+History box (Two tabs)
+- fix: GroovedDropper bar needs to stay in column detail-play
+- Below the controls and waveform
+  - All samples that are randomly picked in the history list
+  - All samples that are newly found
+  - Paging?
+  - Clean history button
+
+Reverse MPC sample:
+- Make XPJ with no chop points
+- Make XPJ with one chop point
+- Make XPJ with four chop points
+
+- Manual needs updating!
+
+- Test 
+  - Sample needs to be able to be relocatable
+
 
 - fine grained marker control (shift drag or mouse drag on edit box?)
   - drag, rough movements, marker does not get updated in DB until release
