@@ -1,5 +1,19 @@
 ## DOING
 
+- Save / download a sample
+  - 'S' - save a part 
+    - When no markers: save begin offset to end of sample
+    - When active marker, from marker to end marker (or sample)
+  - 'Shift+S' - save multiple
+    - If no markers: save whole sample begin to end (serve sample as-is from 
+      back end)
+    - If markers: 
+      - Slice samples in the markers
+      - Include original as-is sample
+  - Update key controls to reflect
+
+Export will eventually allow for more options
+
 - fix: checkboxes for label slightly larger
 
 - Export dialog
