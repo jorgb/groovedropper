@@ -180,6 +180,11 @@ const GrooveDropper = {
 
         this.loadLabels()
             .then(() => this.loadUntaggedCount())
+            .then(() => {
+                if (this.untaggedCount > 0) {
+                    this.state.untaggedFilterActive = true;
+                }
+            })
             .then(() => this.loadPresets())
             .then(() => {
                 this.renderLabelPanel();

@@ -1,5 +1,7 @@
 ## DOING
 
+- fix: checkboxes for label slightly larger
+
 - Export dialog
   - export quickpick set
   - export XPJ
@@ -11,6 +13,7 @@ History box (Two tabs)
 - fix: GroovedDropper bar needs to stay in column detail-play
 - Below the controls and waveform
   - All samples that are randomly picked in the history list
+    - Remove samples from history that are archived!
   - All samples that are newly found
   - Paging?
   - Clean history button

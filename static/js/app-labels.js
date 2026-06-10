@@ -68,7 +68,11 @@ Object.assign(GrooveDropper, {
         tag.style.backgroundColor = 'var(--accent-color)';
         const nameSpan = document.createElement('span');
         nameSpan.className = 'label-name';
-        nameSpan.textContent = 'UNTAGGED';
+        const inboxIcon = document.createElement('i');
+        inboxIcon.className = 'fa-solid fa-inbox';
+        inboxIcon.style.marginRight = '5px';
+        nameSpan.appendChild(inboxIcon);
+        nameSpan.appendChild(document.createTextNode('UNTAGGED'));
         const countSpan = document.createElement('span');
         countSpan.className = 'label-count';
         countSpan.textContent = this.untaggedCount ?? '…';
