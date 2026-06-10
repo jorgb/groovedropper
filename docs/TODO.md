@@ -1,23 +1,14 @@
 ## DOING
 
-- Test:
-  - Shift+S no markers saves whole wav, is DIGEST exactly the same?
-  - Shift+S with markers, the WAV in the ZIP is not the same?
+- fix: save overhaul
+  - Test:
+    - Shift+S no markers saves whole wav, is DIGEST exactly the same?
+    - Shift+S with markers, the WAV in the ZIP is not the same?
 
-- Truncate the file name in the same way as archiving does!
-  - Sample-0000000-48567845.wav slice 00022222 becomes 
-    Sample-48567845-0002222-00438463.wav
-
-- Save / download a sample
-  - 'S' - save a part 
-    - Save active marker or current begin offset to end of sample or marker
-  - 'Shift+S' - save multiple
-    - If no markers: save whole sample begin to end (serve sample as-is from 
-      back end)
-    - If markers: 
-      - Slice samples in the markers
-      - Include original as-is sample
-  - Update key controls to reflect
+  - Truncate the file name in the same way as archiving does!
+    - Sample-0000000-48567845.wav slice 00022222 becomes 
+      Sample-48567845-0002222-00438463.wav
+  - Reflect in keyboard controls 
 
 Export will eventually allow for more options
 
@@ -206,10 +197,6 @@ THINK ABOUT
 - Tap BPM?
   - A BPM tap button that when focussed or mouse press in UI, will determine 
     BPM (stored in DB metadata, in proper pitch, will transpose!)
-- Download whole sample, as-is?
-  - Shift+S Saves whole sample?
-  - IF wanting to slice, or run remotely
-  - slice sample metadata in WAV?
 - Shift+Click mark end of slice, visualize and playback that part only save will save
 	- Tag the part of the slice as a certain type (or the whole sample) 
 	- Randomize in type, this requires a DB and sample references that do not break (the MD5?)
@@ -217,4 +204,3 @@ THINK ABOUT
   - 6 in total, tags can be selected
   - I'm feeling lucky function - Get 3 - 5 or 10 random slices which you need to use, as a ZIP file downloaded
   - Challenge mode, you only get 5 tries to find samples, after that randomize does not work anymore, only back
-- Slice mark in current sample, persistent?
