@@ -1,0 +1,67 @@
+{
+    "version": 1,
+    "value0": {
+        "defaultSlice": {
+            "Start": 0,
+            "End": 249034,
+            "LoopStart": 0,
+            "LoopMode": 1,
+            "PulsePosition": 0,
+            "LoopCrossfadeLength": -1,
+            "LoopCrossfadeType": 0,
+            "TailLength": 0.0,
+            "TailLoopPosition": 0.5
+        },
+        "numBars": 2,
+        "Num slices": 4,
+        "Slice 0": {
+            "Start": 0,
+            "End": 32256,
+            "LoopStart": 0,
+            "LoopMode": 0,
+            "PulsePosition": 0,
+            "LoopCrossfadeLength": -1,
+            "LoopCrossfadeType": 0,
+            "TailLength": 0.0,
+            "TailLoopPosition": 0.5
+        },
+        "Slice 1": {
+            "Start": 32256,
+            "End": 61824,
+            "LoopStart": 32256,
+            "LoopMode": 0,
+            "PulsePosition": 994,
+            "LoopCrossfadeLength": 0,
+            "LoopCrossfadeType": 0,
+            "TailLength": 0.0,
+            "TailLoopPosition": 0.5
+        },
+        "Slice 2": {
+            "Start": 61824,
+            "End": 89984,
+            "LoopStart": 61824,
+            "LoopMode": 0,
+            "PulsePosition": 1906,
+            "LoopCrossfadeLength": 0,
+            "LoopCrossfadeType": 0,
+            "TailLength": 0.0,
+            "TailLoopPosition": 0.5
+        },
+        "Slice 3": {
+            "Start": 89984,
+            "End": 249033,
+            "LoopStart": 89984,
+            "LoopMode": 0,
+            "PulsePosition": 2775,
+            "LoopCrossfadeLength": 0,
+            "LoopCrossfadeType": 0,
+            "TailLength": 0.0,
+            "TailLoopPosition": 0.5
+        }
+    },
+    "value1": {
+        "version": 1,
+        "note": "F",
+        "scale": "Natural Minor"
+    }
+}
