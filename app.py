@@ -160,16 +160,14 @@ def scan_worker():
 
                         # Fast path: skip if path+mtime unchanged
                         existing_ts = db.scan_get_sample_timestamp(cursor, wav_path)
-                        if existing_ts is not None:
-                            if existing_ts == mtime:
-                                continue
-                            db.scan_delete_sample_by_path(cursor, wav_path)
+                        if existing_ts is not None and existing_ts == mtime:
+                            continue
 
+                        # All slow I/O runs before any write transaction is opened
                         digest = db.compute_digest(wav_path)
 
                         # Digest duplicate check: same content already indexed at another path
                         if db.scan_check_digest_exists(cursor, digest):
-                            logger.info(f"Duplicate wave file found, skipped: {wav_path}")
                             continue
 
                         reported_done = False
@@ -178,6 +176,9 @@ def scan_worker():
 
                         waveform_img = audio.generate_waveform(wav_path)
 
+                        # Write transaction is only open for the brief delete+insert
+                        if existing_ts is not None:
+                            db.scan_delete_sample_by_path(cursor, wav_path)
                         db.scan_insert_sample(
                             cursor, wav_path, os.path.basename(wav_path), os.path.dirname(wav_path),
                             size, digest, mtime, duration, samplerate, duration_samples, waveform_img, fid
