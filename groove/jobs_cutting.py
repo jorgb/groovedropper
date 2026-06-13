@@ -1,22 +1,12 @@
 import os
-import re
 import time
 import logging
 from groove import audio
 from groove.queue import scan_queue
+from groove.jobs_util import fmt_offset, strip_suffix
 
 logger   = logging.getLogger(__name__)
 _RETRY_S = 60
-
-
-def _strip_suffix(base: str) -> str:
-    if re.search(r'-\d{8}-\d{8}$', base):
-        return re.sub(r'-\d{8}-(\d{8})$', r'-\1', base)
-    return base
-
-
-def _fmt(n: int) -> str:
-    return f'{int(n):08d}'
 
 
 def _archive_original(path: str) -> None:
@@ -39,7 +29,7 @@ def run(payload: dict) -> None:
     scan_folder_path = payload['scan_folder_path']
     base_dir         = os.path.dirname(path)
     orig_name        = os.path.basename(path)
-    base             = _strip_suffix(os.path.splitext(orig_name)[0])
+    base             = strip_suffix(os.path.splitext(orig_name)[0])
 
     markers         = [int(m) for m in payload['markers']]
     regions_to_keep = [int(i) for i in payload.get('regions_to_keep', [])]
@@ -54,7 +44,7 @@ def run(payload: dict) -> None:
         regions_to_keep = [i - 1 for i in regions_to_keep if i > 0]
     for idx in regions_to_keep:
         start, end = regions[idx]
-        name = f'{base}-{_fmt(start)}-{_fmt(end - 1)}.wav'
+        name = f'{base}-{fmt_offset(start)}-{fmt_offset(end - 1)}.wav'
         logger.info("Cut: region %d (%d–%d) → %s", idx, start, end, name)
         audio.save_slice_wav(path, os.path.join(base_dir, name), start, end)
 

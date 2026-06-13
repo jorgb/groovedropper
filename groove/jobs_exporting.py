@@ -4,12 +4,9 @@ import zipfile
 import logging
 import soundfile as sf
 from groove import audio
+from groove.jobs_util import fmt_offset, strip_suffix
 
 logger = logging.getLogger(__name__)
-
-
-def _fmt(n: int) -> str:
-    return f'{int(n):08d}'
 
 
 def run(payload: dict) -> bytes:
@@ -19,7 +16,7 @@ def run(payload: dict) -> bytes:
     end_offset       = int(payload.get('end_offset', duration_samples))
     samplerate       = int(payload.get('samplerate', 44100))
     markers          = [int(m) for m in payload.get('markers', [])]
-    stem             = payload.get('stem', 'export')
+    stem             = strip_suffix(payload.get('stem', 'export'))
     raw_original     = bool(payload.get('raw_original', False))
     include_original = bool(payload.get('include_original', False))
 
@@ -40,7 +37,7 @@ def run(payload: dict) -> bytes:
     zip_buf = io.BytesIO()
     with zipfile.ZipFile(zip_buf, 'w', zipfile.ZIP_DEFLATED) as zf:
         for start, end in regions:
-            slice_name = f'{stem}-{_fmt(start)}-{_fmt(end - 1)}.wav'
+            slice_name = f'{stem}-{fmt_offset(start)}-{fmt_offset(end - 1)}.wav'
             region_buf = io.BytesIO()
             with sf.SoundFile(path) as src:
                 src.seek(start)

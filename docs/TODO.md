@@ -1,10 +1,6 @@
 ## DOING
 
 - fix: save overhaul
-  - Test:
-    - Shift+S no markers saves whole wav, is DIGEST exactly the same?
-    - Shift+S with markers, the WAV in the ZIP is not the same?
-
   - Truncate the file name in the same way as archiving does!
     - Sample-0000000-48567845.wav slice 00022222 becomes 
       Sample-48567845-0002222-00438463.wav
