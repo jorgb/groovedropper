@@ -17,6 +17,7 @@ from queue import Empty, Queue
 from flask import Flask, render_template, request, send_file, jsonify
 from groove import db, audio, transient as _transient
 from groove.db import DatabaseTooNewError
+from groove.util import compute_digest
 from groove.queue import scan_queue
 from groove.jobs import job_queue, SampleBusyError
 import groove.jobs_archiving  as jobs_archiving
@@ -164,7 +165,7 @@ def scan_worker():
                             continue
 
                         # All slow I/O runs before any write transaction is opened
-                        digest = db.compute_digest(wav_path)
+                        digest = compute_digest(wav_path)
 
                         # Digest duplicate check: same content already indexed at another path
                         if db.scan_check_digest_exists(cursor, digest):
