@@ -1927,26 +1927,25 @@
                 <table>
                     <tr><td colspan="2" class="controls-section">Playback</td></tr>
                     <tr><td><span class="control-key">SPACE</span></td><td>Play / Pause</td></tr>
-                    <tr><td><span class="control-key">SHIFT + SPACE</span></td><td>Restart from begin offset</td></tr>
-                    <tr><td><span class="control-key">CTRL + SPACE</span></td><td>Set begin offset at playhead</td></tr>
+                    <tr><td><span class="control-key">SHIFT + SPACE</span></td><td>Restart from start offset</td></tr>
+                    <tr><td><span class="control-key">CTRL + SPACE</span></td><td>Set start offset to playhead position</td></tr>
 
                     <tr><td colspan="2" class="controls-section">Navigation</td></tr>
                     <tr><td><span class="control-key">HOME</span></td><td>Jump to absolute start (offset 0)</td></tr>
                     <tr><td><span class="control-key">← / →</span></td><td>Prev / next marker</td></tr>
                     <tr><td><span class="control-key">SHIFT + ←</span></td><td>Prev marker (fast step)</td></tr>
-                    <tr><td><span class="control-key">LEFT MOUSE</span></td><td>Scrub waveform</td></tr>
+                    <tr><td><span class="control-key">LEFT MOUSE</span></td><td>Pick playhead position in waveform</td></tr>
 
                     <tr><td colspan="2" class="controls-section">Markers</td></tr>
-                    <tr><td><span class="control-key">M</span></td><td>Toggle marker at begin offset</td></tr>
-                    <tr><td><span class="control-key">CTRL + ENTER</span></td><td>Pin marker at playhead</td></tr>
+                    <tr><td><span class="control-key">M / SHIFT + M</span></td><td>Toggle marker at start offset</td></tr>
+                    <tr><td><span class="control-key">CTRL + ENTER</span></td><td>Pin marker at current playhead</td></tr>
                     <tr><td><span class="control-key">D</span></td><td>Delete all markers</td></tr>
-                    <tr><td><span class="control-key">L / SHIFT + L</span></td><td>Set linear / random markers</td></tr>
+                    <tr><td><span class="control-key">L / SHIFT + L</span></td><td>Auto set linear / random markers</td></tr>
 
                     <tr><td colspan="2" class="controls-section">Samples</td></tr>
-                    <tr><td><span class="control-key">R / SHIFT + R</span></td><td>Random sample / randomize offset in sample</td></tr>
-                    <tr><td><span class="control-key">P</span></td><td>Previous sample</td></tr>
-                    <tr><td><span class="control-key">T / SHIFT + T</span></td><td>Find transient (soft / hard)</td></tr>
-                    <tr><td><span class="control-key">S</span></td><td>Download current slice</td></tr>
+                    <tr><td><span class="control-key">R / SHIFT + R</span></td><td>Random pick next sample / randomize offset in sample</td></tr>
+                    <tr><td><span class="control-key">P</span></td><td>Go to previous sample</td></tr>
+                    <tr><td><span class="control-key">T / SHIFT + T</span></td><td>Find transient (soft or SHIFT for harder edges)</td></tr>
                     <tr><td><span class="control-key">A</span></td><td>Archive sample <em>(mutable only)</em></td></tr>
                     <tr><td><span class="control-key">C</span></td><td>Cut sample <em>(mutable only)</em></td></tr>
 
@@ -1960,6 +1959,10 @@
                     <tr><td><span class="control-key">J / K</span></td><td>Navigate quick pick slots</td></tr>
                     <tr><td><span class="control-key">1–9, 0</span></td><td>Recall slot (0 = slot 10)</td></tr>
                     <tr><td><span class="control-key">SHIFT + 1–9, 0</span></td><td>Save to slot</td></tr>
+
+                    <tr><td colspan="2" class="controls-section">Export / Saving</td></tr>
+                    <tr><td><span class="control-key">S</span></td><td>Download current slice till end (or marker boundaries)</td></tr>
+                    <tr><td><span class="control-key">SHIFT + S</span></td><td>Download original sample (and sliced markers as zip)</td></tr>
 
                     <tr><td colspan="2" class="controls-section">Other</td></tr>
                     <tr><td><span class="control-key">CTRL + U</span></td><td>Copy link to clipboard</td></tr>
