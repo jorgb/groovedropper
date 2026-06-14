@@ -1,31 +1,39 @@
 ## DOING
 
-Cut candidate with tag inheritance:
-http://127.0.0.1:5000/?sample=52434e722b74cad4352a4ce23e78ecdf&start=49186
-
-- feat: If the sample already has tags before cutting, show a checkbox in 
-  the dialog that says "Use tags of original sample for cut parts"
-
-When I cut a sample using the key C I want the labels of the sample
-  to be cut to be taken to the cut dialog. When there are labels on
-  the sample, there should be a checkbox with a accompanied text
-  saying "Use tags from original sample". This checkbox and text 
-  should be activated (checked) when there are labels on the sample I
-  cut. When there are no labels, the checkbox and text should be 
-  dimmed. When the labels are present and the checkbox is selected, 
-  the cut job in the background
-
-
 - fix: Mutable flag needs to be a setting in the database and when set once, 
   the user needs to be warned after that it needs to just be left toggled on or off
+
+- fix: Let SHIFT+M also mark the current position, so that when I am using 
+  SHIFT+R to scan through the sample, SHIFT+M will allow me to mark the last 
+  offset such as the M key does, without releasing my inger off the shift, 
+  update the Keyboard controls section as well to mention optional shift
+
+- label-count needs to be completely black right now it is a muted color
+
+- Merge slices option in cut dialog, where the greyed out sections are 
+  simply cut out of the sample 
+  - When selected, all slices will be merged in one WAV instead of separate 
+    slices, this will be a different logical path to cutting up multiple 
+    slices but using the same logic and utility functions
+  - http://127.0.0.1:5000/?sample=d10211ad86e748684697f18fbbe7bcab&start=14551426
+- Where intense and unchoppable parts can be removed from the sample
+
+- Play instantly -> Keep Playing
+
+- Rename a sample without losing the original
+  - Only works when mutable is selected
+  - Pencil icon behind file name (disabled if not mutable)
+  - Rename in place editor, file exists check upon typing, music can keep 
+    playing
+  - When enter, music stops, rename is done in back-end, random sample is chosen
+
 - fix: Change the C shortcut to X for cutting, also change the controls 
   overview and update the manual
+- 
 - Auto truncate multiple offset(s) recursively, so that max 3 offsets are 
   present
   - BANG-11075327-04261999-00324926-00000000-00066788.wav
   - into: BANG-11075327-{begin-end}.wav 
-
-
 
 Export will eventually allow for more options
 
