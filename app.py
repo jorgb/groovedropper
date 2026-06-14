@@ -17,7 +17,7 @@ from queue import Empty, Queue
 from flask import Flask, render_template, request, send_file, jsonify
 from groove import db, audio, transient as _transient
 from groove.db import DatabaseTooNewError
-from groove.util import compute_digest
+from groove.util import get_sample_meta
 from groove.queue import scan_queue
 from groove.jobs import job_queue, SampleBusyError
 import groove.jobs_archiving  as jobs_archiving
@@ -155,9 +155,7 @@ def scan_worker():
                     wav_path, fid = scan_queue.pop_sample()
 
                     try:
-                        stat = os.stat(wav_path)
-                        mtime = stat.st_mtime
-                        size = stat.st_size
+                        mtime = os.stat(wav_path).st_mtime
 
                         # Fast path: skip if path+mtime unchanged
                         existing_ts = db.scan_get_sample_timestamp(cursor, wav_path)
@@ -166,22 +164,19 @@ def scan_worker():
                                 continue
                             db.scan_delete_sample_by_path(cursor, wav_path)
 
-                        digest = compute_digest(wav_path)
+                        meta = get_sample_meta(wav_path)
 
                         # Digest duplicate check: same content already indexed at another path
-                        if db.scan_check_digest_exists(cursor, digest):
+                        if db.scan_check_digest_exists(cursor, meta.digest):
                             logger.info(f"Duplicate wave file found, skipped: {wav_path}")
                             continue
 
                         reported_done = False
-                        samplerate, duration_samples = audio.get_audio_info(wav_path)
-                        duration = duration_samples / samplerate if samplerate > 0 else 0
-
-                        waveform_img = audio.generate_waveform(wav_path)
-
                         db.scan_insert_sample(
                             cursor, wav_path, os.path.basename(wav_path), os.path.dirname(wav_path),
-                            size, digest, mtime, duration, samplerate, duration_samples, waveform_img, fid
+                            meta.size, meta.digest, meta.mtime,
+                            meta.duration, meta.samplerate, meta.duration_samples,
+                            meta.waveform, fid
                         )
 
                         conn.commit()
