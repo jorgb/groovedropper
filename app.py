@@ -432,6 +432,7 @@ def job_cut():
         'scan_folder_path': _scan_folder_for(src_path),
         'markers':          [int(m) for m in data['markers']],
         'regions_to_keep':  [int(i) for i in data.get('regions_to_keep', [])],
+        'label_ids':        [int(lid) for lid in data.get('label_ids', [])],
     }
     try:
         job_id = job_queue.enqueue('cut', sample_id, payload, jobs_cutting.run)

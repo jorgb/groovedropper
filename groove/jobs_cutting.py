@@ -33,10 +33,11 @@ def _resolve_folder_id(scan_folder_path: str):
         conn.close()
 
 
-def _insert_slice(cursor, conn, dest_path: str, name: str, meta: SampleMeta, folder_id) -> None:
+def _insert_slice(cursor, conn, dest_path: str, name: str, meta: SampleMeta, folder_id) -> bool:
+    """Insert one slice into the DB. Returns True if inserted, False if digest already existed."""
     if db.scan_check_digest_exists(cursor, meta.digest):
         logger.info("Cut: duplicate digest skipped: %s", dest_path)
-        return
+        return False
     db.scan_insert_sample(
         cursor, dest_path, name, os.path.dirname(dest_path),
         meta.size, meta.digest, meta.mtime,
@@ -45,12 +46,32 @@ def _insert_slice(cursor, conn, dest_path: str, name: str, meta: SampleMeta, fol
     )
     conn.commit()
     logger.info("Cut: inserted %s", name)
+    return True
+
+
+def _apply_labels(cursor, conn, digest: str, label_ids: list) -> None:
+    """Atomically attach each label to the newly inserted sample.
+
+    Each label gets its own transaction: check existence → insert relation → commit.
+    A label deleted from the UI between the cut start and this point is silently
+    skipped; the sample is still indexed without it.
+    """
+    for label_id in label_ids:
+        try:
+            cursor.execute('SELECT 1 FROM labels WHERE id = ?', (label_id,))
+            if cursor.fetchone() is not None:
+                db.scan_insert_sample_label(cursor, digest, label_id)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            logger.warning("Cut: failed to apply label %d to %s", label_id, digest)
 
 
 def run(payload: dict) -> None:
     path             = payload['path']
     duration_samples = int(payload['duration_samples'])
     scan_folder_path = payload['scan_folder_path']
+    label_ids        = [int(lid) for lid in payload.get('label_ids', [])]
     base_dir         = os.path.dirname(path)
     orig_name        = os.path.basename(path)
     base             = strip_suffix(os.path.splitext(orig_name)[0])
@@ -90,8 +111,11 @@ def run(payload: dict) -> None:
 
                 # Now that we've moved on to the next write, flush the previous slice.
                 if pending_future is not None:
-                    _insert_slice(cursor, conn, pending_dest, pending_name,
-                                  pending_future.result(), folder_id)
+                    meta = pending_future.result()
+                    inserted = _insert_slice(cursor, conn, pending_dest, pending_name,
+                                             meta, folder_id)
+                    if inserted and label_ids:
+                        _apply_labels(cursor, conn, meta.digest, label_ids)
 
                 pending_future = new_future
                 pending_dest   = dest_path
@@ -99,8 +123,11 @@ def run(payload: dict) -> None:
 
             # Flush the last slice (no subsequent write to overlap with).
             if pending_future is not None:
-                _insert_slice(cursor, conn, pending_dest, pending_name,
-                              pending_future.result(), folder_id)
+                meta = pending_future.result()
+                inserted = _insert_slice(cursor, conn, pending_dest, pending_name,
+                                         meta, folder_id)
+                if inserted and label_ids:
+                    _apply_labels(cursor, conn, meta.digest, label_ids)
     finally:
         conn.close()
 

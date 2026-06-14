@@ -2099,6 +2099,10 @@
                     <img id="cut-dialog-waveform" src="/static/img/waveform_placeholder.png" alt="Waveform" />
                     <!-- marker lines and region overlays injected by JS -->
                 </div>
+                <div id="cut-inherit-labels-row" style="margin:8px 0 0;display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox" id="cut-inherit-labels">
+                    <label for="cut-inherit-labels" style="color:var(--muted);cursor:pointer;user-select:none;">Use tags from original sample</label>
+                </div>
                 <p id="cut-region-status" style="margin:6px 0 0;font-size:1em;color:var(--muted);"></p>
                 <p style="margin:8px 0 0;font-size:1em;color:var(--muted);">
                     Kept sections are saved as new WAV files. The original file is renamed / archived (.bak).

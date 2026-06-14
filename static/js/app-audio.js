@@ -335,6 +335,16 @@ Object.assign(GrooveDropper, {
 
         this.elements.cutDialogOverlay.classList.remove('hidden');
         this._renderCutDialog();
+
+        const labelIds  = this.state.currentSampleLabelIds || [];
+        const hasLabels = labelIds.length > 0;
+        const cbRow = document.getElementById('cut-inherit-labels-row');
+        const cb    = document.getElementById('cut-inherit-labels');
+        cbRow.style.opacity       = hasLabels ? '1' : '0.4';
+        cbRow.style.pointerEvents = hasLabels ? ''  : 'none';
+        cb.disabled = !hasLabels;
+        cb.checked  = hasLabels;
+
         this.elements.cutDialogOk.focus();
     },
 
@@ -342,12 +352,16 @@ Object.assign(GrooveDropper, {
         const sampleIdAtCut = this.state.currentSampleId;
         this._closeCutDialog();
 
+        const cb = document.getElementById('cut-inherit-labels');
         const body = {
             sample_id:       sampleIdAtCut,
             markers:         this.state.markers.map(m => m.offset),
             regions_to_keep: this._cutState.regionActive
                 .map((active, i) => (active ? i : -1))
                 .filter(i => i >= 0),
+            label_ids: (cb && !cb.disabled && cb.checked)
+                ? (this.state.currentSampleLabelIds || [])
+                : [],
         };
 
         const res = await fetch('/api/jobs/cut', {
