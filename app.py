@@ -1030,6 +1030,8 @@ def delete_quickpick_slot(preset_id, slot_number):
 
 @app.route('/api/mutable/disable', methods=['POST'])
 def disable_mutable():
+    with db.get_db() as conn:
+        db.save_config(conn, {'mutable': 'false'})
     app.config['MUTABLE'] = False
     logger.info("MUTABLE mode disabled via UI")
     return jsonify({"status": "ok"})
@@ -1037,6 +1039,8 @@ def disable_mutable():
 
 @app.route('/api/mutable/enable', methods=['POST'])
 def enable_mutable():
+    with db.get_db() as conn:
+        db.save_config(conn, {'mutable': 'true'})
     app.config['MUTABLE'] = True
     logger.info("MUTABLE mode enabled via UI")
     return jsonify({"status": "ok"})
@@ -1165,14 +1169,8 @@ if __name__ == '__main__':
     parser.add_argument('--no-browser', action='store_true')
     parser.add_argument('--serve', action='store_true',
                         help="Bind to all interfaces (0.0.0.0) for LAN access; no browser is launched")
-    parser.add_argument('--mutable', action='store_true',
-                        help="Enable archive mode: allow renaming samples to <name>.bak from the UI")
 
     args = parser.parse_args()
-
-    app.config['MUTABLE'] = args.mutable
-    if args.mutable:
-        logger.info("MUTABLE mode enabled — archive actions are available in the UI")
 
     db_path = str(Path(args.db_file).resolve())
     logger.info(f"Database: {db_path}")
@@ -1187,6 +1185,13 @@ if __name__ == '__main__':
             file=sys.stderr,
         )
         sys.exit(1)
+
+    with db.get_db() as conn:
+        startup_config = db.fetch_config(conn)
+    app.config['MUTABLE'] = startup_config.get('mutable', 'false') == 'true'
+    if app.config['MUTABLE']:
+        logger.info("MUTABLE mode enabled (persisted in database)")
+
     start_background_scan()
     if args.serve:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
