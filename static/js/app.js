@@ -346,13 +346,27 @@ const GrooveDropper = {
 
     async pollStatus() {
         try {
-            const [statsRes, jobsRes] = await Promise.all([
+            const [statsRes, jobsRes, labelsRes] = await Promise.all([
                 fetch('/api/stats'),
                 fetch('/api/jobs'),
+                fetch('/api/labels'),
             ]);
             const data = await statsRes.json();
             this.state.totalSamplesCount = data.total_samples || 0;
             this.elements.totalSamples.textContent = this.state.totalSamplesCount;
+
+            if (labelsRes.ok) {
+                this.state.allLabels = await labelsRes.json();
+                this.elements.labelList.querySelectorAll('.label-count').forEach(el => {
+                    const row = el.closest('.label-tag-row');
+                    if (!row) return;
+                    const tag = row.querySelector('.label-tag');
+                    if (!tag) return;
+                    const lid = parseInt(tag.dataset.labelId, 10);
+                    const found = this.state.allLabels.find(l => l.id === lid);
+                    if (found) el.textContent = found.sample_count;
+                });
+            }
 
             // Job status takes priority over scan status
             if (jobsRes.ok) {
