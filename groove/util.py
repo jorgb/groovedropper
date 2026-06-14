@@ -2,7 +2,7 @@ import hashlib
 
 
 def compute_digest(file_path):
-    # Full-file MD5 so that re-encoded copies of the same recording are detected
+    # Full-file MD5 so that re-encoded copies of the same audio are detected
     # as duplicates even when they live at a different path.
     hasher = hashlib.md5()
     with open(file_path, 'rb') as f:
