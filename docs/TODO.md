@@ -1,7 +1,30 @@
 ## DOING
 
-- Mutable flag needs to be a setting in the database and when set once, the 
-  user needs to be warned after that it needs to just be left toggled on or off
+Cut candidate with tag inheritance:
+http://127.0.0.1:5000/?sample=52434e722b74cad4352a4ce23e78ecdf&start=49186
+
+- feat: If the sample already has tags before cutting, show a checkbox in 
+  the dialog that says "Use tags of original sample for cut parts"
+
+When I cut a sample using the key C I want the labels of the sample
+  to be cut to be taken to the cut dialog. When there are labels on
+  the sample, there should be a checkbox with a accompanied text
+  saying "Use tags from original sample". This checkbox and text 
+  should be activated (checked) when there are labels on the sample I
+  cut. When there are no labels, the checkbox and text should be 
+  dimmed. When the labels are present and the checkbox is selected, 
+  the cut job in the background
+
+
+- fix: Mutable flag needs to be a setting in the database and when set once, 
+  the user needs to be warned after that it needs to just be left toggled on or off
+- fix: Change the C shortcut to X for cutting, also change the controls 
+  overview and update the manual
+- Auto truncate multiple offset(s) recursively, so that max 3 offsets are 
+  present
+  - BANG-11075327-04261999-00324926-00000000-00066788.wav
+  - into: BANG-11075327-{begin-end}.wav 
+
 
 
 Export will eventually allow for more options
