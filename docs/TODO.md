@@ -1,10 +1,8 @@
 ## DOING
 
-- fix: save overhaul
-  - Truncate the file name in the same way as archiving does!
-    - Sample-0000000-48567845.wav slice 00022222 becomes 
-      Sample-48567845-0002222-00438463.wav
-  - Reflect in keyboard controls 
+- Mutable flag needs to be a setting in the database and when set once, the 
+  user needs to be warned after that it needs to just be left toggled on or off
+
 
 Export will eventually allow for more options
 
