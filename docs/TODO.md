@@ -1,30 +1,30 @@
 ## DOING
 
+- Merge slices option
+  - Consider: Two sections adjacent should not crossfade but simply concatenate
+  - Test samples that benefit from a merge action
+  - Test: X should cut if in dialog
+  - Test: M should merge in dialog
 
-
-- label-count needs to be completely black right now it is a muted color
-  - dimming problem, when tried to be fixed, it will mess up the colors so 
-    that needs to be done in a different way!
-
-- Merge slices option in cut dialog, where the greyed out sections are 
-  simply cut out of the sample 
-  - When selected, all slices will be merged in one WAV instead of separate 
-    slices, this will be a different logical path to cutting up multiple 
-    slices but using the same logic and utility functions
-  - http://127.0.0.1:5000/?sample=d10211ad86e748684697f18fbbe7bcab&start=14551426
-- Where intense and unchoppable parts can be removed from the sample
-
-- fix: Change the C shortcut to X for cutting, also change the controls 
-  overview and update the manual
 
 - look into long delay sometimes for loading a sample, is the whole sample 
-  loaded in memory when playback is requested? And if so, make it a buffered 
-  cache where blocks are requested , clear the cache on reset
+    loaded in memory when playback is requested? And if so, make it a buffered 
+    cache where blocks are requested , clear the cache on reset
+- 
+- label-count needs to be completely black right now it is a muted color
+  - dimming problem, when tried to be fixed, it will mess up the colors so
+    that needs to be done in a different way!
 
 - Auto truncate multiple offset(s) recursively, so that max 3 offsets are 
   present
   - BANG-11075327-04261999-00324926-00000000-00066788.wav
   - into: BANG-11075327-{begin-end}.wav 
+
+- Prune database (unused digests)
+  - Digest keys are now used to link tags to samples, they stay persistent 
+    so that samples can move or be removed and still have a tag
+  - But if samples "dissapear" forever, what then?
+  - Prune / vacuum / clean - remove unused labels, remove unused links ?
 
 Export will eventually allow for more options
 
@@ -38,6 +38,7 @@ Export will eventually allow for more options
   - export all
 
 History box (Two tabs)
+- Popup overlay window with cursor controls? Select is pick? Audio playback?
 - fix: GroovedDropper bar needs to stay in column detail-play
 - Below the controls and waveform
   - All samples that are randomly picked in the history list
@@ -52,7 +53,6 @@ History box (Two tabs)
   - Rename in place editor, file exists check upon typing, music can keep 
     playing
   - When enter, music stops, rename is done in back-end, random sample is chosen
-
 
 
 Reverse MPC sample:
@@ -85,7 +85,6 @@ THINK ABOUT
 
 - !! refactor the sample table to only have path column (derive name from path!)
 - Group mutability controls in controls overview with extra divider
-- Consider C change into X (without shift)
 - Shift+S saves whole sample
 
 - check how to download with standalone pywebview, is it possible?
@@ -163,8 +162,6 @@ THINK ABOUT
     - e.g. HOME, arrow up will position the play head in the middle
     - arrow up will place it at 3/4th, etc
     - arrow down will place it at 1/4th, 1/8th etc
-- SLICE EXPORT (X)
-  - Same as C but with a region
 - CHANGE DURATION / SAMPLE TIME
   - Play time == slice export, for short notes to author or little stabs to 
     try, it might be nice to just play 200ms or 500ms of a note, so entering 
