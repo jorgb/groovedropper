@@ -14,7 +14,8 @@ from groove.util import get_sample_meta
 
 logger = logging.getLogger(__name__)
 
-CROSSFADE_S = 0.05  # seconds; linear fade applied at each internal join
+CROSSFADE_S   = 0.02   # seconds; linear fade applied at each internal join
+USE_CROSSFADE = False  # set True to enable crossfading between regions
 
 
 def _merge_and_crossfade(src_path: str, regions: list, dest_path: str) -> None:
@@ -29,19 +30,26 @@ def _merge_and_crossfade(src_path: str, regions: list, dest_path: str) -> None:
         with sf.SoundFile(src_path) as src:
             sr       = src.samplerate
             channels = src.channels
-            fade_n   = int(CROSSFADE_S * sr)
-
-            ramp_out = np.linspace(1.0, 0.0, fade_n)
-            ramp_in  = np.linspace(0.0, 1.0, fade_n)
 
             with sf.SoundFile(tmp_path, mode='w', samplerate=sr, channels=channels,
                               format='WAV', subtype='PCM_16') as dst:
 
-                if len(regions) == 1:
+                if not USE_CROSSFADE:
+                    # no crossfading is simply concatenating
+                    for start, end in regions:
+                        src.seek(start)
+                        dst.write(src.read(end - start))
+                elif len(regions) == 1:
+                    # one region is a simple partial copy
                     start, end = regions[0]
                     src.seek(start)
                     dst.write(src.read(end - start))
                 else:
+                    # crossfade logic, otherwise
+                    fade_n   = int(CROSSFADE_S * sr)
+                    ramp_out = np.linspace(1.0, 0.0, fade_n)
+                    ramp_in  = np.linspace(0.0, 1.0, fade_n)
+
                     # First region: write all but the tail
                     start, end = regions[0]
                     src.seek(start)
