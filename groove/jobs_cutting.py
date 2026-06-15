@@ -1,70 +1,15 @@
 import os
-import time
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
 from groove import audio, db
-from groove.jobs_util import fmt_offset, strip_suffix
-from groove.util import get_sample_meta, SampleMeta
+from groove.jobs_util import (
+    fmt_offset, strip_suffix,
+    archive_original, resolve_folder_id, insert_sample, apply_labels,
+)
+from groove.util import get_sample_meta
 
-logger   = logging.getLogger(__name__)
-_RETRY_S = 60
-
-
-def _archive_original(path: str) -> None:
-    bak      = path + '.bak'
-    deadline = time.monotonic() + _RETRY_S
-    while time.monotonic() < deadline:
-        try:
-            if os.path.exists(path):
-                os.rename(path, bak)
-                logger.info("Cut: archived %s → %s", path, bak)
-            return
-        except PermissionError:
-            time.sleep(1.0)
-    logger.warning("Cut: rename timed out after %ds: %s", _RETRY_S, path)
-
-
-def _resolve_folder_id(scan_folder_path: str):
-    conn = db.open_connection()
-    try:
-        return db.scan_get_folder_id(conn.cursor(), scan_folder_path)
-    finally:
-        conn.close()
-
-
-def _insert_slice(cursor, conn, dest_path: str, name: str, meta: SampleMeta, folder_id) -> bool:
-    """Insert one slice into the DB. Returns True if inserted, False if digest already existed."""
-    if db.scan_check_digest_exists(cursor, meta.digest):
-        logger.info("Cut: duplicate digest skipped: %s", dest_path)
-        return False
-    db.scan_insert_sample(
-        cursor, dest_path, name, os.path.dirname(dest_path),
-        meta.size, meta.digest, meta.mtime,
-        meta.duration, meta.samplerate, meta.duration_samples,
-        meta.waveform, folder_id,
-    )
-    conn.commit()
-    logger.info("Cut: inserted %s", name)
-    return True
-
-
-def _apply_labels(cursor, conn, digest: str, label_ids: list) -> None:
-    """Atomically attach each label to the newly inserted sample.
-
-    Each label gets its own transaction: check existence → insert relation → commit.
-    A label deleted from the UI between the cut start and this point is silently
-    skipped; the sample is still indexed without it.
-    """
-    for label_id in label_ids:
-        try:
-            cursor.execute('SELECT 1 FROM labels WHERE id = ?', (label_id,))
-            if cursor.fetchone() is not None:
-                db.scan_insert_sample_label(cursor, digest, label_id)
-            conn.commit()
-        except Exception:
-            conn.rollback()
-            logger.warning("Cut: failed to apply label %d to %s", label_id, digest)
+logger = logging.getLogger(__name__)
 
 
 def run(payload: dict) -> None:
@@ -88,7 +33,7 @@ def run(payload: dict) -> None:
         regions         = regions[1:]
         regions_to_keep = [i - 1 for i in regions_to_keep if i > 0]
 
-    folder_id = _resolve_folder_id(scan_folder_path)
+    folder_id = resolve_folder_id(scan_folder_path)
 
     conn   = db.open_connection()
     cursor = conn.cursor()
@@ -112,10 +57,10 @@ def run(payload: dict) -> None:
                 # Now that we've moved on to the next write, flush the previous slice.
                 if pending_future is not None:
                     meta = pending_future.result()
-                    inserted = _insert_slice(cursor, conn, pending_dest, pending_name,
-                                             meta, folder_id)
+                    inserted = insert_sample(cursor, conn, pending_dest, pending_name,
+                                             meta, folder_id, label='Cut')
                     if inserted and label_ids:
-                        _apply_labels(cursor, conn, meta.digest, label_ids)
+                        apply_labels(cursor, conn, meta.digest, label_ids, label='Cut')
 
                 pending_future = new_future
                 pending_dest   = dest_path
@@ -124,11 +69,11 @@ def run(payload: dict) -> None:
             # Flush the last slice (no subsequent write to overlap with).
             if pending_future is not None:
                 meta = pending_future.result()
-                inserted = _insert_slice(cursor, conn, pending_dest, pending_name,
-                                         meta, folder_id)
+                inserted = insert_sample(cursor, conn, pending_dest, pending_name,
+                                         meta, folder_id, label='Cut')
                 if inserted and label_ids:
-                    _apply_labels(cursor, conn, meta.digest, label_ids)
+                    apply_labels(cursor, conn, meta.digest, label_ids, label='Cut')
     finally:
         conn.close()
 
-    _archive_original(path)
+    archive_original(path, label='Cut')

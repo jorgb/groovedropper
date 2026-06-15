@@ -1948,7 +1948,7 @@
                     <tr><td><span class="control-key">P</span></td><td>Go to previous sample</td></tr>
                     <tr><td><span class="control-key">T / SHIFT + T</span></td><td>Find transient (soft or SHIFT for harder edges)</td></tr>
                     <tr><td><span class="control-key">A</span></td><td>Archive sample <em>(mutable only)</em></td></tr>
-                    <tr><td><span class="control-key">C</span></td><td>Cut sample <em>(mutable only)</em></td></tr>
+                    <tr><td><span class="control-key">X</span></td><td>Cut / Merge sample — opens dialog <em>(mutable only)</em></td></tr>
 
                     <tr><td colspan="2" class="controls-section">Pitch</td></tr>
                     <tr><td><span class="control-key">, / .</span></td><td>−1 / +1 semitone</td></tr>
@@ -2090,11 +2090,11 @@
         </div>
     </div>
 
-    <!-- Sample Cut Dialog -->
+    <!-- Sample Cut / Merge Dialog -->
     <div id="cut-dialog-overlay" class="dialog-overlay hidden">
         <div id="cut-dialog" class="dialog-card">
             <div class="dialog-header">
-                <span>Cut sample</span>
+                <span>Cut / Merge sample</span>
                 <button id="cut-dialog-close" class="dialog-close-btn" title="Close">&times;</button>
             </div>
             <div class="dialog-body">
@@ -2107,13 +2107,16 @@
                     <label for="cut-inherit-labels" style="color:var(--muted);cursor:pointer;user-select:none;">Use tags from original sample</label>
                 </div>
                 <p id="cut-region-status" style="margin:6px 0 0;font-size:1em;color:var(--muted);"></p>
-                <p style="margin:8px 0 0;font-size:1em;color:var(--muted);">
-                    Kept sections are saved as new WAV files. The original file is renamed / archived (.bak).
+                <p style="margin:8px 0 0;font-size:0.9em;color:var(--muted);line-height:1.6;">
+                    <i class="fa-solid fa-scissors"></i> <strong>Cut</strong> — each kept section becomes a new WAV file.<br>
+                    <i class="fa-solid fa-layer-group"></i> <strong>Merge</strong> — all kept sections are joined into one WAV; excluded sections are removed, crossfaded at each join.<br>
+                    The original file is renamed / archived (.bak) in both cases.
                 </p>
             </div>
             <div class="dialog-footer">
                 <button id="cut-dialog-cancel" class="panel-icon-btn">Cancel</button>
-                <button id="cut-dialog-ok"     class="panel-icon-btn" disabled>OK</button>
+                <button id="cut-dialog-cut"    class="panel-icon-btn" disabled><i class="fa-solid fa-scissors"></i> Cut</button>
+                <button id="cut-dialog-merge"  class="panel-icon-btn" disabled><i class="fa-solid fa-layer-group"></i> Merge</button>
             </div>
         </div>
     </div>

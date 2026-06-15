@@ -22,6 +22,7 @@ from groove.queue import scan_queue
 from groove.jobs import job_queue, SampleBusyError
 import groove.jobs_archiving  as jobs_archiving
 import groove.jobs_cutting    as jobs_cutting
+import groove.jobs_merging    as jobs_merging
 import groove.jobs_exporting  as jobs_exporting
 
 # set this to true to log all HTTP requests
@@ -436,6 +437,46 @@ def job_cut():
     }
     try:
         job_id = job_queue.enqueue('cut', sample_id, payload, jobs_cutting.run)
+    except SampleBusyError:
+        return jsonify({'error': 'sample_busy'}), 409
+    return jsonify({'job_id': job_id, 'status': 'queued'}), 202
+
+
+@app.route('/api/jobs/merge', methods=['POST'])
+def job_merge():
+    if not app.config.get('MUTABLE', False):
+        return jsonify({'error': 'not_mutable'}), 403
+    data      = request.get_json(silent=True) or {}
+    sample_id = data.get('sample_id')
+    if sample_id is None:
+        return jsonify({'error': 'sample_id required'}), 400
+    if not data.get('markers'):
+        return jsonify({'error': 'markers required'}), 400
+    markers = [int(m) for m in data['markers']]
+    if len(markers) == 1 and markers[0] == 0:
+        return jsonify({'error': 'Cannot merge: sole marker is at the start of the sample'}), 400
+    if job_queue.is_sample_busy(sample_id):
+        return jsonify({'error': 'sample_busy'}), 409
+    with db.get_db() as conn:
+        row = db.fetch_sample_by_id(conn, sample_id)
+        if not row:
+            return jsonify({'error': 'not_found'}), 404
+        path_row         = db.fetch_sample_path(conn, sample_id)
+        src_path         = path_row['path']
+        samplerate       = row['samplerate'] or 44100
+        duration_samples = row['duration_samples'] or 0
+        db.delete_sample(conn, sample_id)
+    payload = {
+        'path':             src_path,
+        'samplerate':       samplerate,
+        'duration_samples': duration_samples,
+        'scan_folder_path': _scan_folder_for(src_path),
+        'markers':          [int(m) for m in data['markers']],
+        'regions_to_keep':  [int(i) for i in data.get('regions_to_keep', [])],
+        'label_ids':        [int(lid) for lid in data.get('label_ids', [])],
+    }
+    try:
+        job_id = job_queue.enqueue('merge', sample_id, payload, jobs_merging.run)
     except SampleBusyError:
         return jsonify({'error': 'sample_busy'}), 409
     return jsonify({'job_id': job_id, 'status': 'queued'}), 202

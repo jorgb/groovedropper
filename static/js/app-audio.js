@@ -345,7 +345,7 @@ Object.assign(GrooveDropper, {
         cb.disabled = !hasLabels;
         cb.checked  = hasLabels;
 
-        this.elements.cutDialogOk.focus();
+        this.elements.cutDialogCut.focus();
     },
 
     async _commitCut() {
@@ -381,6 +381,42 @@ Object.assign(GrooveDropper, {
         }
 
         this.showToast('Cut job queued');
+        await this._postArchiveRefresh(true);
+    },
+
+    async _commitMerge() {
+        const sampleIdAtMerge = this.state.currentSampleId;
+        this._closeCutDialog();
+
+        const cb = document.getElementById('cut-inherit-labels');
+        const body = {
+            sample_id:       sampleIdAtMerge,
+            markers:         this.state.markers.map(m => m.offset),
+            regions_to_keep: this._cutState.regionActive
+                .map((active, i) => (active ? i : -1))
+                .filter(i => i >= 0),
+            label_ids: (cb && !cb.disabled && cb.checked)
+                ? (this.state.currentSampleLabelIds || [])
+                : [],
+        };
+
+        const res = await fetch('/api/jobs/merge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            if (data.error === 'sample_busy') {
+                this.showToast('A job on this sample is scheduled, please wait');
+            } else {
+                this.showErrorToast(data.error || 'Merge failed');
+            }
+            return;
+        }
+
+        this.showToast('Merge job queued');
         await this._postArchiveRefresh(true);
     },
 

@@ -129,11 +129,12 @@ const GrooveDropper = {
         markerCountDropdown: document.getElementById('marker-count-dropdown'),
         btnSetLinear: document.getElementById('btn-set-linear'),
         btnSetRandom: document.getElementById('btn-set-random'),
-        // Sample cut dialog
+        // Sample cut / merge dialog
         cutDialogOverlay:    document.getElementById('cut-dialog-overlay'),
         cutDialogClose:      document.getElementById('cut-dialog-close'),
         cutDialogCancel:     document.getElementById('cut-dialog-cancel'),
-        cutDialogOk:         document.getElementById('cut-dialog-ok'),
+        cutDialogCut:        document.getElementById('cut-dialog-cut'),
+        cutDialogMerge:      document.getElementById('cut-dialog-merge'),
         cutWaveformWrap:     document.getElementById('cut-waveform-wrap'),
         cutDialogWaveform:   document.getElementById('cut-dialog-waveform'),
         // Quick Pick
@@ -374,7 +375,7 @@ const GrooveDropper = {
                 const active = jobs.filter(j => j.status === 'queued' || j.status === 'running');
                 if (active.length > 0) {
                     const cur    = active.find(j => j.status === 'running') || active[0];
-                    const labels = { archive: 'Archiving…', cut: 'Slicing data…', export: 'Preparing export…' };
+                    const labels = { archive: 'Archiving…', cut: 'Slicing data…', merge: 'Merging sample…', export: 'Preparing export…' };
                     const msg    = labels[cur.job_type] || 'Processing…';
                     const extra  = active.length > 1 ? ` (+${active.length - 1} queued)` : '';
                     this.elements.scanStatus.innerHTML =
@@ -1083,7 +1084,7 @@ const GrooveDropper = {
 
         this._cutState = { regionActive: new Array(numRegions).fill(true) };
         this._renderCutRegions(wrap);
-        this._updateCutOkState();
+        this._updateCutActionState();
     },
 
     _renderCutRegions(container) {
@@ -1109,9 +1110,9 @@ const GrooveDropper = {
                 const idx = parseInt(region.dataset.idx);
                 this._cutState.regionActive[idx] = !this._cutState.regionActive[idx];
                 this._renderCutRegions(container);
-                this._updateCutOkState();
+                this._updateCutActionState();
                 this._updateCutRegionStatus();
-                this.elements.cutDialogOk.focus();
+                this.elements.cutDialogCut.focus();
             });
             container.appendChild(region);
         }
@@ -1124,11 +1125,11 @@ const GrooveDropper = {
         const total  = this._cutState.regionActive ? this._cutState.regionActive.length : 0;
         const active = this._cutState.regionActive ? this._cutState.regionActive.filter(Boolean).length : 0;
         if (active === total) {
-            el.textContent = 'All sections will be cut to new samples';
+            el.textContent = 'All sections selected';
         } else if (active === 0) {
-            el.textContent = 'No sections selected — select at least one to keep';
+            el.textContent = 'No sections selected — select at least one';
         } else {
-            el.textContent = `${active} of ${total} sections will be cut to new samples`;
+            el.textContent = `${active} of ${total} sections selected`;
         }
     },
 
@@ -1281,9 +1282,12 @@ const GrooveDropper = {
         await this._postArchiveRefresh();
     },
 
-    _updateCutOkState() {
-        const anyActive = this._cutState.regionActive && this._cutState.regionActive.some(Boolean);
-        this.elements.cutDialogOk.disabled = !anyActive;
+    _updateCutActionState() {
+        const regions   = this._cutState.regionActive || [];
+        const total     = regions.length;
+        const active    = regions.filter(Boolean).length;
+        this.elements.cutDialogCut  .disabled = active === 0;
+        this.elements.cutDialogMerge.disabled = active < 2 || active === total;
     },
 
     _closeCutDialog() {
@@ -1624,6 +1628,9 @@ const GrooveDropper = {
             } else if (e.code === 'Enter' && e.ctrlKey) {
                 e.preventDefault();
                 this._addMarkerAtOffset(this.state.currentOffset).catch(err => console.error(err));
+            } else if (e.code === 'KeyM' && !this.elements.cutDialogOverlay.classList.contains('hidden')) {
+                e.preventDefault();
+                this._commitMerge().catch(err => console.error(err));
             } else if (e.code === 'KeyM') {
                 e.preventDefault();
                 this._toggleMarkerAtOrigin().catch(err => console.error(err));
@@ -1664,9 +1671,11 @@ const GrooveDropper = {
                 this.findAndSnapToTransient(e.shiftKey).catch(err => console.error(err));
             } else if (e.code === 'KeyA' && this.state.mutable && !e.ctrlKey && !e.shiftKey) {
                 this.promptArchiveSample();
-            } else if (e.code === 'KeyC' && this.state.mutable && !e.ctrlKey && !e.shiftKey) {
+            } else if (e.code === 'KeyX' && this.state.mutable && !e.ctrlKey && !e.shiftKey) {
                 if (this.elements.cutDialogOverlay.classList.contains('hidden')) {
                     this.showCutDialog().catch(err => console.error(err));
+                } else {
+                    this._commitCut().catch(err => console.error(err));
                 }
             } else if (e.code === 'ArrowLeft') {
                 e.preventDefault();
@@ -1699,7 +1708,8 @@ const GrooveDropper = {
 
         this.elements.cutDialogClose .addEventListener('click', () => this._closeCutDialog());
         this.elements.cutDialogCancel.addEventListener('click', () => this._closeCutDialog());
-        this.elements.cutDialogOk    .addEventListener('click', () => this._commitCut().catch(err => console.error(err)));
+        this.elements.cutDialogCut   .addEventListener('click', () => this._commitCut()  .catch(err => console.error(err)));
+        this.elements.cutDialogMerge .addEventListener('click', () => this._commitMerge().catch(err => console.error(err)));
 
         // Preset box
         this.elements.presetAddBtn.addEventListener('click', () => this.addPreset().catch(e => console.error(e)));
