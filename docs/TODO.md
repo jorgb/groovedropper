@@ -1,16 +1,38 @@
 ## DOING
 
+- Rename a sample without losing the original
+  - Only works when mutable is selected
+  - Pencil icon behind file name (disabled if not mutable)
+  - Rename in place editor, file exists check upon typing, music can keep 
+    playing
+  - When enter, music stops, rename is done in back-end, random sample is chosen
+
+
+- Export dialog
+  - export quickpick set
+  - export XPJ
+  - export SP404
+  - export ZIP
+  - export all
+
+
+- Database refresh / rebuild?
+  - Export json with all tags, all quick picks, all tagged samples, mark 
+    points per sample, config, stored folders
+  - Store in fresh database, keep out all the cruff?
+- Vacuum unreferenced digests
+
 - Merge slices option
-  - Consider: Two sections adjacent should not crossfade but simply concatenate
+  - Consider: Two sections adjacent should not crossfade but simply 
+    concatenate, continue writing as one
   - Test samples that benefit from a merge action
   - Test: X should cut if in dialog
   - Test: M should merge in dialog
 
-
 - look into long delay sometimes for loading a sample, is the whole sample 
     loaded in memory when playback is requested? And if so, make it a buffered 
     cache where blocks are requested , clear the cache on reset
-- 
+
 - label-count needs to be completely black right now it is a muted color
   - dimming problem, when tried to be fixed, it will mess up the colors so
     that needs to be done in a different way!
@@ -28,14 +50,7 @@
 
 Export will eventually allow for more options
 
-- fix: checkboxes for label slightly larger
-
-- Export dialog
-  - export quickpick set
-  - export XPJ
-  - export SP404
-  - export ZIP
-  - export all
+- fix(ui): checkboxes for label slightly larger
 
 History box (Two tabs)
 - Popup overlay window with cursor controls? Select is pick? Audio playback?
@@ -47,14 +62,6 @@ History box (Two tabs)
   - Paging?
   - Clean history button
 
-- Rename a sample without losing the original
-  - Only works when mutable is selected
-  - Pencil icon behind file name (disabled if not mutable)
-  - Rename in place editor, file exists check upon typing, music can keep 
-    playing
-  - When enter, music stops, rename is done in back-end, random sample is chosen
-
-
 Reverse MPC sample:
 - Make XPJ with no chop points
 - Make XPJ with one chop point
@@ -64,7 +71,6 @@ Reverse MPC sample:
 
 - Test 
   - Sample needs to be able to be relocatable
-
 
 - fine grained marker control (shift drag or mouse drag on edit box?)
   - drag, rough movements, marker does not get updated in DB until release
