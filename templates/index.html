@@ -2107,11 +2107,19 @@
                     <label for="cut-inherit-labels" style="color:var(--muted);cursor:pointer;user-select:none;">Use tags from original sample</label>
                 </div>
                 <p id="cut-region-status" style="margin:6px 0 0;font-size:1em;color:var(--muted);"></p>
-                <p style="margin:8px 0 0;font-size:0.9em;color:var(--muted);line-height:1.6;">
-                    <i class="fa-solid fa-scissors"></i> <strong>Cut</strong> — each kept section becomes a new WAV file.<br>
-                    <i class="fa-solid fa-layer-group"></i> <strong>Merge</strong> — all kept sections are joined into one WAV; excluded sections are removed, crossfaded at each join.<br>
-                    The original file is renamed / archived (.bak) in both cases.
-                </p>
+                <table style="margin:8px 0 0;font-size:0.9em;color:var(--muted);border-collapse:collapse;">
+                    <tr>
+                        <td style="padding:2px 10px 2px 0;white-space:nowrap;"><i class="fa-solid fa-scissors"></i> <strong>Cut</strong></td>
+                        <td style="padding:2px 0;">Each kept section becomes a new WAV file.</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:2px 10px 2px 0;white-space:nowrap;"><i class="fa-solid fa-layer-group"></i> <strong>Merge</strong></td>
+                        <td style="padding:2px 0;">All kept sections are joined into one WAV; excluded sections are removed, crossfaded at each join.</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding:4px 0 0;">The original file is renamed / archived (.bak) in both cases.</td>
+                    </tr>
+                </table>
             </div>
             <div class="dialog-footer">
                 <button id="cut-dialog-cancel" class="panel-icon-btn">Cancel</button>
