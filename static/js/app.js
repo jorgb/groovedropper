@@ -129,6 +129,11 @@ const GrooveDropper = {
         markerCountDropdown: document.getElementById('marker-count-dropdown'),
         btnSetLinear: document.getElementById('btn-set-linear'),
         btnSetRandom: document.getElementById('btn-set-random'),
+        // Export dialog
+        exportDialogOverlay:  document.getElementById('export-dialog-overlay'),
+        exportDialogClose:    document.getElementById('export-dialog-close'),
+        exportDialogCancel:   document.getElementById('export-dialog-cancel'),
+        exportDialogOk:       document.getElementById('export-dialog-ok'),
         // Sample cut / merge dialog
         cutDialogOverlay:    document.getElementById('cut-dialog-overlay'),
         cutDialogClose:      document.getElementById('cut-dialog-close'),
@@ -1584,6 +1589,10 @@ const GrooveDropper = {
                     _closeMutableWarnDialog();
                     return;
                 }
+                if (!this.elements.exportDialogOverlay.classList.contains('hidden')) {
+                    this._closeExportDialog();
+                    return;
+                }
                 if (!this.elements.cutDialogOverlay.classList.contains('hidden')) {
                     this._closeCutDialog();
                     return;
@@ -1652,6 +1661,8 @@ const GrooveDropper = {
             } else if (e.code === 'KeyP') {
                 this._clearFocusedQpSlot();
                 this.loadPrevHistory(this.state.isPlaying || this.state.playInstantly);
+            } else if (e.code === 'KeyE') {
+                this.showExportDialog().catch(err => console.error(err));
             } else if (e.code === 'KeyS') {
                 if (e.shiftKey) this.downloadOriginal();
                 else this.downloadSlice();
@@ -1710,6 +1721,12 @@ const GrooveDropper = {
         this.elements.cutDialogCancel.addEventListener('click', () => this._closeCutDialog());
         this.elements.cutDialogCut   .addEventListener('click', () => this._commitCut()  .catch(err => console.error(err)));
         this.elements.cutDialogMerge .addEventListener('click', () => this._commitMerge().catch(err => console.error(err)));
+
+        // Export dialog
+        this.elements.exportDialogClose .addEventListener('click', () => this._closeExportDialog());
+        this.elements.exportDialogCancel.addEventListener('click', () => this._closeExportDialog());
+        this.elements.exportDialogOk    .addEventListener('click', () => this._commitExport().catch(err => console.error(err)));
+        document.getElementById('export-type-dropdown').addEventListener('change', () => this._onExportTypeChange());
 
         // Preset box
         this.elements.presetAddBtn.addEventListener('click', () => this.addPreset().catch(e => console.error(e)));

@@ -2141,10 +2141,13 @@
         </div>
     </div>
 
+    {% include 'dialogs/export.html' %}
+
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app-audio.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app-labels.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app-quickpick.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app-export.js') }}"></script>
     <script>GrooveDropper.init();</script>
 </body>
 </html>

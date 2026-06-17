@@ -20,10 +20,11 @@ from groove.db import DatabaseTooNewError
 from groove.util import get_sample_meta
 from groove.queue import scan_queue
 from groove.jobs import job_queue, SampleBusyError
-import groove.jobs_archiving  as jobs_archiving
-import groove.jobs_cutting    as jobs_cutting
-import groove.jobs_merging    as jobs_merging
-import groove.jobs_exporting  as jobs_exporting
+import groove.jobs_archiving    as jobs_archiving
+import groove.jobs_cutting      as jobs_cutting
+import groove.jobs_merging      as jobs_merging
+import groove.jobs_saving       as jobs_saving
+import groove.jobs_export_bytag as jobs_export_bytag
 
 # set this to true to log all HTTP requests
 HTTP_DEBUG = False
@@ -335,6 +336,14 @@ def download_job(job_id):
         return jsonify({'error': 'not_found'}), 404
     if job.status != JobStatus.DONE or job.result is None:
         return jsonify({'error': 'not_ready'}), 409
+    # Export collection jobs (export_*) always produce a ZIP
+    if job.job_type.startswith('export_'):
+        return send_file(
+            io.BytesIO(job.result),
+            as_attachment=True,
+            download_name='export.zip',
+            mimetype='application/zip',
+        )
     stem         = job.payload.get('stem', 'export')
     has_markers  = bool(job.payload.get('markers'))
     raw_original = job.payload.get('raw_original', False)
@@ -513,9 +522,30 @@ def job_export():
         'include_original': bool(data.get('include_original', False)),
     }
     try:
-        job_id = job_queue.enqueue('export', sample_id, payload, jobs_exporting.run)
+        job_id = job_queue.enqueue('export', sample_id, payload, jobs_saving.run)
     except SampleBusyError:
         return jsonify({'error': 'sample_busy'}), 409
+    return jsonify({'job_id': job_id, 'status': 'queued'}), 202
+
+
+@app.route('/api/jobs/export_bytag', methods=['POST'])
+def job_export_bytag():
+    data    = request.get_json(silent=True) or {}
+    running = [j for j in job_queue.snapshot()
+               if j['job_type'].startswith('export_') and j['status'] in ('queued', 'running')]
+    if running:
+        return jsonify({'error': 'An export is already in progress'}), 409
+    payload = {
+        'label_ids':      [int(lid) for lid in data.get('label_ids', [])],
+        'untagged':       bool(data.get('untagged', False)),
+        'filter_mode':    data.get('filter_mode', 'OR'),
+        'preserve_paths': bool(data.get('preserve_paths', False)),
+        'archive_after':  bool(data.get('archive_after', False)),
+    }
+    try:
+        job_id = job_queue.enqueue('export_bytag', None, payload, jobs_export_bytag.run)
+    except SampleBusyError:
+        return jsonify({'error': 'An export is already in progress'}), 409
     return jsonify({'job_id': job_id, 'status': 'queued'}), 202
 
 

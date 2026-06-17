@@ -1,0 +1,109 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="PNXQAhyBBbG3GD-k8Sqr">
+    <mxGraphModel dx="1542" dy="815" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-35" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="export-panel-per-choice" vertex="1">
+          <mxGeometry height="310" width="650" x="119.35" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-36" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="x" vertex="1">
+          <mxGeometry height="30" width="30" x="739.35" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-37" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="OK" vertex="1">
+          <mxGeometry height="30" width="80" x="679.35" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-38" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Cancel" vertex="1">
+          <mxGeometry height="30" width="80" x="589.35" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-39" edge="1" parent="1" source="w0d9bGpjZMWSMUwaYi5S-35" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0.165;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="369.35" y="650" as="sourcePoint" />
+            <mxPoint x="769.35" y="460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-40" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Samples in tag selection" vertex="1">
+          <mxGeometry height="30" width="160" x="179.35" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-41" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Export" vertex="1">
+          <mxGeometry height="30" width="60" x="119.35" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-42" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0.165;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="119.35" y="671" as="sourcePoint" />
+            <mxPoint x="659.35" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-43" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0.165;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1.001;entryY=0.84;entryDx=0;entryDy=0;entryPerimeter=0;" target="w0d9bGpjZMWSMUwaYi5S-35" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="119.35" y="671" as="sourcePoint" />
+            <mxPoint x="659.35" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="export-panel-per-choice" vertex="1">
+          <mxGeometry height="310" width="650" x="120" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-2" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="x" vertex="1">
+          <mxGeometry height="30" width="30" x="740" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="OK" vertex="1">
+          <mxGeometry height="30" width="80" x="680" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Cancel" vertex="1">
+          <mxGeometry height="30" width="80" x="590" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-5" edge="1" parent="1" source="w0d9bGpjZMWSMUwaYi5S-1" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0.165;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="370" y="280" as="sourcePoint" />
+            <mxPoint x="770" y="90" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="export-dropdown" vertex="1">
+          <mxGeometry height="30" width="160" x="180" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-8" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Export" vertex="1">
+          <mxGeometry height="30" width="60" x="120" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-9" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0.165;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="120" y="301" as="sourcePoint" />
+            <mxPoint x="660" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-18" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="This will export the samples in the current tags filter" vertex="1">
+          <mxGeometry height="30" width="530" x="130" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-19" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="" vertex="1">
+          <mxGeometry height="20" width="20" x="130" y="685" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-20" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="Archive and remove selected samples (batch rename to .bak) after exporting" vertex="1">
+          <mxGeometry height="30" width="500" x="160" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-21" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="The samples will be downloaded as a zip file when ready" vertex="1">
+          <mxGeometry height="30" width="530" x="130" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-22" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="- X samples will be exported" vertex="1">
+          <mxGeometry height="30" width="505" x="145" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-23" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="" vertex="1">
+          <mxGeometry height="20" width="20" x="145" y="585" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-24" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="Preserve relative paths in ZIP file" vertex="1">
+          <mxGeometry height="30" width="500" x="175" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-25" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0.165;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1.001;entryY=0.84;entryDx=0;entryDy=0;entryPerimeter=0;" target="w0d9bGpjZMWSMUwaYi5S-1" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="120" y="301" as="sourcePoint" />
+            <mxPoint x="660" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-45" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="- The size of the samples is X (kB, Mb, Gb)" vertex="1">
+          <mxGeometry height="30" width="505" x="145" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="w0d9bGpjZMWSMUwaYi5S-46" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="Select what you want to export" vertex="1">
+          <mxGeometry height="30" width="530" x="130" y="100" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

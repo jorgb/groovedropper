@@ -1,0 +1,44 @@
+<!-- Export dialog -->
+<div id="export-dialog-overlay" class="dialog-overlay hidden">
+    <div id="export-dialog" class="dialog-card">
+        <div class="dialog-header">
+            <span><i class="fa-solid fa-file-export" style="margin-right:6px;"></i>Export</span>
+            <button id="export-dialog-close" class="dialog-close-btn" title="Close">&times;</button>
+        </div>
+        <div class="dialog-body">
+            <select id="export-type-dropdown" style="width:100%;background-color:var(--bg-color);color:var(--text-color);border:1px solid var(--border-color);font-family:var(--font-family);padding:6px 8px;outline:none;cursor:pointer;box-sizing:border-box;">
+                <option value="" disabled selected>Select export type…</option>
+                <option value="bytag">Samples in tag selection</option>
+            </select>
+
+            <div id="export-no-selection-hint" style="margin-top:12px;font-size:0.9em;color:var(--muted);">
+                Select an export type to continue.
+            </div>
+
+            <!-- Panel: export by tag selection -->
+            <div id="export-panel-bytag" class="export-panel" style="display:none;margin-top:12px;">
+                <p style="margin:0 0 6px;font-size:0.9em;color:var(--muted);">
+                    This will export the samples in the current tags filter.
+                </p>
+                <ul style="margin:0 0 10px;padding-left:18px;font-size:0.9em;color:var(--muted);line-height:1.8;">
+                    <li><span id="export-bytag-count">…</span> samples will be exported</li>
+                </ul>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <input type="checkbox" id="export-preserve-paths">
+                    <label for="export-preserve-paths" style="font-size:0.9em;color:var(--muted);cursor:pointer;user-select:none;">Preserve relative paths in ZIP file</label>
+                </div>
+                <p style="margin:0 0 10px;font-size:0.9em;color:var(--muted);">
+                    The samples will be downloaded as a ZIP file when ready.
+                </p>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox" id="export-archive-after">
+                    <label for="export-archive-after" style="font-size:0.9em;color:var(--muted);cursor:pointer;user-select:none;">Archive and remove selected samples after exporting (batch rename to .bak)</label>
+                </div>
+            </div>
+        </div>
+        <div class="dialog-footer">
+            <button id="export-dialog-cancel">Cancel</button>
+            <button id="export-dialog-ok" disabled>OK</button>
+        </div>
+    </div>
+</div>
