@@ -134,6 +134,7 @@ const GrooveDropper = {
         exportDialogClose:    document.getElementById('export-dialog-close'),
         exportDialogCancel:   document.getElementById('export-dialog-cancel'),
         exportDialogOk:       document.getElementById('export-dialog-ok'),
+        exportDownloadBtn:    document.getElementById('export-download-btn'),
         // Sample cut / merge dialog
         cutDialogOverlay:    document.getElementById('cut-dialog-overlay'),
         cutDialogClose:      document.getElementById('cut-dialog-close'),
@@ -380,7 +381,7 @@ const GrooveDropper = {
                 const active = jobs.filter(j => j.status === 'queued' || j.status === 'running');
                 if (active.length > 0) {
                     const cur    = active.find(j => j.status === 'running') || active[0];
-                    const labels = { archive: 'Archiving…', cut: 'Slicing data…', merge: 'Merging sample…', export: 'Preparing export…' };
+                    const labels = { archive: 'Archiving…', cut: 'Slicing data…', merge: 'Merging sample…', export: 'Preparing export…', export_bytag: 'Exporting samples by tag…' };
                     const msg    = labels[cur.job_type] || 'Processing…';
                     const extra  = active.length > 1 ? ` (+${active.length - 1} queued)` : '';
                     this.elements.scanStatus.innerHTML =
@@ -1727,6 +1728,7 @@ const GrooveDropper = {
         this.elements.exportDialogCancel.addEventListener('click', () => this._closeExportDialog());
         this.elements.exportDialogOk    .addEventListener('click', () => this._commitExport().catch(err => console.error(err)));
         document.getElementById('export-type-dropdown').addEventListener('change', () => this._onExportTypeChange());
+        this.elements.exportDownloadBtn.addEventListener('click', () => this._triggerExportDownload());
 
         // Preset box
         this.elements.presetAddBtn.addEventListener('click', () => this.addPreset().catch(e => console.error(e)));

@@ -5,6 +5,7 @@
 Object.assign(GrooveDropper, {
 
     _exportPollInterval: null,
+    _exportDownloadUrl:  null,
 
     async showExportDialog() {
         // Guard: refuse if any export_* job is already queued or running
@@ -123,7 +124,7 @@ Object.assign(GrooveDropper, {
                 if (job.result_ready) {
                     clearInterval(this._exportPollInterval);
                     this._exportPollInterval = null;
-                    this._showExportReadyToast(jobId);
+                    this._onExportDone(jobId);
                 } else if (job.status === 'failed') {
                     clearInterval(this._exportPollInterval);
                     this._exportPollInterval = null;
@@ -133,26 +134,19 @@ Object.assign(GrooveDropper, {
         }, 5000);
     },
 
-    _showExportReadyToast(jobId) {
-        const toast = this.elements.toast;
-        toast.innerHTML = '';
-        toast.appendChild(document.createTextNode('Export ready — '));
-        const link = document.createElement('a');
-        link.href        = `/api/jobs/${jobId}/download`;
-        link.textContent = 'Download';
-        link.style.cssText = 'color:inherit;font-weight:bold;text-decoration:underline;cursor:pointer;';
-        link.addEventListener('click', () => {
-            setTimeout(() => { toast.className = ''; toast.innerHTML = ''; }, 500);
-        });
-        toast.appendChild(link);
-        toast.className = 'show';
-        // Dismissed by any keypress
-        const dismiss = () => {
-            toast.className  = '';
-            toast.innerHTML  = '';
-            document.removeEventListener('keydown', dismiss);
-        };
-        document.addEventListener('keydown', dismiss);
+    _onExportDone(jobId) {
+        this._exportDownloadUrl = `/api/jobs/${jobId}/download`;
+        this.elements.exportDownloadBtn.style.display = '';
+        this.showToast('Export ready — use the download button');
+    },
+
+    _triggerExportDownload() {
+        if (!this._exportDownloadUrl) return;
+        const a = document.createElement('a');
+        a.href = this._exportDownloadUrl;
+        a.click();
+        this._exportDownloadUrl = null;
+        this.elements.exportDownloadBtn.style.display = 'none';
     },
 
 });
