@@ -30,10 +30,12 @@
                 <p style="margin:0 0 20px;font-size:0.9em;color:var(--muted);">
                     The samples will be downloaded as a ZIP file when ready.
                 </p>
-                <div style="border-top:1px solid var(--border-color);margin-top:10px;padding-top:10px;display:flex;align-items:center;gap:8px;">
-                    <input type="checkbox" id="export-archive-after">
-                    <label for="export-archive-after" style="font-size:0.9em;color:#e05555;cursor:pointer;user-select:none;">Archive and remove selected samples after exporting (batch rename to .bak)</label>
-                </div>
+            </div>
+
+            <!-- Global: archive after export (shown for any export type once selected) -->
+            <div id="export-archive-section" style="display:none;border-top:1px solid var(--border-color);margin-top:12px;padding-top:10px;align-items:center;gap:8px;">
+                <input type="checkbox" id="export-archive-after">
+                <label for="export-archive-after" style="font-size:0.9em;color:#e05555;cursor:pointer;user-select:none;">Archive and remove selected samples after exporting (batch rename to .bak)</label>
             </div>
         </div>
         <div class="dialog-footer">

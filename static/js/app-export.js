@@ -9,11 +9,15 @@ Object.assign(GrooveDropper, {
 
     async showExportDialog() {
         // Reset to initial state
-        const dropdown = document.getElementById('export-type-dropdown');
-        const hint     = document.getElementById('export-no-selection-hint');
-        const ok       = document.getElementById('export-dialog-ok');
+        const dropdown        = document.getElementById('export-type-dropdown');
+        const hint            = document.getElementById('export-no-selection-hint');
+        const ok              = document.getElementById('export-dialog-ok');
+        const archiveSection  = document.getElementById('export-archive-section');
+        const archiveCheckbox = document.getElementById('export-archive-after');
         dropdown.value = '';
         hint.style.display = '';
+        archiveSection.style.display = 'none';
+        archiveCheckbox.checked = false;
         document.querySelectorAll('.export-panel').forEach(p => { p.style.display = 'none'; });
         ok.disabled = true;
 
@@ -26,9 +30,10 @@ Object.assign(GrooveDropper, {
     },
 
     _onExportTypeChange() {
-        const dropdown = document.getElementById('export-type-dropdown');
-        const hint     = document.getElementById('export-no-selection-hint');
-        const ok       = document.getElementById('export-dialog-ok');
+        const dropdown       = document.getElementById('export-type-dropdown');
+        const hint           = document.getElementById('export-no-selection-hint');
+        const ok             = document.getElementById('export-dialog-ok');
+        const archiveSection = document.getElementById('export-archive-section');
 
         hint.style.display = 'none';
         document.querySelectorAll('.export-panel').forEach(p => { p.style.display = 'none'; });
@@ -37,6 +42,7 @@ Object.assign(GrooveDropper, {
         if (!selected) {
             ok.disabled = true;
             hint.style.display = '';
+            archiveSection.style.display = 'none';
             return;
         }
 
@@ -45,6 +51,7 @@ Object.assign(GrooveDropper, {
             panel.style.display = '';
             this._populateExportPanel(selected);
         }
+        archiveSection.style.display = 'flex';
         ok.disabled = false;
     },
 
