@@ -4,26 +4,10 @@
 
 Object.assign(GrooveDropper, {
 
-    _exportPollInterval: null,
-    _exportDownloadUrl:  null,
+    // jobId → intervalId for every export currently being polled
+    _activeExportJobs: new Map(),
 
     async showExportDialog() {
-        // Guard: refuse if any export_* job is already queued or running
-        try {
-            const res = await fetch('/api/jobs');
-            if (res.ok) {
-                const jobs   = await res.json();
-                const active = jobs.filter(j =>
-                    j.job_type.startsWith('export_') &&
-                    (j.status === 'queued' || j.status === 'running')
-                );
-                if (active.length > 0) {
-                    this.showToast('An export is already in progress');
-                    return;
-                }
-            }
-        } catch (_) { /* non-fatal */ }
-
         // Reset to initial state
         const dropdown = document.getElementById('export-type-dropdown');
         const hint     = document.getElementById('export-no-selection-hint');
@@ -108,45 +92,49 @@ Object.assign(GrooveDropper, {
         }
 
         const { job_id } = await res.json();
-        this.showToast("Export queued — you'll be notified when the download is ready");
+        this.showToast('Export queued — the file will download automatically when ready');
         this._pollExportJob(job_id);
     },
 
     _pollExportJob(jobId) {
-        if (this._exportPollInterval) {
-            clearInterval(this._exportPollInterval);
-        }
-        this._exportPollInterval = setInterval(async () => {
+        this._showExportIndicator();
+        const intervalId = setInterval(async () => {
             try {
                 const res = await fetch(`/api/jobs/${jobId}`);
                 if (!res.ok) return;
                 const job = await res.json();
                 if (job.result_ready) {
-                    clearInterval(this._exportPollInterval);
-                    this._exportPollInterval = null;
+                    clearInterval(intervalId);
+                    this._activeExportJobs.delete(jobId);
                     this._onExportDone(jobId);
                 } else if (job.status === 'failed') {
-                    clearInterval(this._exportPollInterval);
-                    this._exportPollInterval = null;
+                    clearInterval(intervalId);
+                    this._activeExportJobs.delete(jobId);
+                    this._maybeHideExportIndicator();
                     this.showErrorToast(job.error || 'Export failed');
                 }
             } catch (_) { /* non-fatal */ }
         }, 5000);
+        this._activeExportJobs.set(jobId, intervalId);
     },
 
     _onExportDone(jobId) {
-        this._exportDownloadUrl = `/api/jobs/${jobId}/download`;
-        this.elements.exportDownloadBtn.style.display = '';
-        this.showToast('Export ready — use the download button');
+        const a = document.createElement('a');
+        a.href = `/api/jobs/${jobId}/download`;
+        a.click();
+        this._maybeHideExportIndicator();
+        this.showToast('Export downloaded');
     },
 
-    _triggerExportDownload() {
-        if (!this._exportDownloadUrl) return;
-        const a = document.createElement('a');
-        a.href = this._exportDownloadUrl;
-        a.click();
-        this._exportDownloadUrl = null;
-        this.elements.exportDownloadBtn.style.display = 'none';
+    _showExportIndicator() {
+        this.elements.exportProgressIndicator.style.display = '';
+    },
+
+    _maybeHideExportIndicator() {
+        if (this._activeExportJobs.size === 0) {
+            this.elements.exportProgressIndicator.style.display = 'none';
+            this.elements.exportProgressIndicator.classList.remove('pinned');
+        }
     },
 
 });

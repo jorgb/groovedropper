@@ -1,5 +1,8 @@
 ## DOING
 
+test: download multiple files / export multiple files 
+- investigate xport mechanism, unique files?
+
 - Rename a sample without losing the original
   - Only works when mutable is selected
   - Pencil icon behind file name (disabled if not mutable)
@@ -15,6 +18,21 @@
   - export ZIP
   - export all
 
+bug: going back to cut / archived sample gives a non existing sample
+  - cut a sample 
+  - press P
+  - sample is not there anymore
+
+- Scroll through database selection window
+  - j - k will scroll forward and backward through database selection
+  - h is go to start
+  - Why? If in selection random might just replay the same samples and 
+    sometimes it is nice to browse the current selection and go back 
+
+- Silence finder and put (at max) 32 markers on the places where the silence 
+  starts
+  - If more than 32 positions, take the most spread out positions until max 
+    32 are present.
 
 - Database refresh / rebuild?
   - Export json with all tags, all quick picks, all tagged samples, mark 

@@ -1149,6 +1149,60 @@
         }
 
         /* ------------------------------------------------------------------ */
+        /* Export progress indicator                                           */
+        /* ------------------------------------------------------------------ */
+
+        #export-progress-indicator {
+            position: relative;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        #export-progress-text {
+            font-size: 0.82em;
+            color: var(--accent-color);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        #export-progress-indicator:hover #export-progress-text,
+        #export-progress-indicator.pinned #export-progress-text {
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .export-progress-tooltip {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--box-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 9px 12px;
+            font-size: 0.8em;
+            color: var(--text-color);
+            white-space: normal;
+            width: 230px;
+            z-index: 200;
+            line-height: 1.5;
+            pointer-events: none;
+        }
+
+        #export-progress-indicator:hover .export-progress-tooltip,
+        #export-progress-indicator.pinned .export-progress-tooltip {
+            display: block;
+        }
+
+        /* ------------------------------------------------------------------ */
         /* Scan status & pitch badge                                           */
         /* ------------------------------------------------------------------ */
 
@@ -1737,10 +1791,14 @@
             </div>
             <div id="index-status-bar">
                 <div id="scan-status"><i class="fa-solid fa-spinner fa-spin"></i> <span>Initializing...</span></div>
-                <button id="export-download-btn" class="panel-icon-btn" title="Export ready — click to download" style="display:none;margin-right:4px;">
-                    <i class="fa-solid fa-file-zipper"></i>
-                    Download Export
-                </button>
+                <div id="export-progress-indicator" style="display:none;">
+                    <span id="export-progress-text">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Export in progress
+                    </span>
+                    <div class="export-progress-tooltip">
+                        Your export is being prepared, do not refresh your browser. The file(s) will download automatically when done.
+                    </div>
+                </div>
                 <button id="controls-help-btn" class="panel-icon-btn"
                         title="Show / hide keyboard controls (?)">
                     <i class="fa-solid fa-keyboard"></i>

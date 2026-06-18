@@ -134,7 +134,7 @@ const GrooveDropper = {
         exportDialogClose:    document.getElementById('export-dialog-close'),
         exportDialogCancel:   document.getElementById('export-dialog-cancel'),
         exportDialogOk:       document.getElementById('export-dialog-ok'),
-        exportDownloadBtn:    document.getElementById('export-download-btn'),
+        exportProgressIndicator: document.getElementById('export-progress-indicator'),
         // Sample cut / merge dialog
         cutDialogOverlay:    document.getElementById('cut-dialog-overlay'),
         cutDialogClose:      document.getElementById('cut-dialog-close'),
@@ -1184,7 +1184,8 @@ const GrooveDropper = {
             return;
         }
         const { job_id } = await res.json();
-        this.showToast('Export started…');
+        this.showToast('Export started — the file will download automatically when ready');
+        this._showExportIndicator();
         this._pollExportJob(job_id);
     },
 
@@ -1216,26 +1217,9 @@ const GrooveDropper = {
             return;
         }
         const { job_id } = await res.json();
-        this.showToast(markers.length ? 'Export started — preparing ZIP…' : 'Export started…');
+        this.showToast('Export started — the file will download automatically when ready');
+        this._showExportIndicator();
         this._pollExportJob(job_id);
-    },
-
-    _pollExportJob(jobId) {
-        const poll = async () => {
-            try {
-                const res  = await fetch(`/api/jobs/${jobId}`);
-                if (!res.ok) { this.showToast('Export check failed'); return; }
-                const data = await res.json();
-                if (data.status === 'done' && data.result_ready) {
-                    window.location.href = `/api/jobs/${jobId}/download`;
-                } else if (data.status === 'failed') {
-                    this.showToast(`Export failed: ${data.error || 'unknown error'}`);
-                } else {
-                    setTimeout(poll, 1000);
-                }
-            } catch (e) { console.error('Export poll:', e); }
-        };
-        setTimeout(poll, 500);
     },
 
     promptArchiveSample() {
@@ -1728,7 +1712,9 @@ const GrooveDropper = {
         this.elements.exportDialogCancel.addEventListener('click', () => this._closeExportDialog());
         this.elements.exportDialogOk    .addEventListener('click', () => this._commitExport().catch(err => console.error(err)));
         document.getElementById('export-type-dropdown').addEventListener('change', () => this._onExportTypeChange());
-        this.elements.exportDownloadBtn.addEventListener('click', () => this._triggerExportDownload());
+        this.elements.exportProgressIndicator.addEventListener('click', () => {
+            this.elements.exportProgressIndicator.classList.toggle('pinned');
+        });
 
         // Preset box
         this.elements.presetAddBtn.addEventListener('click', () => this.addPreset().catch(e => console.error(e)));
