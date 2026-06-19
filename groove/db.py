@@ -685,6 +685,72 @@ def scan_insert_sample_label(cursor, digest, label_id):
 
 
 # ---------------------------------------------------------------------------
+# Export helpers
+# ---------------------------------------------------------------------------
+
+def _build_export_where(label_ids, untagged, filter_mode):
+    clauses = []
+    params  = []
+
+    if label_ids:
+        ph = ','.join('?' * len(label_ids))
+        if filter_mode == 'AND':
+            clauses.append(
+                f's.digest IN ('
+                f'SELECT digest FROM sample_labels '
+                f'WHERE label_id IN ({ph}) '
+                f'GROUP BY digest HAVING COUNT(DISTINCT label_id) = ?)'
+            )
+            params.extend(label_ids)
+            params.append(len(label_ids))
+        else:
+            clauses.append(
+                f's.digest IN (SELECT DISTINCT digest FROM sample_labels WHERE label_id IN ({ph}))'
+            )
+            params.extend(label_ids)
+
+    if untagged:
+        clauses.append('NOT EXISTS (SELECT 1 FROM sample_labels sl_u WHERE sl_u.digest = s.digest)')
+
+    if not clauses:
+        return '', []
+    return 'WHERE ' + ' OR '.join(f'({c})' for c in clauses), params
+
+
+def count_samples_for_export(conn, label_ids=None, untagged=False, filter_mode='OR'):
+    where, params = _build_export_where(label_ids or [], untagged, filter_mode)
+    return conn.execute(
+        f'SELECT COUNT(DISTINCT s.id) FROM samples s {where}', params
+    ).fetchone()[0]
+
+
+def fetch_samples_for_export(conn, label_ids=None, untagged=False, filter_mode='OR'):
+    """Return list of dicts with sample metadata for export, DISTINCT by digest."""
+    where, params = _build_export_where(label_ids or [], untagged, filter_mode)
+    rows = conn.execute(f'''
+        SELECT s.path, s.name, s.directory, s.size, s.digest,
+               sf.path AS folder_path
+        FROM samples s
+        LEFT JOIN scan_folders sf ON sf.id = s.folder_id
+        {where}
+        ORDER BY s.path
+    ''', params).fetchall()
+
+    result = []
+    for row in rows:
+        d = dict(row)
+        label_rows = conn.execute('''
+            SELECT l.name FROM labels l
+            JOIN sample_labels sl ON sl.label_id = l.id
+            WHERE sl.digest = ?
+            ORDER BY l.name
+        ''', (row['digest'],)).fetchall()
+        d['labels'] = [r['name'] for r in label_rows]
+        result.append(d)
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Quick Pick
 # ---------------------------------------------------------------------------
 

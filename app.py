@@ -7,7 +7,9 @@ import argparse
 import socket
 import sqlite3
 import io
+import json
 import random
+import tempfile
 import webbrowser
 import logging
 import traceback
@@ -535,16 +537,38 @@ def job_export_bytag():
                if j['job_type'].startswith('export_') and j['status'] in ('queued', 'running')]
     if running:
         return jsonify({'error': 'An export is already in progress'}), 409
+
+    label_ids   = [int(lid) for lid in data.get('label_ids', [])]
+    untagged    = bool(data.get('untagged', False))
+    filter_mode = data.get('filter_mode', 'OR')
+
+    # Snapshot sample data in the main thread so the export is DB-independent
+    with db.get_db() as conn:
+        samples = db.fetch_samples_for_export(conn, label_ids, untagged, filter_mode)
+
+    fd, manifest_path = tempfile.mkstemp(suffix='.json', prefix='groovedropper_export_')
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            json.dump(samples, f)
+    except Exception:
+        try:
+            os.unlink(manifest_path)
+        except OSError:
+            pass
+        raise
+
     payload = {
-        'label_ids':      [int(lid) for lid in data.get('label_ids', [])],
-        'untagged':       bool(data.get('untagged', False)),
-        'filter_mode':    data.get('filter_mode', 'OR'),
+        'manifest_path':  manifest_path,
         'preserve_paths': bool(data.get('preserve_paths', False)),
         'archive_after':  bool(data.get('archive_after', False)),
     }
     try:
         job_id = job_queue.enqueue('export_bytag', None, payload, jobs_export_bytag.run)
     except SampleBusyError:
+        try:
+            os.unlink(manifest_path)
+        except OSError:
+            pass
         return jsonify({'error': 'An export is already in progress'}), 409
     return jsonify({'job_id': job_id, 'status': 'queued'}), 202
 
@@ -620,6 +644,26 @@ def untagged_count():
     with db.get_db() as conn:
         count = db.fetch_untagged_sample_count(conn)
     return jsonify({'count': count})
+
+
+@app.route('/api/samples/export-preview', methods=['POST'])
+def export_preview():
+    data        = request.get_json(silent=True) or {}
+    label_ids   = [int(lid) for lid in data.get('label_ids', [])]
+    untagged    = bool(data.get('untagged', False))
+    filter_mode = data.get('filter_mode', 'OR')
+
+    with db.get_db() as conn:
+        count       = db.count_samples_for_export(conn, label_ids, untagged, filter_mode)
+        label_names = []
+        for lid in label_ids:
+            row = db.fetch_label_by_id(conn, lid)
+            if row:
+                label_names.append(row['name'])
+        if untagged:
+            label_names.append('untagged')
+
+    return jsonify({'count': count, 'label_names': label_names})
 
 
 @app.route('/api/sample/random', methods=['POST'])

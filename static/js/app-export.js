@@ -47,10 +47,39 @@ Object.assign(GrooveDropper, {
         ok.disabled = false;
     },
 
-    _populateExportPanel(mode) {
+    _exportLabelFilter() {
+        const isAll     = this.state.activePresetId === null;
+        const labelIds  = isAll ? this.state.allPresetSelectedLabelIds : this.state.activePresetLabelIds;
+        const filterMode = isAll ? 'OR' : (this.state.activeFilterMode || 'OR');
+        return { labelIds: labelIds || [], filterMode };
+    },
+
+    async _populateExportPanel(mode) {
         if (mode === 'bytag') {
             const countEl = document.getElementById('export-bytag-count');
-            if (countEl) countEl.textContent = this.state.totalSamplesCount;
+            const tagsEl  = document.getElementById('export-bytag-tags');
+            if (countEl) countEl.textContent = '…';
+            if (tagsEl)  tagsEl.textContent  = '';
+
+            const { labelIds, filterMode } = this._exportLabelFilter();
+            try {
+                const res = await fetch('/api/samples/export-preview', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({
+                        label_ids:   labelIds,
+                        untagged:    this.state.untaggedFilterActive || false,
+                        filter_mode: filterMode,
+                    }),
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (countEl) countEl.textContent = data.count;
+                    if (tagsEl && data.label_names && data.label_names.length > 0) {
+                        tagsEl.textContent = '(' + data.label_names.join(', ') + ')';
+                    }
+                }
+            } catch (_) { /* non-fatal */ }
         }
     },
 
@@ -61,10 +90,11 @@ Object.assign(GrooveDropper, {
 
         let payload = {};
         if (mode === 'bytag') {
+            const { labelIds, filterMode } = this._exportLabelFilter();
             payload = {
-                label_ids:      this.state.activePresetLabelIds || [],
-                untagged:       this.state.untaggedFilterActive  || false,
-                filter_mode:    this.state.activeFilterMode      || 'OR',
+                label_ids:      labelIds,
+                untagged:       this.state.untaggedFilterActive || false,
+                filter_mode:    filterMode,
                 preserve_paths: document.getElementById('export-preserve-paths').checked,
                 archive_after:  document.getElementById('export-archive-after').checked,
             };
