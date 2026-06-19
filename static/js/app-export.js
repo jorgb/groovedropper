@@ -26,9 +26,9 @@ Object.assign(GrooveDropper, {
     },
 
     _onExportTypeChange() {
-        const dropdown       = document.getElementById('export-type-dropdown');
-        const hint           = document.getElementById('export-no-selection-hint');
-        const ok             = document.getElementById('export-dialog-ok');
+        const dropdown = document.getElementById('export-type-dropdown');
+        const hint     = document.getElementById('export-no-selection-hint');
+        const ok       = document.getElementById('export-dialog-ok');
         hint.style.display = 'none';
         document.querySelectorAll('.export-panel').forEach(p => { p.style.display = 'none'; });
 
@@ -42,9 +42,11 @@ Object.assign(GrooveDropper, {
         const panel = document.getElementById(`export-panel-${selected}`);
         if (panel) {
             panel.style.display = '';
+            ok.disabled = false; // default; _populateExportPanel overrides this synchronously for async panels
             this._populateExportPanel(selected);
+        } else {
+            ok.disabled = false;
         }
-        ok.disabled = false;
     },
 
     _exportLabelFilter() {
@@ -56,10 +58,14 @@ Object.assign(GrooveDropper, {
 
     async _populateExportPanel(mode) {
         if (mode === 'bytag') {
+            const ok      = document.getElementById('export-dialog-ok');
             const countEl = document.getElementById('export-bytag-count');
             const tagsEl  = document.getElementById('export-bytag-tags');
             if (countEl) countEl.textContent = '…';
             if (tagsEl)  tagsEl.textContent  = '';
+            // Disable synchronously before the first await so the caller's ok.disabled=false
+            // (which runs before our async fetch) is immediately overridden.
+            if (ok) ok.disabled = true;
 
             const { labelIds, filterMode } = this._exportLabelFilter();
             try {
@@ -78,8 +84,9 @@ Object.assign(GrooveDropper, {
                     if (tagsEl && data.label_names && data.label_names.length > 0) {
                         tagsEl.textContent = '(' + data.label_names.join(', ') + ')';
                     }
+                    if (ok) ok.disabled = data.count === 0;
                 }
-            } catch (_) { /* non-fatal */ }
+            } catch (_) { /* non-fatal — leave OK disabled */ }
         }
     },
 

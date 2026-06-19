@@ -546,6 +546,9 @@ def job_export_bytag():
     with db.get_db() as conn:
         samples = db.fetch_samples_for_export(conn, label_ids, untagged, filter_mode)
 
+    if not samples:
+        return jsonify({'error': 'No samples match the current selection'}), 400
+
     fd, manifest_path = tempfile.mkstemp(suffix='.json', prefix='groovedropper_export_')
     try:
         with os.fdopen(fd, 'w', encoding='utf-8') as f:
