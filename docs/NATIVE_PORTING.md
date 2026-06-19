@@ -9,7 +9,7 @@
 ## Table of Contents
 
 1. [What We Are Porting](#1-what-we-are-porting)
-2. [Why Rust](#2-why-rust)
+2. [Language Evaluation](#2-language-evaluation)
 3. [Recommendation: Rust](#3-recommendation-rust)
 4. [UI Framework](#4-ui-framework)
 5. [Audio Subsystem](#5-audio-subsystem)
@@ -51,7 +51,9 @@ The most significant gains from a native port:
 
 ---
 
-## 2. Why Rust
+## 2. Language Evaluation
+
+### 2.1 Rust
 
 **Strengths for this project:**
 - Thread safety is enforced by the compiler — the job queue, scan worker, and audio callback cannot accidentally share state unsafely. This is not a style rule; it is a compile error.
@@ -63,17 +65,103 @@ The most significant gains from a native port:
 - `rust-analyzer` in VSCode is best-in-class — better autocomplete and inline diagnostics than most C++ setups.
 
 **Weaknesses:**
-- Steeper initial learning curve than C++, primarily the borrow checker. Plan for 2–4 weeks of friction before it becomes intuitive.
-- GUI ecosystem has fewer pre-built widgets than Qt. Custom look-and-feel is easier, but a standard "settings dialog" takes more code.
-- Compile times are slower than Go (though `cargo check` is fast and `rust-analyzer` gives instant feedback).
+- Steeper initial learning curve, primarily the borrow checker. Plan for 2–4 weeks of friction before it becomes intuitive.
+- GUI ecosystem has fewer pre-built widgets than mature toolkits. Custom look-and-feel is easier, but a standard "settings dialog" takes more code.
+- Compile times are slow on first build (though `cargo check` and `rust-analyzer` give instant incremental feedback).
+
+### 2.2 Java
+
+Java is a legitimate contender specifically because of its audio analysis ecosystem. The transient detection subsystem — the most complex part of GrooveDropper — is already solved by a mature Java library, which is not true of any other language evaluated here.
+
+#### Audio pipeline (the strongest Java argument)
+
+**TarsosDSP** is the decisive library. It is an audio processing library that directly addresses GrooveDropper's most critical needs:
+
+| GrooveDropper need | TarsosDSP feature |
+|---|---|
+| Block-stream audio file | `AudioDispatcher` — streaming dispatcher with configurable block/hop size |
+| Compute STFT magnitude | `FFT` class, `STFT` analysis |
+| Onset / transient detection | `ComplexOnsetDetector` (spectral flux-based), `PercussionOnsetDetector` |
+| Zero-crossing snap | `ZeroCrossingRateProcessor` |
+| Waveform data extraction | `WaveformSimilarityBasedOverlapAdd` (WSOLA), amplitude envelope |
+| Pitch shifting (future) | Built-in WSOLA time-stretching with pitch preservation |
+
+The `ComplexOnsetDetector` implements spectral flux onset detection — the same algorithm that GrooveDropper's `groove/transient.py` builds manually on top of librosa. In Java, this is a few lines of `AudioDispatcher` + handler setup. This is the single largest implementation shortcut available in any language.
+
+**Format support:**
+- WAV: `javax.sound.sampled` (built-in) + TarsosDSP's `WavAudioInputStream`
+- MP3: `mp3spi` + `tritonus-share` libraries (SPI plugins that extend `javax.sound.sampled` transparently — MP3 files are opened the same way as WAV)
+
+**Playback:**
+- `javax.sound.sampled.SourceDataLine` for direct PCM playback — low-level, works on all platforms
+- For lower latency: JNA bindings to PortAudio, or the `Beads` library (designed for real-time synthesis)
+
+#### GC and the audio callback
+
+This is Java's most significant concern for audio work. The JVM garbage collector can pause all threads unpredictably, causing glitches at common audio buffer sizes.
+
+**Practical mitigations:**
+
+| Approach | Pause times | Notes |
+|---|---|---|
+| Default G1GC (Java 11+) | 5–50 ms typical | Unacceptable for real-time audio |
+| ZGC (Java 15+, `-XX:+UseZGC`) | < 1 ms | Acceptable for buffer sizes ≥ 256 frames at 44.1 kHz |
+| Pre-allocation discipline | Near zero | Allocate all objects before the audio loop; never allocate inside the callback |
+| GraalVM Native Image | Configurable | Substrate VM can use Epsilon GC (no GC) or low-pause collectors |
+
+The standard professional Java audio approach combines ZGC with strict pre-allocation: the audio callback is written to produce zero garbage. All arrays, buffers, and intermediate objects are allocated once at startup and reused. With this discipline, ZGC pauses become rare enough that they are inaudible at typical buffer sizes (512–1024 frames).
+
+#### UI frameworks
+
+**JavaFX (recommended for Java path):**
+- CSS styling — the stylesheet syntax is nearly identical to web CSS. The existing GrooveDropper themes (dark-orange, hacker green, protracker) translate directly to JavaFX CSS.
+- `Canvas` node — immediate-mode drawing API. The waveform is a `GraphicsContext.strokeLine` loop per pixel, directly analogous to egui's painter. Zoom requires the same view-window approach.
+- `AnimationTimer` — 60 fps callback, equivalent to `requestAnimationFrame`. Used to update the playhead position on every frame.
+- Scene Builder — FXML visual designer, available as a VSCode extension (`JavaFX Scene Builder` by Gluon), or as a standalone tool.
+- OpenJFX is actively maintained (currently JavaFX 22+).
+- **Custom look and feel:** JavaFX CSS exposes every visual property — colours, fonts, border radii, shadows, focus rings — as CSS variables set on the root node. Switching themes is a single `scene.getStylesheets()` swap.
+
+**Swing + FlatLaf (alternative):**
+- Swing is the older Java UI toolkit but is very stable.
+- FlatLaf is a modern look-and-feel that makes Swing visually contemporary (flat, dark/light themes). It is used by IntelliJ IDEA and many other tools.
+- Custom waveform via `JPanel.paintComponent(Graphics2D)`.
+- Less recommended for a new project — JavaFX's CSS and `Canvas` API are more suitable for GrooveDropper's needs.
+
+#### Build system and distribution
+
+**Build:** Maven or Gradle. Both integrate with VSCode via the "Extension Pack for Java" (Microsoft). Gradle is more flexible; Maven is more conventional. Either works.
+
+**VSCode extensions:** "Extension Pack for Java" (Microsoft) covers language support, debugger, Maven/Gradle, and test runner. Java development in VSCode is mature and well-supported.
+
+**Distribution options:**
+
+| Tool | Output | Size | Notes |
+|---|---|---|---|
+| `jlink` | Custom JRE | ~50–80 MB | Includes only the JDK modules you use |
+| `jpackage` | Native installer | ~60–90 MB | `.exe`/`.msi`, `.dmg`, `.deb`/`.rpm` — wraps jlink output |
+| GraalVM Native Image | Single native binary | ~20–40 MB | Eliminates JVM, reduces GC concern; JavaFX requires Gluon's build tooling |
+
+`jpackage` is the simplest path — it produces platform-native installers without any external tooling. GraalVM Native Image with JavaFX is technically possible (via Gluon Client / GluonFX) but adds significant build complexity and is not production-stable for all JavaFX features.
+
+#### Cross-platform
+
+Java's strongest historical advantage. The same JAR runs on Windows, macOS, and Linux with no cross-compilation step. `jpackage` produces platform-specific bundles but from the same source and build command. No Docker, no cross-toolchain.
+
+**Weaknesses of Java for this project:**
+- Binary + JRE bundle is 6–10× larger than the Rust equivalent.
+- GC discipline is required in the audio callback — it is achievable but must be maintained consciously throughout development.
+- `javax.sound.sampled` does not expose WASAPI or CoreAudio directly; for low-latency output you depend on the JVM's platform abstraction, which adds a layer of indirection.
+- JavaFX `Canvas` performance is good but not GPU-accelerated in the same way as `wgpu`-backed egui; very large waveforms at 60 fps may require careful dirty-rect optimisation.
 
 ---
 
 ## 3. Recommendation: Rust
 
-**Use Rust.** The combination of enforced thread safety, zero-cost abstractions, a first-class build system, and a capable audio/GUI ecosystem makes it the best fit.
+**Use Rust** as the primary recommendation. The combination of enforced thread safety, zero-cost abstractions, a first-class build system, and zero GC makes it the strongest long-term foundation.
 
-The learning investment pays off quickly for a project like this because the two hardest problems — audio thread safety and waveform rendering performance — are exactly where Rust's model provides the most value.
+**However, Java is the strongest alternative** if the transient detection pipeline is the deciding factor. TarsosDSP's `ComplexOnsetDetector` directly replaces the entire `groove/transient.py` implementation with a few lines of setup code. If time-to-working-transient-detection matters more than long-term performance headroom, Java with TarsosDSP + JavaFX is a legitimate choice.
+
+The learning investment in Rust pays off because the two hardest problems — audio thread safety and waveform rendering performance — are exactly where Rust's model provides the most value. Java solves the DSP problem faster upfront but requires ongoing discipline around GC to maintain audio quality.
 
 ---
 
