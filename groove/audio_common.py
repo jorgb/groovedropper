@@ -1,5 +1,6 @@
 import io
 import os
+import random
 import tempfile
 
 import numpy as np
@@ -7,6 +8,13 @@ from PIL import Image, ImageDraw
 
 CUT_WAVEFORM_ZOOM = 1.5    # visible window = total_frames / zoom (1 = full file)
 CUT_WRITE_BUFFER  = 65536  # frames per streaming read/write chunk (~1.5 s at 44.1 kHz)
+
+
+def get_random_offset(duration_samples, samplerate):
+    # 200ms seconds play time margin for randomization
+    play_time = 0.2 * samplerate
+    max_start = max(0, duration_samples - play_time) if duration_samples >= play_time else duration_samples
+    return random.randint(0, int(max_start))
 
 
 def make_tmp_path(dest_path, suffix='.wav.tmp'):

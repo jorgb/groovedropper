@@ -18,6 +18,7 @@ from queue import Empty, Queue
 
 from flask import Flask, render_template, request, send_file, jsonify
 from groove import db, audio, transient as _transient
+from groove.audio_common import get_random_offset
 from groove.db import DatabaseTooNewError
 from groove.util import get_sample_meta
 from groove.queue import scan_queue
@@ -78,6 +79,7 @@ if not HTTP_DEBUG:
 
 
 def _resource(relative_path):
+    # Open a specific resource for Flask
     base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base, relative_path)
 
@@ -102,6 +104,7 @@ def scan_stale_samples(cursor, conn):
     stale_paths = []
     batch_size = 50
     offset = 0
+
     while True:
         batch = db.scan_fetch_all_sample_paths_paginated(cursor, batch_size, offset)
         if not batch:
@@ -110,8 +113,10 @@ def scan_stale_samples(cursor, conn):
             if not os.path.exists(sample_path):
                 stale_paths.append(sample_path)
         offset += batch_size
+    
     for sample_path in stale_paths:
         logger.info(f"Removing stale sample from database: {sample_path}")
+    
     db.scan_delete_samples_by_paths(cursor, stale_paths)
     conn.commit()
     removed_count = len(stale_paths)
@@ -220,12 +225,6 @@ def start_background_scan():
     Thread(target=scan_worker,  daemon=True).start()
     Thread(target=_rename_worker, daemon=True).start()
 
-
-def get_random_offset(duration_samples, samplerate):
-    # 200ms seconds play time margin for randomization
-    play_time = 0.2 * samplerate
-    max_start = max(0, duration_samples - play_time) if duration_samples >= play_time else duration_samples
-    return random.randint(0, int(max_start))
 
 
 # ---------------------------------------------------------------------------
