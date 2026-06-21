@@ -33,6 +33,7 @@ const GrooveDropper = {
         sampleDir: null,
         mutable: false,
         mutableWarn: true,
+        renameActive: false,
         playInstantly: false,
         markers: [],            // [{id, offset}] sorted ascending, loaded from DB
         activeMarkerIndex: -1,  // index into markers[], -1 = soft playhead
@@ -106,6 +107,10 @@ const GrooveDropper = {
         markCut: document.getElementById('mark-cut'),
         // Transient finder
         btnFindTransient: document.getElementById('btn-find-transient'),
+        // Rename
+        sampleRenameBtn:   document.getElementById('sample-rename-btn'),
+        sampleRenameInput: document.getElementById('sample-rename-input'),
+        sampleRenameIcon:  document.getElementById('sample-rename-icon'),
         // Mutable / archive
         mutableIndicator: document.getElementById('mutable-indicator'),
         mutableWarnOverlay: document.getElementById('mutable-warn-overlay'),
@@ -507,6 +512,7 @@ const GrooveDropper = {
 
 
     updateUI(data, playInstantly = false) {
+        this._cancelRename();
         this.elements.indexInput.classList.remove('error');
 
         // Hydrate every piece of state that identifies the current sample; kept together so
@@ -559,6 +565,7 @@ const GrooveDropper = {
 
         this.state.markersDirty = true;
         this.loadMarkers(data.id).catch(e => console.error(e));
+        this._updateRenameBtnVisibility();
     },
 
     async disableMutable() {
@@ -568,6 +575,7 @@ const GrooveDropper = {
         this.elements.mutableIndicator.classList.add('disabled');
         document.getElementById('controls-archive-row')?.remove();
         document.getElementById('controls-cut-row')?.remove();
+        this._updateRenameBtnVisibility();
         this.showToast('Mutable options (archiving, writing) are disabled');
     },
 
@@ -576,6 +584,7 @@ const GrooveDropper = {
         if (!res.ok) return;
         this.state.mutable = true;
         this.elements.mutableIndicator.classList.remove('disabled');
+        this._updateRenameBtnVisibility();
         this.showToast('Mutable options (archiving, writing) are enabled');
     },
 
@@ -1222,6 +1231,81 @@ const GrooveDropper = {
         this._pollExportJob(job_id);
     },
 
+    _updateRenameBtnVisibility() {
+        const show = this.state.mutable && this.state.currentSampleId !== null;
+        this.elements.sampleRenameBtn.style.display = show ? '' : 'none';
+        if (!show) this._cancelRename();
+    },
+
+    _startRename() {
+        if (!this.state.mutable || !this.state.currentSampleId) return;
+        const name = this.state.sampleName || '';
+        const lastDot = name.lastIndexOf('.');
+        const basename = lastDot > 0 ? name.slice(0, lastDot) : name;
+        this.state.renameActive = true;
+        const input = this.elements.sampleRenameInput;
+        input.value = basename;
+        input.style.display = '';
+        this.elements.sampleName.style.display = 'none';
+        this.elements.sampleRenameIcon.className = 'fa-solid fa-xmark';
+        this.elements.sampleRenameBtn.title = 'Cancel rename';
+        input.focus();
+        input.select();
+    },
+
+    _cancelRename() {
+        if (!this.state.renameActive) return;
+        this.state.renameActive = false;
+        this.elements.sampleRenameInput.style.display = 'none';
+        this.elements.sampleName.style.display = '';
+        this.elements.sampleRenameIcon.className = 'fa-solid fa-pencil';
+        this.elements.sampleRenameBtn.title = 'Rename sample';
+    },
+
+    async _commitRename() {
+        if (!this.state.renameActive) return;
+        const newBasename = this.elements.sampleRenameInput.value.trim();
+        this._cancelRename();
+        if (!newBasename) return;
+        if (/[/\\:*?"<>|\x00-\x1f]/.test(newBasename)) {
+            this.showErrorToast('Illegal characters in name: \\ / : * ? " < > |');
+            return;
+        }
+        if (/[. ]$/.test(newBasename)) {
+            this.showErrorToast('Name cannot end with a dot or space');
+            return;
+        }
+        if (/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i.test(newBasename)) {
+            this.showErrorToast('That name is reserved by the operating system');
+            return;
+        }
+        if (this.state.isPlaying) {
+            this.elements.audio.pause();
+            this._stopPlayheadUpdater();
+            this.state.isPlaying = false;
+            this.updateStatusText('STOPPED');
+        }
+        const sampleId = this.state.currentSampleId;
+        if (!sampleId) return;
+        try {
+            const res = await fetch(`/api/sample/${sampleId}/rename`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ new_name: newBasename }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                this.showErrorToast(data.error || 'Rename failed');
+                return;
+            }
+            this.state.sampleName = data.new_name;
+            this.truncatePathLeft(this.elements.sampleName, data.new_name);
+            this.showToast(`Renamed to ${data.new_name}`);
+        } catch (_) {
+            this.showErrorToast('Rename failed: network error');
+        }
+    },
+
     promptArchiveSample() {
         const name = this.state.sampleName;
         if (!name) return;
@@ -1357,6 +1441,7 @@ const GrooveDropper = {
             } else {
                 this.elements.mutableIndicator.classList.add('disabled');
             }
+            this._updateRenameBtnVisibility();
         } catch (e) {
             console.error('Failed to load info', e);
         }
@@ -1493,6 +1578,17 @@ const GrooveDropper = {
                 this.enableMutable().catch(err => console.error(err));
             }
         });
+
+        // Sample rename
+        this.elements.sampleRenameBtn.addEventListener('click', () => {
+            if (this.state.renameActive) this._cancelRename();
+            else this._startRename();
+        });
+        this.elements.sampleRenameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter')  { e.preventDefault(); this._commitRename().catch(err => console.error(err)); }
+            else if (e.key === 'Escape') { e.preventDefault(); this._cancelRename(); }
+        });
+        this.elements.sampleRenameInput.addEventListener('blur', () => this._cancelRename());
 
         const _closeMutableWarnDialog = () => this.elements.mutableWarnOverlay.classList.add('hidden');
         this.elements.mutableWarnCancel.addEventListener('click', _closeMutableWarnDialog);

@@ -669,6 +669,13 @@ def scan_check_digest_exists(cursor, digest):
     return cursor.fetchone() is not None
 
 
+def rename_sample(conn, sample_id, new_path, new_name):
+    conn.execute(
+        'UPDATE samples SET path = ?, name = ? WHERE id = ?',
+        (new_path, new_name, sample_id),
+    )
+
+
 def scan_insert_sample(cursor, wav_path, name, directory, size, digest, mtime, duration, samplerate, duration_samples, waveform, folder_id):
     cursor.execute('''
         INSERT INTO samples

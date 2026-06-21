@@ -338,6 +338,33 @@
             min-width: 0;
         }
 
+        #sample-name-wrap {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            min-width: 0;
+            flex: 1;
+            justify-content: flex-end;
+        }
+
+        #sample-rename-input {
+            flex: 1;
+            min-width: 0;
+            background: var(--input-bg);
+            border: 1px solid var(--accent-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            font-size: 1em;
+            padding: 1px 6px;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        #sample-rename-btn {
+            flex-shrink: 0;
+            padding: 2px 5px;
+        }
+
         #header-right {
             grid-column: 3;
             justify-self: end;
@@ -1822,7 +1849,13 @@
                             <i class="fa-solid fa-file info-copy-icon" id="copy-icon-name" title="Copy filename"></i>
                             <span class="info-label">Name:</span>
                         </span>
-                        <span id="sample-name">Waiting for samples to be indexed</span>
+                        <span id="sample-name-wrap">
+                            <span id="sample-name">Waiting for samples to be indexed</span>
+                            <input type="text" id="sample-rename-input" autocomplete="off" spellcheck="false" style="display:none;">
+                            <button id="sample-rename-btn" class="panel-icon-btn" title="Rename sample" style="display:none;">
+                                <i id="sample-rename-icon" class="fa-solid fa-pencil"></i>
+                            </button>
+                        </span>
                     </div>
                     <div class="info-row">
                         <span class="info-row-label-group">

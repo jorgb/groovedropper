@@ -3,6 +3,8 @@
 test: download multiple files / export multiple files 
 - investigate xport mechanism, unique files?
 
+- Export CSV should contain the link to the sample
+
 - Rename a sample without losing the original
   - Only works when mutable is selected
   - Pencil icon behind file name (disabled if not mutable)

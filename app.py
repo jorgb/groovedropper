@@ -1198,6 +1198,54 @@ def api_cut_waveform(sample_id):
 
 
 
+@app.route('/api/sample/<int:sample_id>/rename', methods=['POST'])
+def api_rename_sample(sample_id):
+    if not app.config.get('MUTABLE', False):
+        return jsonify({'error': 'mutable_disabled'}), 403
+
+    data         = request.get_json(silent=True) or {}
+    new_basename = (data.get('new_name') or '').strip()
+
+    if not new_basename:
+        return jsonify({'error': 'Name cannot be empty'}), 400
+    if re.search(r'[/\\:*?"<>|\x00-\x1f]', new_basename):
+        return jsonify({'error': r'Illegal characters in name: \ / : * ? " < > |'}), 400
+    if new_basename[-1] in '. ':
+        return jsonify({'error': 'Name cannot end with a dot or space'}), 400
+    if re.fullmatch(r'(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])', new_basename, re.IGNORECASE):
+        return jsonify({'error': 'That name is reserved by the operating system'}), 400
+
+    with db.get_db() as conn:
+        row = db.fetch_sample_path(conn, sample_id)
+        if not row:
+            return jsonify({'error': 'Sample not found'}), 404
+
+        old_path  = row['path']
+        directory = os.path.dirname(old_path)
+        _, ext    = os.path.splitext(old_path)
+        new_name  = new_basename + ext
+        new_path  = os.path.join(directory, new_name)
+
+        if new_path == old_path:
+            return jsonify({'status': 'ok', 'new_name': new_name, 'new_path': new_path})
+
+        if os.path.exists(new_path):
+            return jsonify({'error': f"A file named '{new_name}' already exists in this folder"}), 409
+
+        try:
+            os.rename(old_path, new_path)
+            logger.info("Renamed sample: %s → %s", os.path.basename(old_path), new_name)
+        except PermissionError:
+            _rename_queue.put((old_path, new_path, time.monotonic() + 60))
+            logger.info("Renamed sample (queued): %s → %s", os.path.basename(old_path), new_name)
+        except OSError as exc:
+            return jsonify({'error': str(exc)}), 500
+
+        db.rename_sample(conn, sample_id, new_path, new_name)
+
+    return jsonify({'status': 'ok', 'new_name': new_name, 'new_path': new_path})
+
+
 @app.route('/api/sample/<digest>/archive', methods=['POST'])
 def archive_sample(digest):
     if not app.config.get('MUTABLE', False):
