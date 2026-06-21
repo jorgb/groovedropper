@@ -23,9 +23,19 @@
                 <ul style="margin:0 0 15px;padding-left:18px;font-size:0.9em;color:var(--muted);line-height:1.8;">
                     <li><span id="export-bytag-count">…</span> samples will be exported <span id="export-bytag-tags" style="color:var(--text-color);"></span></li>
                 </ul>
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
-                    <input type="checkbox" id="export-preserve-paths">
-                    <label for="export-preserve-paths" style="font-size:0.9em;color:var(--muted);cursor:pointer;user-select:none;">Preserve relative paths in ZIP file</label>
+                <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" id="export-include-samples" checked>
+                        <label for="export-include-samples" style="font-size:0.9em;color:var(--muted);cursor:pointer;user-select:none;">Export samples</label>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" id="export-include-metadata" checked>
+                        <label for="export-include-metadata" style="font-size:0.9em;color:var(--muted);cursor:pointer;user-select:none;">Export metadata (export.csv + export.txt)</label>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" id="export-preserve-paths">
+                        <label for="export-preserve-paths" style="font-size:0.9em;color:var(--muted);cursor:pointer;user-select:none;">Preserve relative paths in ZIP file</label>
+                    </div>
                 </div>
                 <p style="margin:0 0 20px;font-size:0.9em;color:var(--muted);">
                     The samples will be downloaded as a ZIP file when ready.

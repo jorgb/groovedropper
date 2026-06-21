@@ -16,6 +16,8 @@ Object.assign(GrooveDropper, {
         hint.style.display = '';
         document.querySelectorAll('.export-panel').forEach(p => { p.style.display = 'none'; });
         ok.disabled = true;
+        document.getElementById('export-include-samples').checked  = true;
+        document.getElementById('export-include-metadata').checked = true;
 
         this.elements.exportDialogOverlay.classList.remove('hidden');
         dropdown.focus();
@@ -99,11 +101,13 @@ Object.assign(GrooveDropper, {
         if (mode === 'bytag') {
             const { labelIds, filterMode } = this._exportLabelFilter();
             payload = {
-                label_ids:      labelIds,
-                untagged:       this.state.untaggedFilterActive || false,
-                filter_mode:    filterMode,
-                preserve_paths: document.getElementById('export-preserve-paths').checked,
-                archive_after:  document.getElementById('export-archive-after').checked,
+                label_ids:        labelIds,
+                untagged:         this.state.untaggedFilterActive || false,
+                filter_mode:      filterMode,
+                export_samples:   document.getElementById('export-include-samples').checked,
+                export_metadata:  document.getElementById('export-include-metadata').checked,
+                preserve_paths:   document.getElementById('export-preserve-paths').checked,
+                archive_after:    document.getElementById('export-archive-after').checked,
             };
         }
 

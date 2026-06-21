@@ -560,9 +560,11 @@ def job_export_bytag():
         raise
 
     payload = {
-        'manifest_path':  manifest_path,
-        'preserve_paths': bool(data.get('preserve_paths', False)),
-        'archive_after':  bool(data.get('archive_after', False)),
+        'manifest_path':   manifest_path,
+        'export_samples':  bool(data.get('export_samples', True)),
+        'export_metadata': bool(data.get('export_metadata', True)),
+        'preserve_paths':  bool(data.get('preserve_paths', False)),
+        'archive_after':   bool(data.get('archive_after', False)),
     }
     try:
         job_id = job_queue.enqueue('export_bytag', None, payload, jobs_export_bytag.run)
