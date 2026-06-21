@@ -1,0 +1,25 @@
+<!-- Manage scan folders dialog -->
+<div id="manage-folders-overlay" class="dialog-overlay hidden">
+    <div id="manage-folders-dialog" class="dialog-card">
+        <div class="dialog-header">
+            <span>Manage scan folders</span>
+            <button id="manage-folders-close" class="dialog-close-btn" title="Close">&times;</button>
+        </div>
+        <div class="dialog-body">
+            <div id="manage-folders-list"></div>
+            <div class="manage-folders-warning">
+                <div class="manage-folders-pending">Deletion will take place once OK is pressed</div>
+                <div><span class="manage-folders-caution">⚠️</span>Deleting a sample folder will:</div>
+                <ul>
+                    <li>Remove all sample references from the database (not on disk)</li>
+                    <li>Remove the sample from all quick pick references</li>
+                    <li>Remove the samples from the assigned labels</li>
+                </ul>
+            </div>
+        </div>
+        <div class="dialog-footer">
+            <button id="manage-folders-cancel">Cancel</button>
+            <button id="manage-folders-ok">OK</button>
+        </div>
+    </div>
+</div>
