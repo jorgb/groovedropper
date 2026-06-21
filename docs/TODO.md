@@ -3,15 +3,15 @@
 test: download multiple files / export multiple files 
 - investigate xport mechanism, unique files?
 
-- Export CSV should contain the link to the sample
-
-- Rename a sample without losing the original
-  - Only works when mutable is selected
-  - Pencil icon behind file name (disabled if not mutable)
-  - Rename in place editor, file exists check upon typing, music can keep 
-    playing
-  - When enter, music stops, rename is done in back-end, random sample is chosen
-
+- Last visited / unique picking
+  - Add last visited timestamp to database sample field
+  - Add a checkbox in the UI "pick unique samples" (to prevent already picked 
+    samples)
+  - Add to new migration script, and upon indexing
+  - When pressing R and checkbox is checked, pick random with sort based upon 
+    old to new
+  - Update the sample table after loading sample
+  - j/k should pick in filter the next available ?
 
 - Export dialog
   - export quickpick set

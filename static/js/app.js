@@ -1699,13 +1699,13 @@ const GrooveDropper = {
                     return;
                 }
             }
+            const tag = document.activeElement.tagName;
+            if (tag === 'SELECT' || tag === 'BUTTON' || tag === 'INPUT') return;
             if (e.key === '?') {
                 e.preventDefault();
                 this.toggleControlsDialog();
                 return;
             }
-            const tag = document.activeElement.tagName;
-            if (tag === 'SELECT' || tag === 'BUTTON' || tag === 'INPUT') return;
 
             if (e.code === 'Home') {
                 e.preventDefault();
