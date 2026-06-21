@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 def run(payload: dict) -> bytes:
     manifest_path    = payload.get('manifest_path')
+    base_url         = payload.get('base_url', '')
     export_samples   = bool(payload.get('export_samples', True))
     export_metadata  = bool(payload.get('export_metadata', True))
     preserve_paths   = bool(payload.get('preserve_paths', False))
@@ -63,7 +64,9 @@ def run(payload: dict) -> bytes:
             else:
                 exported_paths.append(path)
 
-            csv_rows.append((path, name, ','.join(labels), str(size)))
+            digest = sample.get('digest', '')
+            link   = f"{base_url}/?sample={digest}" if base_url and digest else ''
+            csv_rows.append((path, name, ','.join(labels), str(size), link))
 
         if export_metadata:
             # export.txt — full paths of all samples in selection
@@ -75,7 +78,7 @@ def run(payload: dict) -> bytes:
             # export.csv
             csv_buf = io.StringIO()
             writer = csv.writer(csv_buf, quoting=csv.QUOTE_ALL)
-            writer.writerow(['Path', 'Filename', 'Labels', 'Size'])
+            writer.writerow(['Path', 'Filename', 'Labels', 'Size', 'Link'])
             for row in csv_rows:
                 writer.writerow(row)
             zf.writestr('export.csv', csv_buf.getvalue().encode('utf-8'))

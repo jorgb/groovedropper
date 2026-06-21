@@ -561,6 +561,7 @@ def job_export_bytag():
 
     payload = {
         'manifest_path':   manifest_path,
+        'base_url':        request.host_url.rstrip('/'),
         'export_samples':  bool(data.get('export_samples', True)),
         'export_metadata': bool(data.get('export_metadata', True)),
         'preserve_paths':  bool(data.get('preserve_paths', False)),
