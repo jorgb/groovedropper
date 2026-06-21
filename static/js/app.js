@@ -1761,6 +1761,9 @@ const GrooveDropper = {
                 this.storeToNextFreeQpSlot().catch(err => console.error(err));
             } else if (e.code === 'KeyT') {
                 this.findAndSnapToTransient(e.shiftKey).catch(err => console.error(err));
+            } else if (e.code === 'F2' && this.state.mutable && !e.ctrlKey && !e.shiftKey) {
+                e.preventDefault();
+                this._startRename();
             } else if (e.code === 'KeyA' && this.state.mutable && !e.ctrlKey && !e.shiftKey) {
                 this.promptArchiveSample();
             } else if (e.code === 'KeyX' && this.state.mutable && !e.ctrlKey && !e.shiftKey) {
