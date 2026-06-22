@@ -354,7 +354,6 @@ Object.assign(GrooveDropper, {
                 const res = await fetch(`/api/sample/digest/${slot.digest}?start=${slot.start_offset}`);
                 if (!res.ok) { this.showErrorToast('Sample not found'); return; }
                 const data = await res.json();
-                this._pushHistory(data);
                 this.updateUI(data, this.state.playInstantly);
                 this._renderPitchOverlay();
             }

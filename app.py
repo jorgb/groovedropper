@@ -28,13 +28,14 @@ import groove.jobs_cutting      as jobs_cutting
 import groove.jobs_merging      as jobs_merging
 import groove.jobs_saving       as jobs_saving
 import groove.jobs_export_bytag as jobs_export_bytag
+import groove.sample_select     as sample_select
 
 # set this to true to log all HTTP requests
 HTTP_DEBUG = False
 # Maximum allowed of markers to be set per sample in database
 MAX_MARKERS = 32
 # Configuration API needs validation on keys
-ALLOWED_CONFIG_KEYS = frozenset({'theme', 'loop', 'offset-preview', 'quick-pick-preset', 'quick-play-instantly', 'mutable-warn'})
+ALLOWED_CONFIG_KEYS = frozenset({'theme', 'loop', 'offset-preview', 'quick-pick-preset', 'quick-play-instantly', 'mutable-warn', 'pick-unique'})
 
 # ---------------------------------------------------------------------------
 # Background rename queue — retries file renames that Windows locks temporarily
@@ -679,32 +680,49 @@ def random_sample():
     untagged_only = data.get('untagged_only', False)
     label_ids = data.get('label_ids') or []
     filter_mode = data.get('filter_mode', 'OR')
+    pick_unique = bool(data.get('pick_unique', False))
 
     with db.get_db() as conn:
         if sample_id_override:
             row = db.fetch_sample_by_id(conn, sample_id_override)
             if not row:
                 return jsonify({"error": "Specified sample not found"}), 404
-        elif untagged_only:
-            row = db.fetch_random_untagged_sample(conn)
-            if not row:
-                return jsonify({"error": "no_samples"})
-        elif label_ids:
-            row = db.fetch_random_sample(conn, label_ids, filter_mode)
-            if not row:
-                return jsonify({"error": "no_samples"})
-        else:
-            row = db.fetch_random_sample(conn)
-            if not row:
-                return jsonify({"error": "No samples found"}), 404
+            start_offset = get_random_offset(row['duration_samples'], row['samplerate'])
+            index_num = db.fetch_sample_index(conn, row['id'])
+            result = dict(row)
+            result['index_num'] = index_num
+            result['start_offset'] = start_offset
+            result['randomize_only'] = randomize_only
+            return jsonify(result)
 
-        start_offset = get_random_offset(row['duration_samples'], row['samplerate'])
-        index_num = db.fetch_sample_index(conn, row['id'])
+        result = sample_select.pick_next(conn, label_ids, filter_mode, untagged_only, pick_unique)
+        if not result:
+            return jsonify({"error": "no_samples"})
 
-    result = dict(row)
-    result['index_num'] = index_num
-    result['start_offset'] = start_offset
     result['randomize_only'] = randomize_only
+    return jsonify(result)
+
+
+@app.route('/api/unique-pick/adjacent', methods=['POST'])
+def unique_pick_adjacent():
+    data = request.get_json(silent=True) or {}
+    label_ids    = data.get('label_ids') or []
+    filter_mode  = data.get('filter_mode', 'OR')
+    untagged_only = bool(data.get('untagged_only', False))
+    edge         = data.get('edge')          # 'oldest' | 'newest' | None
+
+    with db.get_db() as conn:
+        if edge in ('oldest', 'newest'):
+            result = sample_select.pick_window_edge(conn, edge, label_ids, filter_mode, untagged_only)
+        else:
+            sample_id = data.get('sample_id')
+            direction = int(data.get('direction', 0))
+            if not sample_id or direction not in (1, -1):
+                return jsonify({"error": "sample_id and direction required"}), 400
+            result = sample_select.pick_adjacent(conn, sample_id, direction, label_ids, filter_mode, untagged_only)
+
+    if result is None:
+        return '', 204
     return jsonify(result)
 
 
@@ -855,6 +873,7 @@ def refresh_samples():
 
     with db.get_db() as conn:
         folders = db.fetch_scan_folder_paths(conn)
+        db.reset_pick_orders(conn)
 
     for folder_path in folders:
         scan_queue.push_folder(folder_path)

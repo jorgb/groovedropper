@@ -762,7 +762,8 @@
             outline: none;
         }
 
-        #qp-play-instantly-label {
+        #qp-play-instantly-label,
+        #pick-unique-label {
             display: flex;
             align-items: center;
             gap: 4px;
@@ -1938,6 +1939,10 @@
                         <label id="qp-play-instantly-label" title="Auto-play when loading a new sample">
                             <input type="checkbox" id="qp-play-instantly">
                             <span>Autoplay</span>
+                        </label>
+                        <label id="pick-unique-label" title="Prefer unvisited samples when picking randomly (R)">
+                            <input type="checkbox" id="pick-unique-checkbox" checked>
+                            <span>Pick unique</span>
                         </label>
                         <button id="loop-toggle" class="toggle-btn" onclick="this.blur()">
                             <span class="loop-cross">[X]</span>Loop

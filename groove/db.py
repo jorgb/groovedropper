@@ -45,7 +45,7 @@ def get_db():
         conn.close()
 
 
-CURRENT_VERSION = 4
+CURRENT_VERSION = 5
 
 
 def _migrate_v1(conn):
@@ -165,11 +165,16 @@ def _migrate_v4(conn):
     )
 
 
+def _migrate_v5(conn):
+    conn.execute('ALTER TABLE samples ADD COLUMN pick_order INTEGER DEFAULT NULL')
+
+
 _MIGRATION_FNS = {
     1: _migrate_v1,
     2: _migrate_v2,
     3: _migrate_v3,
     4: _migrate_v4,
+    5: _migrate_v5,
 }
 
 
@@ -385,6 +390,92 @@ def delete_sample_by_digest(conn, digest):
     if row:
         conn.execute('DELETE FROM samples WHERE digest = ?', (digest,))
     return row
+
+
+# ---------------------------------------------------------------------------
+# Pick order
+# ---------------------------------------------------------------------------
+
+_PICK_COLS = 'id, name, directory, size, duration, samplerate, duration_samples, digest, pick_order'
+
+
+def _filter_clause(label_ids, filter_mode, untagged_only):
+    """Return (where_fragment, params) that filters the samples table (aliased as s)."""
+    if untagged_only:
+        return 'NOT EXISTS (SELECT 1 FROM sample_labels sl WHERE sl.digest = s.digest)', []
+    if not label_ids:
+        return '1=1', []
+    placeholders = ','.join('?' * len(label_ids))
+    if filter_mode == 'AND':
+        return (
+            f's.digest IN (SELECT digest FROM sample_labels WHERE label_id IN ({placeholders})'
+            f' GROUP BY digest HAVING COUNT(DISTINCT label_id) = ?)',
+            list(label_ids) + [len(label_ids)],
+        )
+    return (
+        f's.digest IN (SELECT DISTINCT digest FROM sample_labels WHERE label_id IN ({placeholders}))',
+        list(label_ids),
+    )
+
+
+def fetch_next_pick_order(conn):
+    return conn.execute('SELECT COALESCE(MAX(pick_order), 0) + 1 FROM samples').fetchone()[0]
+
+
+def set_pick_order(conn, sample_id, pick_order):
+    conn.execute('UPDATE samples SET pick_order = ? WHERE id = ?', (pick_order, sample_id))
+
+
+def reset_pick_orders(conn):
+    conn.execute('UPDATE samples SET pick_order = NULL')
+
+
+def fetch_unvisited_sample(conn, label_ids, filter_mode, untagged_only):
+    where, params = _filter_clause(label_ids, filter_mode, untagged_only)
+    return conn.execute(f'''
+        SELECT {_PICK_COLS} FROM samples s
+        WHERE pick_order IS NULL AND ({where})
+        ORDER BY RANDOM() LIMIT 1
+    ''', params).fetchone()
+
+
+def fetch_lru_sample(conn, label_ids, filter_mode, untagged_only):
+    where, params = _filter_clause(label_ids, filter_mode, untagged_only)
+    return conn.execute(f'''
+        SELECT {_PICK_COLS} FROM samples s
+        WHERE pick_order IS NOT NULL AND ({where})
+        ORDER BY pick_order ASC LIMIT 1
+    ''', params).fetchone()
+
+
+def fetch_adjacent_in_window(conn, sample_id, direction, label_ids, filter_mode, untagged_only):
+    row = conn.execute('SELECT pick_order FROM samples WHERE id = ?', (sample_id,)).fetchone()
+    if not row or row['pick_order'] is None:
+        return None
+    current_order = row['pick_order']
+    where, params = _filter_clause(label_ids, filter_mode, untagged_only)
+    if direction > 0:
+        return conn.execute(f'''
+            SELECT {_PICK_COLS} FROM samples s
+            WHERE pick_order > ? AND ({where})
+            ORDER BY pick_order ASC LIMIT 1
+        ''', [current_order] + params).fetchone()
+    return conn.execute(f'''
+        SELECT {_PICK_COLS} FROM samples s
+        WHERE pick_order < ? AND ({where})
+        ORDER BY pick_order DESC LIMIT 1
+    ''', [current_order] + params).fetchone()
+
+
+def fetch_window_edge(conn, edge, label_ids, filter_mode, untagged_only):
+    """Return the oldest (edge='oldest') or newest (edge='newest') sample in the pick window."""
+    where, params = _filter_clause(label_ids, filter_mode, untagged_only)
+    order = 'ASC' if edge == 'oldest' else 'DESC'
+    return conn.execute(f'''
+        SELECT {_PICK_COLS} FROM samples s
+        WHERE pick_order IS NOT NULL AND ({where})
+        ORDER BY pick_order {order} LIMIT 1
+    ''', params).fetchone()
 
 
 # ---------------------------------------------------------------------------

@@ -11,8 +11,7 @@ const GrooveDropper = {
         statusInterval: null,
         loopEnabled: true,
         skipEndedEvent: false,  // suppresses the 'ended' handler while seeking or swapping src
-        historyQueue: [],
-        historyIndex: -1,
+        pickUnique: true,
         totalSamplesCount: 0,
         // Label system
         activePresetId: null,
@@ -154,6 +153,7 @@ const GrooveDropper = {
         qpPresetSelect: document.getElementById('qp-preset-select'),
         qpRenameBtn: document.getElementById('qp-rename-btn'),
         qpPlayInstantly: document.getElementById('qp-play-instantly'),
+        pickUniqueCheckbox: document.getElementById('pick-unique-checkbox'),
         qpSlots: document.getElementById('qp-slots'),
         qpDeleteBtn: document.getElementById('qp-delete-btn'),
     },
@@ -303,6 +303,10 @@ const GrooveDropper = {
                 this.state.playInstantly = config['quick-play-instantly'] === 'true';
                 this.elements.qpPlayInstantly.checked = this.state.playInstantly;
             }
+            if (config['pick-unique'] !== undefined) {
+                this.state.pickUnique = config['pick-unique'] === 'true';
+                this.elements.pickUniqueCheckbox.checked = this.state.pickUnique;
+            }
             this.state.mutableWarn = config['mutable-warn'] !== 'false';
         } catch (e) {
             console.error("Failed to load config", e);
@@ -347,13 +351,16 @@ const GrooveDropper = {
     },
 
 
-    _pushHistory(snapshot) {
-        // Branching: discard any forward entries when navigating to a new sample mid-history.
-        if (this.state.historyIndex < this.state.historyQueue.length - 1) {
-            this.state.historyQueue = this.state.historyQueue.slice(0, this.state.historyIndex + 1);
+    _buildFilterBody() {
+        const isAll = this.state.activePresetId === null;
+        const labelIds = isAll ? this.state.allPresetSelectedLabelIds : this.state.activePresetLabelIds;
+        const filterMode = isAll ? 'OR' : this.state.activeFilterMode;
+        const body = { label_ids: labelIds, filter_mode: filterMode };
+        if (this.state.untaggedFilterActive) {
+            body.untagged_only = true;
+            body.label_ids = [];
         }
-        this.state.historyQueue.push(snapshot);
-        this.state.historyIndex = this.state.historyQueue.length - 1;
+        return body;
     },
 
     async pollStatus() {
@@ -430,17 +437,8 @@ const GrooveDropper = {
     async loadNextRandom(playInstantly = false) {
         if (this._markerDrag?.active) return;
         try {
-            const isAll = this.state.activePresetId === null;
-            const labelIds = isAll
-                ? this.state.allPresetSelectedLabelIds
-                : this.state.activePresetLabelIds;
-            const filterMode = isAll ? 'OR' : this.state.activeFilterMode;
-
-            const body = { label_ids: labelIds, filter_mode: filterMode };
-            if (this.state.untaggedFilterActive) {
-                body.untagged_only = true;
-                body.label_ids = [];
-            }
+            const body = this._buildFilterBody();
+            body.pick_unique = this.state.pickUnique;
 
             const res = await fetch('/api/sample/random', {
                 method: 'POST',
@@ -453,7 +451,6 @@ const GrooveDropper = {
                 this.showToast('No samples in current preset selection');
                 return;
             }
-            this._pushHistory(data);
             this.updateUI(data, playInstantly);
         } catch (e) {
             console.error(e);
@@ -466,7 +463,6 @@ const GrooveDropper = {
             if (!res.ok) { this.elements.indexInput.classList.add('error'); return; }
             const data = await res.json();
             this.elements.indexInput.classList.remove('error');
-            this._pushHistory(data);
 
             if (this.state.isPlaying) {
                 this.elements.audio.pause();
@@ -489,7 +485,6 @@ const GrooveDropper = {
                 return;
             }
             const data = await res.json();
-            this._pushHistory(data);
             this.updateUI(data, false);
             if (pitch !== 0 || cents !== 0) {
                 this.state.pitchSemitones = pitch;
@@ -503,11 +498,49 @@ const GrooveDropper = {
         }
     },
 
-    loadPrevHistory(playInstantly = false) {
-        if (this.state.historyIndex <= 0) { console.log("No more history"); return; }
-        this.state.historyIndex--;
-        const snapshot = this.state.historyQueue[this.state.historyIndex];
-        this.updateUI(snapshot, playInstantly);
+    async loadPickAdjacent(direction) {
+        if (!this.state.currentSampleId) return;
+        const autoPlay = this.state.isPlaying || this.state.playInstantly;
+        try {
+            const body = this._buildFilterBody();
+            body.sample_id = this.state.currentSampleId;
+            body.direction = direction;
+
+            const res = await fetch('/api/unique-pick/adjacent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (res.status === 204) {
+                if (direction > 0) await this.loadNextRandom(autoPlay);
+                return;
+            }
+            if (!res.ok) return;
+            const data = await res.json();
+            this.updateUI(data, autoPlay);
+        } catch (e) {
+            console.error(e);
+        }
+    },
+
+    async loadPickWindowEdge(edge) {
+        const autoPlay = this.state.isPlaying || this.state.playInstantly;
+        try {
+            const body = this._buildFilterBody();
+            body.edge = edge;
+
+            const res = await fetch('/api/unique-pick/adjacent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (res.status === 204) return;
+            if (!res.ok) return;
+            const data = await res.json();
+            this.updateUI(data, autoPlay);
+        } catch (e) {
+            console.error(e);
+        }
     },
 
 
@@ -1739,9 +1772,6 @@ const GrooveDropper = {
                 const autoPlay = this.state.isPlaying || this.state.playInstantly;
                 if (e.shiftKey) this.randomizeCurrentOffset(autoPlay).catch(err => console.error(err));
                 else this.loadNextRandom(autoPlay).catch(err => console.error(err));
-            } else if (e.code === 'KeyP') {
-                this._clearFocusedQpSlot();
-                this.loadPrevHistory(this.state.isPlaying || this.state.playInstantly);
             } else if (e.code === 'KeyE') {
                 this.showExportDialog().catch(err => console.error(err));
             } else if (e.code === 'KeyS') {
@@ -1780,10 +1810,12 @@ const GrooveDropper = {
                 this.navigateToNextMarker(1);
             } else if (e.code === 'KeyJ') {
                 e.preventDefault();
-                this.navigateQuickpickSlot(-1);
+                if (e.shiftKey) this.loadPickWindowEdge('oldest').catch(err => console.error(err));
+                else this.loadPickAdjacent(-1).catch(err => console.error(err));
             } else if (e.code === 'KeyK') {
                 e.preventDefault();
-                this.navigateQuickpickSlot(1);
+                if (e.shiftKey) this.loadPickWindowEdge('newest').catch(err => console.error(err));
+                else this.loadPickAdjacent(+1).catch(err => console.error(err));
             } else if (/^Digit[0-9]$/.test(e.code)) {
                 const keyDigit = e.code.slice(-1);
                 const slotNumber = keyDigit === '0' ? 10 : parseInt(keyDigit);
@@ -1929,6 +1961,12 @@ const GrooveDropper = {
             this.state.playInstantly = this.elements.qpPlayInstantly.checked;
             this.elements.qpPlayInstantly.blur();
             this.saveConfig('quick-play-instantly', String(this.state.playInstantly)).catch(e => console.error(e));
+        });
+
+        this.elements.pickUniqueCheckbox.addEventListener('change', () => {
+            this.state.pickUnique = this.elements.pickUniqueCheckbox.checked;
+            this.elements.pickUniqueCheckbox.blur();
+            this.saveConfig('pick-unique', String(this.state.pickUnique)).catch(e => console.error(e));
         });
 
         this.elements.audio.addEventListener('ended', () => {
