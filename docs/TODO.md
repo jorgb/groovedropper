@@ -3,15 +3,7 @@
 test: download multiple files / export multiple files 
 - investigate xport mechanism, unique files?
 
-- Last visited / unique picking
-  - Add last visited timestamp to database sample field
-  - Add a checkbox in the UI "pick unique samples" (to prevent already picked 
-    samples)
-  - Add to new migration script, and upon indexing
-  - When pressing R and checkbox is checked, pick random with sort based upon 
-    old to new
-  - Update the sample table after loading sample
-  - j/k should pick in filter the next available ?
+- shift+checkbox unchecks all other labels (quick move to new label)
 
 - Export dialog
   - export quickpick set

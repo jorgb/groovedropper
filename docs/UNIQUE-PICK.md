@@ -366,7 +366,7 @@ The `1–9 / 0` and `V` / `SHIFT + 1–9` rows remain in Quick Pick unchanged.
 ### Migration order
 
 1. Implement and ship J/K pick-window backend + frontend.
-2. Verify K replicates the most common P-key usage (go back one).
+2. Verify K replicates the most common P-key usage (go back one). 
 3. Remove the history stack and P key in a follow-up commit.
 
 ---
