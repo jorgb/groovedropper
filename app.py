@@ -102,26 +102,34 @@ app = Flask(__name__,
 def scan_stale_samples(cursor, conn):
     total_count = db.scan_count_all_samples(cursor)
     logger.info(f"Scanning {total_count} entries for stale samples")
-    stale_paths = []
+
+    stale = []
     batch_size = 50
     offset = 0
 
     while True:
-        batch = db.scan_fetch_all_sample_paths_paginated(cursor, batch_size, offset)
+        batch = db.scan_fetch_all_samples_paginated(cursor, batch_size, offset)
         if not batch:
             break
-        for sample_path in batch:
-            if not os.path.exists(sample_path):
-                stale_paths.append(sample_path)
+        for folder_path, rel_path in batch:
+            full_path = db.resolve_path(folder_path, rel_path)
+            if not os.path.exists(full_path):
+                stale.append((folder_path, rel_path))
         offset += batch_size
-    
-    for sample_path in stale_paths:
-        logger.info(f"Removing stale sample from database: {sample_path}")
-    
-    db.scan_delete_samples_by_paths(cursor, stale_paths)
+
+    for folder_path, rel_path in stale:
+        logger.info("Removing stale sample: %s", db.resolve_path(folder_path, rel_path))
+
+    for folder_path, rel_path in stale:
+        cursor.execute(
+            '''DELETE FROM samples
+               WHERE rel_path = ? AND folder_id = (
+                   SELECT id FROM scan_folders WHERE path = ?
+               )''',
+            (rel_path, folder_path)
+        )
     conn.commit()
-    removed_count = len(stale_paths)
-    logger.info(f"Removed {removed_count} stale sample entries")
+    logger.info("Removed %d stale sample entries", len(stale))
 
 
 def scan_worker():
@@ -147,43 +155,42 @@ def scan_worker():
 
                 # Remove DB entries for files that no longer exist on disk
                 if folder_id is not None:
-                    for sample_path in db.scan_fetch_samples_by_folder_id(cursor, folder_id):
-                        if not os.path.exists(sample_path):
-                            logger.info(f"Removing missing sample from database: {sample_path}")
-                            db.scan_delete_sample_by_path(cursor, sample_path)
+                    for rel_path in db.scan_fetch_samples_by_folder_id(cursor, folder_id):
+                        full_path = db.resolve_path(folder_path, rel_path)
+                        if not os.path.exists(full_path):
+                            logger.info("Removing missing sample: %s", full_path)
+                            db.scan_delete_sample(cursor, folder_id, rel_path)
                     conn.commit()
-                else:
-                    logger.info(f"Orphaned sample: {sample_path}")
 
                 for root, _, files in os.walk(folder_path):
                     for file in files:
                         if file.lower().endswith(audio.SUPPORTED_EXTENSIONS):
                             wav_path = os.path.join(root, file)
-                            scan_queue.push_sample(wav_path, folder_id)
+                            scan_queue.push_sample(wav_path, folder_id, folder_path)
 
                 while scan_queue.has_samples():
-                    wav_path, fid = scan_queue.pop_sample()
+                    wav_path, fid, fpath = scan_queue.pop_sample()
+                    rel_path = os.path.relpath(wav_path, fpath)
+                    name     = os.path.basename(wav_path)
 
                     try:
                         mtime = os.stat(wav_path).st_mtime
 
-                        # Fast path: skip if path+mtime unchanged
-                        existing_ts = db.scan_get_sample_timestamp(cursor, wav_path)
+                        existing_ts = db.scan_get_sample_timestamp(cursor, fid, rel_path)
                         if existing_ts is not None:
                             if existing_ts == mtime:
                                 continue
-                            db.scan_delete_sample_by_path(cursor, wav_path)
+                            db.scan_delete_sample(cursor, fid, rel_path)
 
                         meta = get_sample_meta(wav_path)
 
-                        # Digest duplicate check: same content already indexed at another path
                         if db.scan_check_digest_exists(cursor, meta.digest):
                             logger.info(f"Duplicate wave file found, skipped: {wav_path}")
                             continue
 
                         reported_done = False
                         db.scan_insert_sample(
-                            cursor, wav_path, os.path.basename(wav_path), os.path.dirname(wav_path),
+                            cursor, rel_path, name,
                             meta.size, meta.digest, meta.mtime,
                             meta.duration, meta.samplerate, meta.duration_samples,
                             meta.waveform, fid
@@ -298,16 +305,6 @@ def delete_marker(sample_id, offset):
 # Job queue
 # ---------------------------------------------------------------------------
 
-def _scan_folder_for(path):
-    """Return the registered scan folder that owns path, or path's directory."""
-    with db.get_db() as conn:
-        folders = db.fetch_scan_folder_paths(conn)
-    parent = os.path.dirname(path)
-    for f in folders:
-        if path.startswith(f + os.sep):
-            return f
-    return parent
-
 
 @app.route('/api/jobs', methods=['GET'])
 def list_jobs():
@@ -403,9 +400,9 @@ def job_archive():
         if not row:
             return jsonify({'error': 'not_found'}), 404
         path_row = db.fetch_sample_path(conn, sample_id)
-        src_path = path_row['path']
+        src_path = db.resolve_path(path_row['folder_path'], path_row['rel_path'])
         db.delete_sample(conn, sample_id)
-    payload = {'path': src_path, 'scan_folder_path': _scan_folder_for(src_path)}
+    payload = {'path': src_path, 'scan_folder_path': path_row['folder_path']}
     try:
         job_id = job_queue.enqueue('archive', sample_id, payload, jobs_archiving.run)
     except SampleBusyError:
@@ -433,7 +430,7 @@ def job_cut():
         if not row:
             return jsonify({'error': 'not_found'}), 404
         path_row         = db.fetch_sample_path(conn, sample_id)
-        src_path         = path_row['path']
+        src_path         = db.resolve_path(path_row['folder_path'], path_row['rel_path'])
         samplerate       = row['samplerate'] or 44100
         duration_samples = row['duration_samples'] or 0
         db.delete_sample(conn, sample_id)
@@ -441,7 +438,7 @@ def job_cut():
         'path':             src_path,
         'samplerate':       samplerate,
         'duration_samples': duration_samples,
-        'scan_folder_path': _scan_folder_for(src_path),
+        'scan_folder_path': path_row['folder_path'],
         'markers':          [int(m) for m in data['markers']],
         'regions_to_keep':  [int(i) for i in data.get('regions_to_keep', [])],
         'label_ids':        [int(lid) for lid in data.get('label_ids', [])],
@@ -473,7 +470,7 @@ def job_merge():
         if not row:
             return jsonify({'error': 'not_found'}), 404
         path_row         = db.fetch_sample_path(conn, sample_id)
-        src_path         = path_row['path']
+        src_path         = db.resolve_path(path_row['folder_path'], path_row['rel_path'])
         samplerate       = row['samplerate'] or 44100
         duration_samples = row['duration_samples'] or 0
         db.delete_sample(conn, sample_id)
@@ -481,7 +478,7 @@ def job_merge():
         'path':             src_path,
         'samplerate':       samplerate,
         'duration_samples': duration_samples,
-        'scan_folder_path': _scan_folder_for(src_path),
+        'scan_folder_path': path_row['folder_path'],
         'markers':          [int(m) for m in data['markers']],
         'regions_to_keep':  [int(i) for i in data.get('regions_to_keep', [])],
         'label_ids':        [int(lid) for lid in data.get('label_ids', [])],
@@ -503,14 +500,17 @@ def job_export():
         return jsonify({'error': 'sample_busy'}), 409
     with db.get_db() as conn:
         row = db.fetch_sample_path_and_name(conn, sample_id)
-    if not row or not os.path.exists(row['path']):
+    if not row:
+        return jsonify({'error': 'not_found'}), 404
+    path = db.resolve_path(row['folder_path'], row['rel_path'])
+    if not os.path.exists(path):
         return jsonify({'error': 'not_found'}), 404
     samplerate       = row['samplerate'] or 44100
     stem             = os.path.splitext(row['name'])[0]
     ext              = os.path.splitext(row['name'])[1].lower()
-    _, duration_samples = audio.get_audio_info(row['path'])
+    _, duration_samples = audio.get_audio_info(path)
     payload = {
-        'path':             row['path'],
+        'path':             path,
         'ext':              ext,
         'samplerate':       samplerate,
         'duration_samples': duration_samples,
@@ -693,6 +693,8 @@ def random_sample():
             result['index_num'] = index_num
             result['start_offset'] = start_offset
             result['randomize_only'] = randomize_only
+            if result.get('folder_path') and result.get('rel_path'):
+                result['directory'] = os.path.dirname(db.resolve_path(result['folder_path'], result['rel_path']))
             return jsonify(result)
 
         result = sample_select.pick_next(conn, label_ids, filter_mode, untagged_only, pick_unique)
@@ -741,6 +743,8 @@ def get_sample_by_index(index_num):
     result = dict(row)
     result['index_num'] = index_num
     result['start_offset'] = 0
+    if result.get('folder_path') and result.get('rel_path'):
+        result['directory'] = os.path.dirname(db.resolve_path(result['folder_path'], result['rel_path']))
     return jsonify(result)
 
 
@@ -759,6 +763,8 @@ def get_sample_by_digest(digest):
     result = dict(row)
     result['index_num'] = index_num
     result['start_offset'] = start_offset
+    if result.get('folder_path') and result.get('rel_path'):
+        result['directory'] = os.path.dirname(db.resolve_path(result['folder_path'], result['rel_path']))
     return jsonify(result)
 
 
@@ -777,10 +783,12 @@ def serve_audio(sample_id):
     with db.get_db() as conn:
         row = db.fetch_sample_path(conn, sample_id)
 
-    if row and row['path'] and os.path.exists(row['path']):
-        ext = os.path.splitext(row['path'])[1].lower()
-        mimetype = audio.MIME_BY_EXT.get(ext, 'audio/wav')
-        return send_file(row['path'], conditional=True, mimetype=mimetype)
+    if row:
+        path = db.resolve_path(row['folder_path'], row['rel_path'])
+        if os.path.exists(path):
+            ext = os.path.splitext(path)[1].lower()
+            mimetype = audio.MIME_BY_EXT.get(ext, 'audio/wav')
+            return send_file(path, conditional=True, mimetype=mimetype)
     return "Not found", 404
 
 
@@ -800,12 +808,15 @@ def api_find_transient():
     with db.get_db() as conn:
         row = db.fetch_sample_path(conn, sample_id)
 
-    if not row or not row['path'] or not os.path.exists(row['path']):
+    if not row:
+        return jsonify({"error": "sample not found"}), 404
+    path = db.resolve_path(row['folder_path'], row['rel_path'])
+    if not os.path.exists(path):
         return jsonify({"error": "sample not found"}), 404
 
     job_queue.lock_sample(sample_id)
     try:
-        result = _transient.find_transient(row['path'], start_sample, big_only=big_only)
+        result = _transient.find_transient(path, start_sample, big_only=big_only)
     finally:
         job_queue.unlock_sample(sample_id)
     return jsonify(result)
@@ -820,7 +831,10 @@ def slice_audio(sample_id):
     with db.get_db() as conn:
         row = db.fetch_sample_path_and_name(conn, sample_id)
 
-    if not row or not os.path.exists(row['path']):
+    if not row:
+        return "Not found", 404
+    path = db.resolve_path(row['folder_path'], row['rel_path'])
+    if not os.path.exists(path):
         return "Not found", 404
 
     samplerate = row['samplerate'] or 44100
@@ -838,7 +852,7 @@ def slice_audio(sample_id):
         pitch_suffix = f"_{parts}"
 
     try:
-        buf = audio.make_audio_slice(row['path'], start_offset, samplerate)
+        buf = audio.make_audio_slice(path, start_offset, samplerate)
         return send_file(buf, as_attachment=True,
                          download_name=f"{stem}_{start_offset:08d}{pitch_suffix}.wav",
                          mimetype='audio/wav')
@@ -1205,10 +1219,13 @@ def api_cut_waveform(sample_id):
 
     with db.get_db() as conn:
         row = db.fetch_sample_path(conn, sample_id)
-    if not row or not os.path.exists(row['path']):
+    if not row:
+        return jsonify({'error': 'not found'}), 404
+    path = db.resolve_path(row['folder_path'], row['rel_path'])
+    if not os.path.exists(path):
         return jsonify({'error': 'not found'}), 404
 
-    result = audio.generate_cut_waveform(row['path'], begin_offset, width, height)
+    result = audio.generate_cut_waveform(path, begin_offset, width, height)
     if result is None:
         return jsonify({'error': 'unsupported format'}), 422
     png_bytes, cut_px = result
@@ -1240,11 +1257,14 @@ def api_rename_sample(sample_id):
         if not row:
             return jsonify({'error': 'Sample not found'}), 404
 
-        old_path  = row['path']
-        directory = os.path.dirname(old_path)
-        _, ext    = os.path.splitext(old_path)
-        new_name  = new_basename + ext
-        new_path  = os.path.join(directory, new_name)
+        folder_path = row['folder_path']
+        old_rel     = row['rel_path']
+        old_path    = db.resolve_path(folder_path, old_rel)
+
+        _, ext   = os.path.splitext(old_path)
+        new_name = new_basename + ext
+        new_rel  = os.path.join(os.path.dirname(old_rel), new_name)
+        new_path = db.resolve_path(folder_path, new_rel)
 
         if new_path == old_path:
             return jsonify({'status': 'ok', 'new_name': new_name, 'new_path': new_path})
@@ -1261,7 +1281,7 @@ def api_rename_sample(sample_id):
         except OSError as exc:
             return jsonify({'error': str(exc)}), 500
 
-        db.rename_sample(conn, sample_id, new_path, new_name)
+        db.rename_sample(conn, sample_id, new_rel, new_name)
 
     return jsonify({'status': 'ok', 'new_name': new_name, 'new_path': new_path})
 
@@ -1276,7 +1296,7 @@ def archive_sample(digest):
         if not row:
             return jsonify({"error": "sample_not_found"}), 404
         path_row = db.fetch_sample_path(conn, row['id'])
-        path = path_row['path']
+        path = db.resolve_path(path_row['folder_path'], path_row['rel_path'])
         _archive_file(path, conn, row['id'])
 
     return jsonify({"status": "ok", "archived_path": path + '.bak'})

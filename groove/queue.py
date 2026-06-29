@@ -27,8 +27,8 @@ class ScanQueue:
     def folder_done(self):
         self._folders.task_done()
 
-    def push_sample(self, wav_path, folder_id):
-        self._samples.put((wav_path, folder_id))
+    def push_sample(self, wav_path, folder_id, folder_path):
+        self._samples.put((wav_path, folder_id, folder_path))
         with self._lock:
             self.total_samples += 1
 

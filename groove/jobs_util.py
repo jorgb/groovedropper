@@ -43,13 +43,14 @@ def resolve_folder_id(scan_folder_path: str):
         conn.close()
 
 
-def insert_sample(cursor, conn, dest_path: str, name: str, meta: SampleMeta, folder_id, label: str = 'Job') -> bool:
+def insert_sample(cursor, conn, dest_path: str, name: str, meta: SampleMeta, folder_id, scan_folder_path: str, label: str = 'Job') -> bool:
     """Insert one sample into the DB. Returns True if inserted, False if digest already existed."""
     if db.scan_check_digest_exists(cursor, meta.digest):
         logger.info("%s: duplicate digest skipped: %s", label, dest_path)
         return False
+    rel_path = os.path.relpath(dest_path, scan_folder_path)
     db.scan_insert_sample(
-        cursor, dest_path, name, os.path.dirname(dest_path),
+        cursor, rel_path, name,
         meta.size, meta.digest, meta.mtime,
         meta.duration, meta.samplerate, meta.duration_samples,
         meta.waveform, folder_id,

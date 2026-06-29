@@ -45,7 +45,7 @@ def get_db():
         conn.close()
 
 
-CURRENT_VERSION = 5
+CURRENT_VERSION = 6
 
 
 def _migrate_v1(conn):
@@ -169,12 +169,68 @@ def _migrate_v5(conn):
     conn.execute('ALTER TABLE samples ADD COLUMN pick_order INTEGER DEFAULT NULL')
 
 
+def _migrate_v6(conn):
+    """Replace samples.path + samples.directory with samples.rel_path."""
+    conn.execute('PRAGMA foreign_keys = OFF')
+
+    conn.execute('''
+        CREATE TABLE samples_v6 (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            rel_path         TEXT    NOT NULL,
+            name             TEXT,
+            size             INTEGER,
+            digest           TEXT,
+            timestamp        REAL,
+            duration         REAL,
+            samplerate       INTEGER,
+            duration_samples INTEGER,
+            waveform         BLOB,
+            folder_id        INTEGER NOT NULL REFERENCES scan_folders(id) ON DELETE CASCADE,
+            pick_order       INTEGER DEFAULT NULL,
+            UNIQUE (folder_id, rel_path)
+        )
+    ''')
+
+    conn.execute('''
+        INSERT OR IGNORE INTO samples_v6
+            (id, rel_path, name, size, digest, timestamp,
+             duration, samplerate, duration_samples, waveform,
+             folder_id, pick_order)
+        SELECT
+            s.id,
+            CASE
+                WHEN sf.path IS NOT NULL
+                    THEN substr(s.path, length(sf.path) + 2)
+                ELSE s.name
+            END  AS rel_path,
+            s.name,
+            s.size,
+            s.digest,
+            s.timestamp,
+            s.duration,
+            s.samplerate,
+            s.duration_samples,
+            s.waveform,
+            COALESCE(s.folder_id, 0),
+            s.pick_order
+        FROM samples s
+        LEFT JOIN scan_folders sf ON sf.id = s.folder_id
+    ''')
+
+    conn.execute('DROP TABLE samples')
+    conn.execute('ALTER TABLE samples_v6 RENAME TO samples')
+    conn.execute('CREATE UNIQUE INDEX idx_samples_digest ON samples(digest)')
+
+    conn.execute('PRAGMA foreign_keys = ON')
+
+
 _MIGRATION_FNS = {
     1: _migrate_v1,
     2: _migrate_v2,
     3: _migrate_v3,
     4: _migrate_v4,
     5: _migrate_v5,
+    6: _migrate_v6,
 }
 
 
@@ -207,6 +263,8 @@ def migrate_db(db_path):
         conn.close()
 
 
+def resolve_path(folder_path: str, rel_path: str) -> str:
+    return os.path.join(folder_path, rel_path)
 
 
 # ---------------------------------------------------------------------------
@@ -284,16 +342,20 @@ def fetch_untagged_sample_count(conn):
 def fetch_random_untagged_sample(conn, excluded_digest=None):
     if excluded_digest:
         return conn.execute('''
-            SELECT id, name, directory, size, duration, samplerate, duration_samples, digest
+            SELECT s.id, s.name, s.size, s.duration, s.samplerate, s.duration_samples, s.digest,
+                   s.rel_path, sf.path AS folder_path
             FROM samples s
+            LEFT JOIN scan_folders sf ON sf.id = s.folder_id
             WHERE NOT EXISTS (
                 SELECT 1 FROM sample_labels sl WHERE sl.digest = s.digest
             ) AND s.digest != ?
             ORDER BY RANDOM() LIMIT 1
         ''', (excluded_digest,)).fetchone()
     return conn.execute('''
-        SELECT id, name, directory, size, duration, samplerate, duration_samples, digest
+        SELECT s.id, s.name, s.size, s.duration, s.samplerate, s.duration_samples, s.digest,
+               s.rel_path, sf.path AS folder_path
         FROM samples s
+        LEFT JOIN scan_folders sf ON sf.id = s.folder_id
         WHERE NOT EXISTS (
             SELECT 1 FROM sample_labels sl WHERE sl.digest = s.digest
         )
@@ -307,7 +369,11 @@ def fetch_random_untagged_sample(conn, excluded_digest=None):
 
 def fetch_sample_by_id(conn, sample_id):
     return conn.execute(
-        'SELECT id, name, directory, size, duration, samplerate, duration_samples, digest FROM samples WHERE id = ?',
+        '''SELECT s.id, s.name, s.size, s.duration, s.samplerate, s.duration_samples, s.digest,
+                  s.rel_path, sf.path AS folder_path
+           FROM samples s
+           LEFT JOIN scan_folders sf ON sf.id = s.folder_id
+           WHERE s.id = ?''',
         (sample_id,)
     ).fetchone()
 
@@ -317,8 +383,10 @@ def fetch_random_sample(conn, label_ids=None, filter_mode='OR'):
         placeholders = ','.join('?' * len(label_ids))
         if filter_mode == 'AND':
             return conn.execute(f'''
-                SELECT s.id, s.name, s.directory, s.size, s.duration, s.samplerate, s.duration_samples, s.digest
+                SELECT s.id, s.name, s.size, s.duration, s.samplerate, s.duration_samples, s.digest,
+                       s.rel_path, sf.path AS folder_path
                 FROM samples s
+                LEFT JOIN scan_folders sf ON sf.id = s.folder_id
                 WHERE s.digest IN (
                     SELECT digest FROM sample_labels
                     WHERE label_id IN ({placeholders})
@@ -327,17 +395,23 @@ def fetch_random_sample(conn, label_ids=None, filter_mode='OR'):
                 ORDER BY RANDOM() LIMIT 1
             ''', label_ids + [len(label_ids)]).fetchone()
         return conn.execute(f'''
-            SELECT s.id, s.name, s.directory, s.size, s.duration, s.samplerate, s.duration_samples, s.digest
+            SELECT s.id, s.name, s.size, s.duration, s.samplerate, s.duration_samples, s.digest,
+                   s.rel_path, sf.path AS folder_path
             FROM samples s
+            LEFT JOIN scan_folders sf ON sf.id = s.folder_id
             WHERE s.digest IN (
                 SELECT DISTINCT digest FROM sample_labels
                 WHERE label_id IN ({placeholders})
             )
             ORDER BY RANDOM() LIMIT 1
         ''', label_ids).fetchone()
-    return conn.execute(
-        'SELECT id, name, directory, size, duration, samplerate, duration_samples, digest FROM samples ORDER BY RANDOM() LIMIT 1'
-    ).fetchone()
+    return conn.execute('''
+        SELECT s.id, s.name, s.size, s.duration, s.samplerate, s.duration_samples, s.digest,
+               s.rel_path, sf.path AS folder_path
+        FROM samples s
+        LEFT JOIN scan_folders sf ON sf.id = s.folder_id
+        ORDER BY RANDOM() LIMIT 1
+    ''').fetchone()
 
 
 def fetch_sample_index(conn, sample_id):
@@ -352,14 +426,22 @@ def fetch_sample_total(conn):
 
 def fetch_sample_at_offset(conn, index_num):
     return conn.execute(
-        'SELECT id, name, directory, size, duration, samplerate, duration_samples, digest FROM samples ORDER BY id LIMIT 1 OFFSET ?',
+        '''SELECT s.id, s.name, s.size, s.duration, s.samplerate, s.duration_samples, s.digest,
+                  s.rel_path, sf.path AS folder_path
+           FROM samples s
+           LEFT JOIN scan_folders sf ON sf.id = s.folder_id
+           ORDER BY s.id LIMIT 1 OFFSET ?''',
         (index_num - 1,)
     ).fetchone()
 
 
 def fetch_sample_by_digest(conn, digest):
     return conn.execute(
-        'SELECT id, name, directory, size, duration, samplerate, duration_samples, digest FROM samples WHERE digest = ?',
+        '''SELECT s.id, s.name, s.size, s.duration, s.samplerate, s.duration_samples, s.digest,
+                  s.rel_path, sf.path AS folder_path
+           FROM samples s
+           LEFT JOIN scan_folders sf ON sf.id = s.folder_id
+           WHERE s.digest = ?''',
         (digest,)
     ).fetchone()
 
@@ -369,34 +451,41 @@ def fetch_waveform(conn, sample_id):
 
 
 def fetch_sample_path(conn, sample_id):
-    return conn.execute('SELECT path FROM samples WHERE id = ?', (sample_id,)).fetchone()
+    return conn.execute(
+        '''SELECT sf.path AS folder_path, s.rel_path
+           FROM samples s
+           JOIN scan_folders sf ON sf.id = s.folder_id
+           WHERE s.id = ?''',
+        (sample_id,)
+    ).fetchone()
 
 
 def fetch_sample_path_and_name(conn, sample_id):
-    return conn.execute('SELECT path, name, samplerate FROM samples WHERE id = ?', (sample_id,)).fetchone()
+    return conn.execute(
+        '''SELECT sf.path AS folder_path, s.rel_path, s.name, s.samplerate
+           FROM samples s
+           JOIN scan_folders sf ON sf.id = s.folder_id
+           WHERE s.id = ?''',
+        (sample_id,)
+    ).fetchone()
 
 
 def delete_sample(conn, sample_id):
-    """Fetch the sample row and delete it. Returns the row (for path), or None if not found."""
-    row = conn.execute('SELECT path FROM samples WHERE id = ?', (sample_id,)).fetchone()
-    if row:
-        conn.execute('DELETE FROM samples WHERE id = ?', (sample_id,))
-    return row
+    conn.execute('DELETE FROM samples WHERE id = ?', (sample_id,))
 
 
 def delete_sample_by_digest(conn, digest):
-    """Delete a sample by digest. Returns the path row, or None if not found."""
-    row = conn.execute('SELECT path FROM samples WHERE digest = ?', (digest,)).fetchone()
+    row = conn.execute('SELECT id FROM samples WHERE digest = ?', (digest,)).fetchone()
     if row:
         conn.execute('DELETE FROM samples WHERE digest = ?', (digest,))
-    return row
+    return row is not None
 
 
 # ---------------------------------------------------------------------------
 # Pick order
 # ---------------------------------------------------------------------------
 
-_PICK_COLS = 'id, name, directory, size, duration, samplerate, duration_samples, digest, pick_order'
+_PICK_COLS = 's.id, s.name, s.size, s.duration, s.samplerate, s.duration_samples, s.digest, s.pick_order, s.rel_path, sf.path AS folder_path'
 
 
 def _filter_clause(label_ids, filter_mode, untagged_only):
@@ -434,6 +523,7 @@ def fetch_unvisited_sample(conn, label_ids, filter_mode, untagged_only):
     where, params = _filter_clause(label_ids, filter_mode, untagged_only)
     return conn.execute(f'''
         SELECT {_PICK_COLS} FROM samples s
+        LEFT JOIN scan_folders sf ON sf.id = s.folder_id
         WHERE pick_order IS NULL AND ({where})
         ORDER BY RANDOM() LIMIT 1
     ''', params).fetchone()
@@ -443,6 +533,7 @@ def fetch_lru_sample(conn, label_ids, filter_mode, untagged_only):
     where, params = _filter_clause(label_ids, filter_mode, untagged_only)
     return conn.execute(f'''
         SELECT {_PICK_COLS} FROM samples s
+        LEFT JOIN scan_folders sf ON sf.id = s.folder_id
         WHERE pick_order IS NOT NULL AND ({where})
         ORDER BY pick_order ASC LIMIT 1
     ''', params).fetchone()
@@ -457,11 +548,13 @@ def fetch_adjacent_in_window(conn, sample_id, direction, label_ids, filter_mode,
     if direction > 0:
         return conn.execute(f'''
             SELECT {_PICK_COLS} FROM samples s
+            LEFT JOIN scan_folders sf ON sf.id = s.folder_id
             WHERE pick_order > ? AND ({where})
             ORDER BY pick_order ASC LIMIT 1
         ''', [current_order] + params).fetchone()
     return conn.execute(f'''
         SELECT {_PICK_COLS} FROM samples s
+        LEFT JOIN scan_folders sf ON sf.id = s.folder_id
         WHERE pick_order < ? AND ({where})
         ORDER BY pick_order DESC LIMIT 1
     ''', [current_order] + params).fetchone()
@@ -473,6 +566,7 @@ def fetch_window_edge(conn, edge, label_ids, filter_mode, untagged_only):
     order = 'ASC' if edge == 'oldest' else 'DESC'
     return conn.execute(f'''
         SELECT {_PICK_COLS} FROM samples s
+        LEFT JOIN scan_folders sf ON sf.id = s.folder_id
         WHERE pick_order IS NOT NULL AND ({where})
         ORDER BY pick_order {order} LIMIT 1
     ''', params).fetchone()
@@ -711,7 +805,6 @@ def delete_folder(conn, folder_id):
 # ---------------------------------------------------------------------------
 
 
-
 def scan_get_folder_id(cursor, folder_path):
     cursor.execute('SELECT id FROM scan_folders WHERE path = ?', (folder_path,))
     row = cursor.fetchone()
@@ -727,18 +820,24 @@ def scan_get_folder_id(cursor, folder_path):
 
 
 def scan_fetch_samples_by_folder_id(cursor, folder_id):
-    cursor.execute('SELECT path FROM samples WHERE folder_id = ?', (folder_id,))
-    return [row['path'] for row in cursor.fetchall()]
+    cursor.execute('SELECT rel_path FROM samples WHERE folder_id = ?', (folder_id,))
+    return [row['rel_path'] for row in cursor.fetchall()]
 
 
-def scan_get_sample_timestamp(cursor, wav_path):
-    cursor.execute('SELECT timestamp FROM samples WHERE path = ?', (wav_path,))
+def scan_get_sample_timestamp(cursor, folder_id, rel_path):
+    cursor.execute(
+        'SELECT timestamp FROM samples WHERE folder_id = ? AND rel_path = ?',
+        (folder_id, rel_path)
+    )
     row = cursor.fetchone()
     return row['timestamp'] if row else None
 
 
-def scan_delete_sample_by_path(cursor, wav_path):
-    cursor.execute('DELETE FROM samples WHERE path = ?', (wav_path,))
+def scan_delete_sample(cursor, folder_id, rel_path):
+    cursor.execute(
+        'DELETE FROM samples WHERE folder_id = ? AND rel_path = ?',
+        (folder_id, rel_path)
+    )
 
 
 def scan_count_all_samples(cursor):
@@ -746,13 +845,14 @@ def scan_count_all_samples(cursor):
     return cursor.fetchone()[0]
 
 
-def scan_fetch_all_sample_paths_paginated(cursor, limit, offset):
-    cursor.execute('SELECT path FROM samples LIMIT ? OFFSET ?', (limit, offset))
-    return [row['path'] for row in cursor.fetchall()]
-
-
-def scan_delete_samples_by_paths(cursor, paths):
-    cursor.executemany('DELETE FROM samples WHERE path = ?', [(p,) for p in paths])
+def scan_fetch_all_samples_paginated(cursor, limit, offset):
+    cursor.execute('''
+        SELECT sf.path AS folder_path, s.rel_path
+        FROM samples s
+        JOIN scan_folders sf ON sf.id = s.folder_id
+        LIMIT ? OFFSET ?
+    ''', (limit, offset))
+    return [(row['folder_path'], row['rel_path']) for row in cursor.fetchall()]
 
 
 def scan_check_digest_exists(cursor, digest):
@@ -760,19 +860,21 @@ def scan_check_digest_exists(cursor, digest):
     return cursor.fetchone() is not None
 
 
-def rename_sample(conn, sample_id, new_path, new_name):
+def rename_sample(conn, sample_id, new_rel_path, new_name):
     conn.execute(
-        'UPDATE samples SET path = ?, name = ? WHERE id = ?',
-        (new_path, new_name, sample_id),
+        'UPDATE samples SET rel_path = ?, name = ? WHERE id = ?',
+        (new_rel_path, new_name, sample_id),
     )
 
 
-def scan_insert_sample(cursor, wav_path, name, directory, size, digest, mtime, duration, samplerate, duration_samples, waveform, folder_id):
+def scan_insert_sample(cursor, rel_path, name, size, digest, mtime, duration, samplerate, duration_samples, waveform, folder_id):
     cursor.execute('''
         INSERT INTO samples
-            (path, name, directory, size, digest, timestamp, duration, samplerate, duration_samples, waveform, folder_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (wav_path, name, directory, size, digest, mtime, duration, samplerate, duration_samples, waveform, folder_id))
+            (rel_path, name, size, digest, timestamp, duration,
+             samplerate, duration_samples, waveform, folder_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (rel_path, name, size, digest, mtime, duration,
+          samplerate, duration_samples, waveform, folder_id))
 
 
 def scan_insert_sample_label(cursor, digest, label_id):
@@ -826,17 +928,19 @@ def fetch_samples_for_export(conn, label_ids=None, untagged=False, filter_mode='
     """Return list of dicts with sample metadata for export, DISTINCT by digest."""
     where, params = _build_export_where(label_ids or [], untagged, filter_mode)
     rows = conn.execute(f'''
-        SELECT s.path, s.name, s.directory, s.size, s.digest,
+        SELECT s.rel_path, s.name, s.size, s.digest,
                sf.path AS folder_path
         FROM samples s
         LEFT JOIN scan_folders sf ON sf.id = s.folder_id
         {where}
-        ORDER BY s.path
+        ORDER BY sf.path, s.rel_path
     ''', params).fetchall()
 
     result = []
     for row in rows:
         d = dict(row)
+        d['path'] = resolve_path(row['folder_path'], row['rel_path'])
+        d['directory'] = os.path.dirname(d['path'])
         label_rows = conn.execute('''
             SELECT l.name FROM labels l
             JOIN sample_labels sl ON sl.label_id = l.id

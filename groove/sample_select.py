@@ -1,3 +1,4 @@
+import os
 import logging
 from groove import db
 from groove.audio_common import get_random_offset
@@ -36,6 +37,8 @@ def pick_next(conn, label_ids, filter_mode, untagged_only, pick_unique):
     result['index_num'] = index_num
     result['start_offset'] = start_offset
     result['pick_order'] = next_order
+    if result.get('folder_path') and result.get('rel_path'):
+        result['directory'] = os.path.dirname(db.resolve_path(result['folder_path'], result['rel_path']))
     return result
 
 
@@ -67,4 +70,6 @@ def _to_result(conn, row):
     result = dict(row)
     result['index_num'] = index_num
     result['start_offset'] = 0
+    if result.get('folder_path') and result.get('rel_path'):
+        result['directory'] = os.path.dirname(db.resolve_path(result['folder_path'], result['rel_path']))
     return result

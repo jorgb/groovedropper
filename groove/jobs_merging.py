@@ -136,7 +136,7 @@ def run(payload: dict) -> None:
     conn   = db.open_connection()
     cursor = conn.cursor()
     try:
-        inserted = insert_sample(cursor, conn, dest_path, name, meta, folder_id, label='Merge')
+        inserted = insert_sample(cursor, conn, dest_path, name, meta, folder_id, scan_folder_path, label='Merge')
         if inserted and label_ids:
             apply_labels(cursor, conn, meta.digest, label_ids, label='Merge')
     finally:

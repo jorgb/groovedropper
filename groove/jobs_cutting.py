@@ -58,7 +58,7 @@ def run(payload: dict) -> None:
                 if pending_future is not None:
                     meta = pending_future.result()
                     inserted = insert_sample(cursor, conn, pending_dest, pending_name,
-                                             meta, folder_id, label='Cut')
+                                             meta, folder_id, scan_folder_path, label='Cut')
                     if inserted and label_ids:
                         apply_labels(cursor, conn, meta.digest, label_ids, label='Cut')
 
@@ -70,7 +70,7 @@ def run(payload: dict) -> None:
             if pending_future is not None:
                 meta = pending_future.result()
                 inserted = insert_sample(cursor, conn, pending_dest, pending_name,
-                                         meta, folder_id, label='Cut')
+                                         meta, folder_id, scan_folder_path, label='Cut')
                 if inserted and label_ids:
                     apply_labels(cursor, conn, meta.digest, label_ids, label='Cut')
     finally:
