@@ -1,15 +1,38 @@
 ## DOING
 
 test: download multiple files / export multiple files 
-- investigate xport mechanism, unique files?
+- investigate export mechanism, unique files?
+
+- Edit vibe needs to become a dialog with a button to generate a random name
+  - RANDOM NAMER
+    - https://github.com/taikuukaits/SimpleWordlists (suggestion: curate the 
+      words)
+    - feat: Random vibe generator - random name generator
+    - Later? Song name randomizer (same code, back end) for inspiration
+  - Re-use random namer as dialog not for vibes, just to get a new random name
 
 - shift+checkbox unchecks all other labels (quick move to new label)
+  - Remove all labels from sample, but add only one 
+
+- Create an active flag in the sample column, all samples that are not found 
+  are made inactive, they are no longer used, until they are found again
+
+- Bug with stale unknown samples
+  - Are they removed when archived?
+  - Why are there pathless unknown samples in the database
+  - Can they just be removed if the path and name is unknown?
+
+2026-07-02 07:37:07,505 - INFO - Duplicate sample found, skipped: G:\My Drive\3-Resources\Samples\RIPS\Digital Vinyl\Vinyl Rips Todo-20250410T102928Z\03-DJ_Revolution-III-EGO-00000000-01684634.wav -- in database: (unknown) (digest: 0868d43240f303b51bb8d02d18221291)
+2026-07-02 07:37:07,776 - INFO - Duplicate sample found, skipped: G:\My Drive\3-Resources\Samples\RIPS\Digital Vinyl\Vinyl Rips Todo-20250410T102928Z\DJStreak-BabyDiaperSkidmarkBreaks_sideA 038-046 015-034-00220910-00536970.wav -- in database: (unknown) (digest: eea10ad7f6c128f0fa46e47bb789c35e)
+2026-07-02 07:37:08,096 - INFO - Duplicate sample found, skipped: G:\My Drive\3-Resources\Samples\RIPS\Digital Vinyl\Vinyl Rips Todo-20250410T102928Z\06-chops-meal_a-track_6-ftd-00000000-00664321.wav -- in database: (unknown) (digest: 9a4ea895a963a9a2f0164a3ff366cde7)
+2026-07-02 07:37:08,467 - INFO - Duplicate sample found, skipped: G:\My Drive\3-Resources\Samples\RIPS\Digital Vinyl\Vinyl Rips Todo-20250410T102928Z\DJ Tigerstyle _ Vinyl Ritchie ‎– Vinylstyle - Side B 075-082-01293497-02520446.wav -- in database: (unknown) (digest: dd4f27227c558d5233f182f7c5f70e3c)
+
 
 - Export dialog
   - export quickpick set
   - export XPJ
   - export SP404
-  - export ZIP
+  - export ZIP (for samples done)
   - export all
 
 bug: going back to cut / archived sample gives a non existing sample
