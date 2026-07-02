@@ -185,7 +185,12 @@ def scan_worker():
                         meta = get_sample_meta(wav_path)
 
                         if db.scan_check_digest_exists(cursor, meta.digest):
-                            logger.info(f"Duplicate wave file found, skipped: {wav_path}")
+                            existing = db.scan_fetch_path_by_digest(cursor, meta.digest)
+                            existing_path = db.resolve_path(*existing) if existing else '(unknown)'
+                            logger.info(
+                                "Duplicate sample found, skipped: %s -- in database: %s (digest: %s)",
+                                wav_path, existing_path, meta.digest,
+                            )
                             continue
 
                         reported_done = False

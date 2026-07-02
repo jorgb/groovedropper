@@ -860,6 +860,19 @@ def scan_check_digest_exists(cursor, digest):
     return cursor.fetchone() is not None
 
 
+def scan_fetch_path_by_digest(cursor, digest):
+    """Return (folder_path, rel_path) for an existing sample with the given digest, or None."""
+    cursor.execute('''
+        SELECT sf.path AS folder_path, s.rel_path
+        FROM samples s
+        JOIN scan_folders sf ON sf.id = s.folder_id
+        WHERE s.digest = ?
+        LIMIT 1
+    ''', (digest,))
+    row = cursor.fetchone()
+    return (row['folder_path'], row['rel_path']) if row else None
+
+
 def rename_sample(conn, sample_id, new_rel_path, new_name):
     conn.execute(
         'UPDATE samples SET rel_path = ?, name = ? WHERE id = ?',
